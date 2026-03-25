@@ -5,52 +5,101 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>qTap Events — Changelog</title>
 <style>
+:root{--bg:#f6f8fa;--bg-card:#fff;--bg-hover:#f0f1f3;--text:#1f2328;--text-secondary:#656d76;--border:#d1d9e0;--accent:#e36d1e;--accent-hover:#c75a12;--badge-bg:#f0f0f1;--badge-text:#656d76;--shadow:0 1px 3px rgba(0,0,0,.06);--radius:10px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1117;--bg-card:#161b22;--bg-hover:#1c2128;--text:#e6edf3;--text-secondary:#8b949e;--border:#30363d;--badge-bg:#21262d;--badge-text:#8b949e;--shadow:0 1px 3px rgba(0,0,0,.2)}}
+[data-theme=light]{--bg:#f6f8fa;--bg-card:#fff;--bg-hover:#f0f1f3;--text:#1f2328;--text-secondary:#656d76;--border:#d1d9e0;--badge-bg:#f0f0f1;--badge-text:#656d76;--shadow:0 1px 3px rgba(0,0,0,.06)}
+[data-theme=dark]{--bg:#0d1117;--bg-card:#161b22;--bg-hover:#1c2128;--text:#e6edf3;--text-secondary:#8b949e;--border:#30363d;--badge-bg:#21262d;--badge-text:#8b949e;--shadow:0 1px 3px rgba(0,0,0,.2)}
 *{margin:0;padding:0;box-sizing:border-box}
-body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Oxygen,Ubuntu,sans-serif;color:#1d2327;background:#f9f9f9;line-height:1.6}
-.header{background:#fff;border-bottom:3px solid #e36d1e;padding:16px 0}
-.header-inner{max-width:800px;margin:0 auto;padding:0 20px;display:flex;align-items:center;justify-content:space-between}
-.header a{color:#e36d1e;text-decoration:none;font-weight:600;font-size:14px}
-.header a:hover{text-decoration:underline}
-.logo{font-size:20px;font-weight:700;color:#1d2327;text-decoration:none;display:flex;align-items:center;gap:8px}
-.logo span{color:#e36d1e}
-main{max-width:800px;margin:0 auto;padding:32px 20px 64px}
-h1{font-size:24px;margin-bottom:24px;color:#1d2327;border-bottom:1px solid #dcdcde;padding-bottom:12px}
-#changelog{background:#fff;border:1px solid #dcdcde;border-radius:6px;padding:32px;min-height:200px}
-#changelog h2{font-size:18px;margin:32px 0 12px;padding:8px 0 8px;border-bottom:1px solid #f0f0f1;color:#1d2327}
-#changelog h2:first-child{margin-top:0}
-#changelog h3{font-size:14px;font-weight:600;color:#e36d1e;margin:16px 0 8px;text-transform:uppercase;letter-spacing:0.5px}
-#changelog ul{margin:0 0 16px 20px}
-#changelog li{margin:4px 0;font-size:14px;color:#3c434a}
-#changelog p{margin:8px 0;font-size:14px;color:#3c434a}
-#changelog strong{color:#1d2327}
-#changelog code{background:#f0f0f1;padding:2px 6px;border-radius:3px;font-size:13px}
-.loading{text-align:center;color:#646970;padding:40px;font-size:14px}
-.footer{text-align:center;padding:24px 20px;color:#646970;font-size:13px}
-.footer a{color:#e36d1e;text-decoration:none}
+body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;transition:background .3s,color .3s}
+.header{background:var(--bg-card);border-bottom:1px solid var(--border);padding:16px 0;position:sticky;top:0;z-index:10;backdrop-filter:blur(12px);transition:background .3s}
+.header-inner{max-width:860px;margin:0 auto;padding:0 24px;display:flex;align-items:center;justify-content:space-between}
+.logo{font-size:20px;font-weight:700;color:var(--text);text-decoration:none;display:flex;align-items:center;gap:6px;letter-spacing:-.02em}
+.logo span{color:var(--accent)}.logo-icon{transition:filter .3s}
+[data-theme=dark] .logo-icon{filter:invert(1)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]) .logo-icon{filter:invert(1)}}
+.header-actions{display:flex;align-items:center;gap:16px}
+.header-actions a{color:var(--text-secondary);text-decoration:none;font-size:14px;font-weight:500;transition:color .2s}
+.header-actions a:hover{color:var(--accent)}
+.theme-toggle{background:none;border:1px solid var(--border);border-radius:8px;cursor:pointer;padding:6px 8px;color:var(--text-secondary);font-size:16px;line-height:1;transition:border-color .2s}
+.theme-toggle:hover{border-color:var(--accent);color:var(--text)}
+main{max-width:860px;margin:0 auto;padding:32px 24px 80px}
+h1{font-size:22px;font-weight:700;letter-spacing:-.02em;margin-bottom:20px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+h1 .badge{font-family:var(--mono);font-size:12px;font-weight:400;color:var(--badge-text);background:var(--badge-bg);padding:3px 8px;border-radius:6px}
+#content{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:32px;min-height:200px;transition:background .3s,border-color .3s}
+#content h2{font-size:17px;margin:28px 0 10px;padding-bottom:8px;border-bottom:1px solid var(--border);cursor:pointer;transition:color .2s}
+#content h2:first-child{margin-top:0}
+#content h2:hover{color:var(--accent)}
+#content h3{font-size:13px;font-weight:600;color:var(--accent);margin:14px 0 6px;text-transform:uppercase;letter-spacing:.5px}
+#content ul{margin:0 0 14px 20px}
+#content li{margin:3px 0;font-size:14px;color:var(--text-secondary)}
+#content li strong{color:var(--text)}
+#content p{margin:8px 0;font-size:14px;color:var(--text-secondary)}
+#content code{font-family:var(--mono);background:var(--badge-bg);padding:2px 6px;border-radius:4px;font-size:13px}
+#content pre{background:var(--badge-bg);border:1px solid var(--border);border-radius:8px;padding:16px;overflow-x:auto;margin:12px 0;font-size:13px;line-height:1.5}
+#content pre code{background:none;padding:0;border-radius:0}
+#content a{color:var(--accent);text-decoration:none}
+#content a:hover{text-decoration:underline}
+#content table{width:100%;border-collapse:collapse;margin:12px 0;font-size:13px}
+#content th,#content td{border:1px solid var(--border);padding:8px 12px;text-align:left}
+#content th{background:var(--badge-bg);font-weight:600}
+.loading{text-align:center;color:var(--text-secondary);padding:40px;font-size:14px}
+.footer{text-align:center;padding:32px 24px;color:var(--text-secondary);font-size:13px;border-top:1px solid var(--border)}
+.footer a{color:var(--accent);text-decoration:none}
 .footer a:hover{text-decoration:underline}
-@media(max-width:600px){main{padding:20px 12px 48px}#changelog{padding:20px}}
+@media(max-width:600px){main{padding:20px 12px 60px}#content{padding:20px}h1{font-size:18px}}
 </style>
 </head>
 <body>
 <div class="header"><div class="header-inner">
-<a href="../" class="logo"><span>q</span>Tap Apps</a>
+<a href="../" class="logo"><img src="../qtap-logo.svg" alt="" width="22" height="22" class="logo-icon">qTap Apps</a>
+<div class="header-actions">
 <a href="../">All Apps</a>
+<button class="theme-toggle" onclick="toggleTheme()" title="Toggle theme" aria-label="Toggle dark/light theme">
+<span id="theme-icon"></span>
+</button>
+</div>
 </div></div>
 <main>
-<h1>Events — Changelog</h1>
-<div id="changelog"><div class="loading">Loading changelog...</div></div>
+<h1 id="page-title">Events — <span id="doc-type">Changelog</span></h1>
+<div id="content"><div class="loading">Loading...</div></div>
 </main>
 <div class="footer"><a href="https://qtap.app">qtap.app</a></div>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script>
-fetch('CHANGELOG.md').then(r=>{if(!r.ok)throw r;return r.text()}).then(md=>{
-document.getElementById('changelog').innerHTML=marked.parse(md);
-document.querySelectorAll('#changelog h2').forEach(h=>{
-const id=h.textContent.replace(/[^\w.-]/g,'-').toLowerCase();
-h.id=id;h.style.cursor='pointer';
-h.addEventListener('click',()=>{location.hash=id});
+function getTheme(){return localStorage.getItem('theme')||'auto'}
+function applyTheme(t){
+if(t==='auto')document.documentElement.removeAttribute('data-theme');
+else document.documentElement.setAttribute('data-theme',t);
+updateIcon();
+}
+function toggleTheme(){
+const cur=getTheme();
+const next=cur==='auto'?'dark':cur==='dark'?'light':'auto';
+localStorage.setItem('theme',next);applyTheme(next);
+}
+function updateIcon(){
+const t=getTheme();const el=document.getElementById('theme-icon');
+if(t==='dark')el.textContent='\u{1F319}';
+else if(t==='light')el.textContent='\u2600\uFE0F';
+else el.textContent='\u{1F5A5}\uFE0F';
+}
+applyTheme(getTheme());
+
+const params=new URLSearchParams(location.search);
+const doc=params.get('doc');
+const file=doc?doc+'.md':'CHANGELOG.md';
+const label=doc?doc.replace(/-/g,' ').replace(/\b\w/g,c=>c.toUpperCase()):'Changelog';
+document.getElementById('doc-type').textContent=label;
+document.title=document.title.replace('Changelog',label);
+
+fetch(file).then(r=>{if(!r.ok)throw r;return r.text()}).then(md=>{
+const el=document.getElementById('content');
+el.innerHTML=marked.parse(md);
+el.querySelectorAll('h2').forEach(h=>{
+const id=h.textContent.replace(/[^\w.-]/g,'-').replace(/-+/g,'-').toLowerCase();
+h.id=id;h.addEventListener('click',()=>{location.hash=id});
 });
-}).catch(()=>{document.getElementById('changelog').innerHTML='<p class="loading">No changelog available yet.</p>'});
+}).catch(()=>{document.getElementById('content').innerHTML='<p class="loading">No content available yet.</p>'});
 </script>
 </body>
 </html>

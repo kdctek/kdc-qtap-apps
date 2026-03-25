@@ -2,6 +2,10 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.6.6] - 2026-03-25
+### Changed
+- **Update highlight border** — plugin cards with available updates now show a border in the WP admin theme color for visual emphasis
+
 ## [2.6.5] - 2026-03-25
 ### Added
 - **Changelog page links** — version badges on dashboard plugin cards now link to changelog pages at changelog.qtap.app

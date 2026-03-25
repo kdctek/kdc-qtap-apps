@@ -28,7 +28,12 @@
       "slug": "kdc-qtap-finance",
       "requires_php": "7.4",
       "requires_wp": "5.8",
-      "description": "Academic years, grades, fee matrix, enrollments, and payments."
+      "description": "Academic years, grades, fee matrix, enrollments, and payments.",
+      "docs": [
+        {"name": "Beginner's Guide", "file": "beginners-guide.md"},
+        {"name": "WhatsApp Templates", "file": "whatsapp-templates.md"},
+        {"name": "Explainer Script", "file": "explainer-script-parent.md"}
+      ]
     },
     "kdc-qtap-events": {
       "version": "1.0.1",

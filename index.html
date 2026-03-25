@@ -27,17 +27,19 @@ main{max-width:960px;margin:0 auto;padding:40px 24px 80px}
 .hero h1{font-size:28px;font-weight:700;letter-spacing:-.03em;margin-bottom:6px}
 .hero p{color:var(--text-secondary);font-size:15px}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:16px}
-.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px;transition:border-color .2s,box-shadow .2s,background .3s;display:flex;flex-direction:column;gap:12px}
+.card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:20px 20px 0;transition:border-color .2s,box-shadow .2s,background .3s;display:flex;flex-direction:column}
 .card:hover{border-color:var(--accent);box-shadow:var(--shadow-hover)}
-.card-header{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.card-header{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:12px}
 .card h2{font-size:16px;font-weight:600;letter-spacing:-.01em}
 .card .version{font-family:var(--mono);font-size:12px;color:var(--badge-text);background:var(--badge-bg);padding:3px 8px;border-radius:6px;white-space:nowrap}
-.card .desc{font-size:13px;color:var(--text-secondary);line-height:1.5;flex-grow:1}
-.card-actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:auto}
-.btn{display:inline-flex;align-items:center;gap:4px;padding:6px 14px;border-radius:8px;font-size:13px;font-weight:500;text-decoration:none;transition:background .2s,color .2s,border-color .2s;border:1px solid var(--border);color:var(--text);background:var(--bg-card)}
-.btn:hover{border-color:var(--accent);color:var(--accent);background:var(--bg-hover)}
-.btn-primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-.btn-primary:hover{background:var(--accent-hover);border-color:var(--accent-hover);color:#fff}
+.card .desc{font-size:13px;color:var(--text-secondary);line-height:1.5;flex:1}
+.card-docs{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
+.card-docs a{font-size:12px;color:var(--text-secondary);text-decoration:none;padding:4px 10px;border-radius:6px;background:var(--badge-bg);transition:color .2s,background .2s}
+.card-docs a:hover{color:var(--accent);background:var(--bg-hover)}
+.card-footer{display:flex;align-items:center;justify-content:space-between;margin:16px -20px 0;padding:12px 20px;border-top:1px solid var(--border);border-radius:0 0 var(--radius) var(--radius);text-decoration:none;color:var(--text);font-size:14px;font-weight:500;transition:background .2s,color .2s}
+.card-footer:hover{background:var(--bg-hover);color:var(--accent)}
+.card-footer .arrow{font-size:16px;transition:transform .2s}
+.card-footer:hover .arrow{transform:translateX(3px)}
 .footer{text-align:center;padding:32px 24px;color:var(--text-secondary);font-size:13px;border-top:1px solid var(--border)}
 .footer a{color:var(--accent);text-decoration:none}
 .footer a:hover{text-decoration:underline}
@@ -90,13 +92,15 @@ Object.entries(data.plugins).forEach(([slug,info])=>{
 const id=slugToId[slug]||slug;
 const card=document.createElement('div');
 card.className='card';
-let btns=`<a href="${id}/" class="btn btn-primary">Changelog</a>`;
+let docs='';
 if(info.docs&&info.docs.length){
+docs='<div class="card-docs">';
 info.docs.forEach(d=>{
-btns+=`<a href="${id}/?doc=${d.file.replace('.md','')}" class="btn">${d.name}</a>`;
+docs+=`<a href="${id}/?doc=${d.file.replace('.md','')}">${d.name}</a>`;
 });
+docs+='</div>';
 }
-card.innerHTML=`<div class="card-header"><h2>${info.name}</h2><span class="version">v${info.version}</span></div><p class="desc">${info.description||''}</p><div class="card-actions">${btns}</div>`;
+card.innerHTML=`<div class="card-header"><h2>${info.name}</h2><span class="version">v${info.version}</span></div><p class="desc">${info.description||''}</p>${docs}<a href="${id}/" class="card-footer">Changelog<span class="arrow">&rarr;</span></a>`;
 grid.appendChild(card);
 });
 });

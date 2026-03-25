@@ -2,6 +2,21 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.6.5] - 2026-03-25
+### Added
+- **Changelog page links** — version badges on dashboard plugin cards now link to changelog pages at changelog.qtap.app
+- **Docs support on GitHub Pages** — plugin cards show doc buttons (Notifications, Template Variables) linking to rendered documentation
+- **Dark/light mode on changelog site** — system-aware theme with manual toggle, qTap SVG logo
+- **Cross-sell for uninstalled plugins** — dashboard shows available qTap apps from apps-registry.json
+
+### Changed
+- **Version registry URL** — moved from kdctek.github.io to changelog.qtap.app custom domain
+- **Settings buttons** — use WordPress admin theme classes instead of hardcoded styles
+
+### Fixed
+- **Double-prefix slug** — `register_plugin()` no longer prepends `kdc-qtap-` to IDs that already include it
+- **Cross-sell comparison** — uninstalled plugin detection now matches on slug field instead of short ID
+
 ## [2.5.8] - 2026-03-24
 ### Fixed
 - **Export data missing — sections fallback** — when stored POST data is empty/corrupted (JSON encoding failure), export now reconstructs checkbox selections from the separately stored `sections` array which always survives encoding; this is the definitive fix for CSV exports producing only summary data

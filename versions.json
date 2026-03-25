@@ -1,0 +1,55 @@
+{
+  "schema_version": 1,
+  "updated_at": "2026-03-25T00:00:00Z",
+  "plugins": {
+    "kdc-qtap": {
+      "version": "2.5.9",
+      "name": "qTap App",
+      "slug": "kdc-qtap",
+      "requires_php": "7.4",
+      "requires_wp": "5.8"
+    },
+    "kdc-qtap-mobile": {
+      "version": "2.10.17",
+      "name": "qTap Mobile",
+      "slug": "kdc-qtap-mobile",
+      "requires_php": "7.4",
+      "requires_wp": "5.8"
+    },
+    "kdc-qtap-finance": {
+      "version": "3.10.8",
+      "name": "qTap Finance",
+      "slug": "kdc-qtap-finance",
+      "requires_php": "7.4",
+      "requires_wp": "5.8"
+    },
+    "kdc-qtap-events": {
+      "version": "1.0.1",
+      "name": "qTap Events",
+      "slug": "kdc-qtap-events",
+      "requires_php": "7.4",
+      "requires_wp": "5.8"
+    },
+    "kdc-qtap-admin": {
+      "version": "1.0.1",
+      "name": "qTap Admin",
+      "slug": "kdc-qtap-admin",
+      "requires_php": "7.4",
+      "requires_wp": "5.8"
+    },
+    "kdc-qtap-kyc": {
+      "version": "1.0.3",
+      "name": "qTap KYC",
+      "slug": "kdc-qtap-kyc",
+      "requires_php": "7.4",
+      "requires_wp": "5.8"
+    },
+    "kdc-qtap-wa": {
+      "version": "1.0.0",
+      "name": "qTap WhatsApp",
+      "slug": "kdc-qtap-wa",
+      "requires_php": "7.4",
+      "requires_wp": "5.8"
+    }
+  }
+}

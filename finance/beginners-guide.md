@@ -8,10 +8,13 @@
 
 1. [What is qTap Finance?](#part-1-what-is-qtap-finance)
 2. [The Fee Matrix — Your Price List](#part-2-the-fee-matrix--your-price-list)
-3. [Enrollments — Giving Each Student Their Fee Sheet](#part-3-enrollments--giving-each-student-their-fee-sheet)
-4. [Recording Payments — The Accountant's Way (Backend)](#part-4-recording-payments--the-accountants-way-backend)
-5. [Paying Fees — The Parent's Way (Frontend)](#part-5-paying-fees--the-parents-way-frontend)
-6. [The Journey of a Payment](#part-6-the-journey-of-a-payment)
+3. [Academic Terms — Splitting the Year](#part-3-academic-terms--splitting-the-year)
+4. [Enrollments — Giving Each Student Their Fee Sheet](#part-4-enrollments--giving-each-student-their-fee-sheet)
+5. [Adjustments — Discounts & Surcharges](#part-5-adjustments--discounts--surcharges)
+6. [Multi-Year Programs](#part-6-multi-year-programs)
+7. [Recording Payments — The Accountant's Way (Backend)](#part-7-recording-payments--the-accountants-way-backend)
+8. [Paying Fees — The Parent's Way (Frontend)](#part-8-paying-fees--the-parents-way-frontend)
+9. [The Journey of a Payment](#part-9-the-journey-of-a-payment)
 
 ---
 
@@ -22,24 +25,34 @@ Think of your school like a small business:
 | Real World | In qTap Finance |
 |-----------|-----------------|
 | The school year (April 2025 to March 2026) | **Academic Year** (2025-2026) |
+| A 2-year diploma program (2025 to 2027) | **Multi-Year** (2025-2027) |
 | Classes like "Grade 1", "Grade 5" | **Grades** |
 | Sections like "A", "B", "C" | **Divisions** |
 | A list of all fees and their prices | **Fee Matrix** |
+| Term 1, Term 2, Term 3 | **Academic Terms** |
 | Writing a student's name in the register | **Enrollment** |
 | The bill you get from a shop | **Payment Record** |
 | The receipt after you pay | **Transaction** |
 
-### The 4 Building Blocks
+### The Building Blocks
 
-Everything in qTap Finance is built on these four things:
+Everything in qTap Finance is built on these things:
 
-1. **Academic Years** — The school calendar. Example: "2025-2026". You can have multiple years set up at once (this year, next year, etc.)
+1. **Academic Years** — The school calendar. Example: "2025-2026" (standard) or "2025-2027" (multi-year for 2-year programs).
 
 2. **Grades & Divisions** — How your school organizes students. Grades are the class level (Nursery, LKG, Grade 1...), and Divisions are the sections within each grade (A, B, C...).
 
-3. **Fee Matrix** — The master price list. It tells the system: *"Grade 1 students pay ₹15,000 for Tuition, Grade 5 students pay ₹18,000 for Tuition, everyone pays ₹5,000 for Transport..."*
+3. **Fee Matrix** — The master price list with **fee types** that control how charges are calculated:
+   - **Per Month** — charged every month (e.g., transport)
+   - **Per Term** — charged once per academic term (e.g., exam fee)
+   - **Per Cycle** — charged once per 12-month cycle (e.g., annual maintenance)
+   - **Per Tenure** — charged once for the entire program (e.g., admission fee)
 
-4. **Enrollments** — The act of saying: *"This student is in Grade 5, Division A, for the year 2025-2026."* The moment you enroll a student, the system automatically creates all their fee records.
+4. **Academic Terms** — How the year is divided (Term 1: Apr-Jul, Term 2: Aug-Nov, Term 3: Dec-Mar). Each term has its own months and due date.
+
+5. **Enrollments** — The act of saying: *"This student is in Grade 5, Division A, for the year 2025-2026."* The moment you enroll a student, the system automatically creates all their fee records.
+
+6. **Adjustments** — Per-student discounts or surcharges. *"This student gets a 10% discount on Tuition Fee."*
 
 ---
 
@@ -47,7 +60,7 @@ Everything in qTap Finance is built on these four things:
 
 ### What is a "Slab"?
 
-A **slab** is just a fancy word for a **fee category** — a type of fee you charge students.
+A **slab** is a **fee category** — a type of fee you charge students.
 
 **Common examples of slabs:**
 
@@ -57,380 +70,369 @@ A **slab** is just a fancy word for a **fee category** — a type of fee you cha
 | Transport Fee | School bus charges |
 | Lab Fee | Science/Computer lab equipment |
 | Activity Fee | Sports, music, art activities |
-| Exam Fee | Conducting exams |
+| PTA Contribution | Parent-Teacher Association fund |
+
+### Fee Types — How Charges Are Calculated
+
+Each slab has up to four **fee types** that control how amounts are calculated:
+
+| Fee Type | When It's Charged | Example |
+|----------|------------------|---------|
+| **Per Month** | Every single month | Transport: ₹1,000/month |
+| **Per Term** | Once per academic term | Exam Fee: ₹500/term |
+| **Per Cycle** | Once per 12-month cycle | Lab Maintenance: ₹2,000/year |
+| **Per Tenure** | Once for the entire program | Admission Fee: ₹10,000 (one-time) |
+
+A single slab can use multiple fee types! For example, "Tuition Fee" might have both a Per Month component (₹2,000/month) and a Per Tenure component (₹5,000 one-time admission).
+
+### Collection Modes — How Often Students Pay
+
+Each slab also has a **collection mode** that determines how payments are grouped:
+
+| Mode | What It Means |
+|------|--------------|
+| **Monthly** | One payment every month |
+| **Quarterly** | One payment every 3 months |
+| **Half Yearly** | One payment every 6 months |
+| **Full Year** | One payment per 12-month cycle |
+| **Full Tenure** | One single payment for everything |
 
 ### How Amounts Differ by Grade
 
-Here's the cool part — the **same slab** can have **different prices** for different grades. Just like a movie ticket costs less for kids and more for adults!
+The **same slab** can have **different prices** for different grades:
 
 **Example Fee Matrix for 2025-2026:**
 
-| Slab | Nursery | Grade 1 | Grade 5 | Grade 10 | Due Date |
-|------|---------|---------|---------|----------|----------|
-| Tuition Fee | ₹12,000 | ₹15,000 | ₹18,000 | ₹25,000 | Jun 15 |
-| Transport Fee | ₹5,000 | ₹5,000 | ₹5,000 | ₹5,000 | Jun 15 |
-| Lab Fee | — | — | ₹3,000 | ₹5,000 | Jul 1 |
-| Activity Fee | ₹2,000 | ₹2,000 | ₹2,000 | ₹2,000 | Jun 15 |
+| Slab | Fee Type | Nursery | Grade 1 | Grade 5 | Grade 10 |
+|------|----------|---------|---------|---------|----------|
+| Tuition Fee | Per Term | ₹4,000 | ₹5,000 | ₹6,000 | ₹8,000 |
+| Transport Fee | Per Month | ₹1,000 | ₹1,000 | ₹1,000 | ₹1,000 |
+| Lab Fee | Per Cycle | — | — | ₹3,000 | ₹5,000 |
+| PTA | Per Tenure | ₹2,000 | ₹2,000 | ₹2,000 | ₹2,000 |
 
 Notice how:
-- Tuition increases as the grade goes up
-- Transport is the same for everyone
-- Lab Fee only applies to Grade 5 and above (Nursery and Grade 1 have a "—" meaning it doesn't apply to them)
+- Tuition increases as the grade goes up (charged per term)
+- Transport is the same for everyone (charged monthly)
+- Lab Fee only applies to Grade 5+ (per cycle — once per year)
+- PTA is a one-time charge (per tenure)
 
 ### What About Free Passes? (Exempt Fees)
 
-Some students get **exemptions** — they don't have to pay certain fees. This could be because of:
-- **RTE** (Right to Education) — a government rule that gives free education to some students
-- **Scholarships** — the school decides to waive the fee
+Some students get **exemptions** — they don't have to pay certain fees. When a slab is marked as "Can be Exempted," the admin can give specific students a free pass. Their payment record will show **"Exempt"** instead of a pending amount.
 
-When a slab is marked as "Can be Exempted," the admin can give specific students a free pass for that fee. Their payment record will show **"Exempt"** instead of a pending amount.
+### Fee Sort Order
+
+Admins can control how fee line items are ordered in payments:
+- **Fee type first** — Groups all Per Tenure items together, then Per Cycle, Per Term, Per Month
+- **Slab position first** — Shows items in the order slabs appear in the Fee Matrix
+
+The order of fee types themselves is also drag-to-reorder (Per Tenure → Per Cycle → Per Term → Per Month by default).
 
 ### Step-by-Step: How an Admin Sets Up the Fee Matrix
 
 **Step 1: Set up the basics** (General Tab)
 
-1. Go to **qTap Education** in the admin menu
+1. Go to **qTap Finance** in the admin menu
 2. Click the **General** tab
-3. Add your **Academic Years** (e.g., "2025-2026", "2026-2027")
-4. Add your **Grades** (e.g., Nursery, LKG, UKG, Grade 1, Grade 2...)
+3. Add your **Academic Years** (e.g., "2025-2026")
+4. Add your **Grades** (e.g., Nursery, LKG, UKG, Grade 1...)
 5. Add your **Divisions** (e.g., A, B, C, D)
-6. Add your **Fee Categories** — these become your slabs (e.g., Tuition Fee, Transport Fee)
+6. Add your **Fee Categories** — these become your slabs
 7. Click **Save**
 
 **Step 2: Set the current year** (Institute Tab)
 
 1. Click the **Institute** tab
-2. Select the **Current Academic Year** from the dropdown
-3. Fill in your institute name, email, phone, and currency settings
-4. Click **Save**
+2. Select the **Current Academic Year** (for standard years)
+3. Select the **Current Multi-Year** (if you have multi-year programs)
+4. Fill in institute details and currency settings
+5. Click **Save**
 
-**Step 3: Build the fee matrix** (Fee Matrix Tab)
+**Step 3: Set up Academic Terms** (General Tab)
+
+1. Go back to the **General** tab
+2. In the **Academic Terms** section, create terms (e.g., Term 1, Term 2, Term 3)
+3. For each term, select which months belong to it
+4. Set the **due date** for each term
+5. Click **Save Terms**
+
+**Step 4: Build the fee matrix** (Fee Matrix Tab)
 
 1. Click the **Fee Matrix** tab
-2. Select the academic year from the dropdown at the top
-3. For each fee slab (Tuition, Transport, etc.):
-   - Enter the **amount** for each grade
-   - Set the **due date** (when should this fee be paid by?)
-   - Check **"Can be Exempted"** if some students might get a free pass
-   - Uncheck a grade if that slab doesn't apply to it
+2. Select the academic year from the dropdown
+3. For each fee slab:
+   - Choose the **Collection Mode** (how often to collect)
+   - For each **Fee Type** row (Per Month, Per Term, Per Cycle, Per Tenure):
+     - Enter the amount for each grade
+     - Check the "Enable" checkbox for grades that should pay
+   - Check **"Exempt"** if some students might get a free pass
 4. Click **Save Fee Matrix**
-
-**Pro Tip:** If you already set up last year's fees and this year's are similar, use the **"Copy from Year"** button to copy everything and then just adjust the amounts!
 
 ---
 
-## Part 3: Enrollments — Giving Each Student Their Fee Sheet
+## Part 3: Academic Terms — Splitting the Year
+
+### Why Terms Matter
+
+Instead of one giant bill at the start of the year, schools typically split fees into **terms**. Each term covers a portion of the academic year.
+
+**Example for 2025-2026 (April start):**
+
+| Term | Months | Due Date |
+|------|--------|----------|
+| Term 1 | Apr, May, Jun, Jul | April 15, 2025 |
+| Term 2 | Aug, Sep, Oct, Nov | August 15, 2025 |
+| Term 3 | Dec, Jan, Feb, Mar | December 15, 2025 |
+
+### How Terms Affect Payments
+
+When a student is enrolled, the system uses terms to create billing periods:
+
+- **Per Month** items create one line item per month within each billing period
+- **Per Term** items create one line item per term
+- **Per Cycle** items create one line item per 12-month cycle
+- **Per Tenure** items create one line item for the entire program (attached to the first billing period)
+
+**Example: Grade 5 student with Quarterly collection mode:**
+
+| Payment | Per Month (Transport ₹1,000) | Per Term (Exam ₹500) | Per Tenure (PTA ₹2,000) | Total |
+|---------|------------------------------|---------------------|------------------------|-------|
+| Q1 (Apr-Jun) | ₹3,000 (3 months) | ₹500 (Term 1) | ₹2,000 | ₹5,500 |
+| Q2 (Jul-Sep) | ₹3,000 (3 months) | — | — | ₹3,000 |
+| Q3 (Oct-Dec) | ₹3,000 (3 months) | ₹500 (Term 2) | — | ₹3,500 |
+| Q4 (Jan-Mar) | ₹3,000 (3 months) | ₹500 (Term 3) | — | ₹3,500 |
+
+---
+
+## Part 4: Enrollments — Giving Each Student Their Fee Sheet
 
 ### What Happens When You Enroll a Student?
 
-Enrolling a student is like writing their name in the attendance register — but smarter. Here's what the system does automatically:
+Enrolling a student is like writing their name in the attendance register — but smarter:
 
 1. You tell it: *"Riya is in Grade 5, Division A, for 2025-2026"*
-2. The system looks at the Fee Matrix and finds all the fees that apply to Grade 5
-3. It creates a **payment record** for each applicable fee:
-   - Tuition Fee: ₹18,000 — Due: Jun 15 — Status: **Pending**
-   - Transport Fee: ₹5,000 — Due: Jun 15 — Status: **Pending**
-   - Lab Fee: ₹3,000 — Due: Jul 1 — Status: **Pending**
-   - Activity Fee: ₹2,000 — Due: Jun 15 — Status: **Pending**
+2. The system looks at the Fee Matrix and finds all fees that apply to Grade 5
+3. It uses the Collection Mode and Terms to create **billing period payments**
+4. Each payment has granular line items (per_month, per_term, per_cycle, per_tenure)
 
-That's 4 payment records created automatically! The admin didn't have to manually enter each one.
+### Payment Cycle Override
 
-### What If a Student Gets a Free Pass?
+Each student can have a **payment cycle override** on their enrollment. This lets you change how often a specific student pays, independent of the slab's collection mode:
 
-If Riya is an **RTE student** (exempt):
-- The system still creates all 4 payment records
-- But each one shows: Amount Due = **₹0**, Status = **Exempt**
-- Nobody needs to pay anything — the records exist just for bookkeeping
+| Payment Cycle | How It Works |
+|--------------|-------------|
+| Monthly | 12 payments per year |
+| Quarterly | 4 payments per year |
+| Half Yearly | 2 payments per year |
+| Full Year | 1 payment per 12-month cycle |
+| Full Tenure | 1 payment for everything |
 
-### Step-by-Step: How to Enroll a Student
+### Force Full Academic Year
 
-1. Go to **qTap Education** > **Enrollments** tab
-2. You'll see a list of students (or an empty list if you're just starting)
-3. To enroll a new student:
-   - Select the **Academic Year** (e.g., 2025-2026)
-   - Search for the student by name or email
-   - Assign their **Grade** (e.g., Grade 5)
-   - Assign their **Division** (e.g., A)
-   - The system shows which **Fee Slabs** will apply — you can customize this if needed
-   - If the student qualifies, check **"Exempt"** for a free pass
-4. Click **Save Enrollment**
-5. The system instantly creates all the payment records!
-
-### What If You Change the Fee Matrix Later?
-
-No worries! If the school updates the Fee Matrix (say, Transport Fee goes from ₹5,000 to ₹6,000), the system **automatically syncs** the changes:
-- Existing payment records get updated due dates
-- New slabs that were added get new payment records created
-- Nothing gets lost or forgotten
+Admins can enable **"Force full academic year payment"** per academic year. When enabled, all terms must be paid together as a single payment (unless a student has an individual payment cycle override).
 
 ---
 
-## Part 4: Recording Payments — The Accountant's Way (Backend)
+## Part 5: Adjustments — Discounts & Surcharges
 
-> *If you ever want to become an accountant, this section is for you! This is how the school's admin (the person managing fees) handles money from behind the scenes.*
+### What Are Adjustments?
+
+Adjustments let admins give individual students **discounts** or **surcharges** on specific fee slabs.
+
+**Examples:**
+- *"Riya gets a 10% discount on Tuition Fee"* (percentage discount)
+- *"Aman gets ₹500 off on Transport Fee"* (fixed discount)
+- *"Priya has an extra ₹1,000 surcharge for special coaching"* (surcharge)
+
+### How Adjustments Work
+
+Each adjustment has:
+- **Label** — A name (e.g., "Sibling Discount", "Sports Scholarship")
+- **Type** — Discount or Surcharge
+- **Mode** — Fixed amount (₹500) or Percentage (10%)
+- **Amount** — The value
+- **Target Slabs** — Which fee slabs it applies to (checkboxes)
+- **Show Badge** — Whether it appears as a visible line item or is silently applied
+
+### Badge ON vs Badge OFF
+
+| Setting | What Happens |
+|---------|-------------|
+| **Badge ON** | The adjustment appears as a **separate line item** in payments (e.g., "Sibling Discount: -₹500"). The original slab shows its full price. |
+| **Badge OFF** | The adjustment is **silently baked into** the slab amounts. The parent sees the adjusted price directly — no separate discount line. |
+
+Both produce the same net total — the difference is just how it's displayed.
+
+### Adjustments in Enrollment Cards
+
+In the admin's enrollment view, adjustments show as colored badges:
+- Discounts: `-10%` or `-₹500` with an arrow pointing to the target slab
+- Surcharges: `+₹1,000` with the target slab name
+
+---
+
+## Part 6: Multi-Year Programs
+
+### What Are Multi-Year Academic Years?
+
+Some programs span more than one year — like a 2-year diploma or a 3-year degree. qTap Finance supports this with **multi-year academic years**.
+
+**Examples:**
+- `2025-2026` — Standard 1-year (12 months)
+- `2025-2027` — 2-year program (24 months, 2 cycles)
+- `2025-2028` — 3-year program (36 months, 3 cycles)
+
+### How Cycles Work
+
+Each 12-month slice of a multi-year program is called a **cycle**:
+- `2025-2027` has **Cycle 1** (2025-2026) and **Cycle 2** (2026-2027)
+- `2025-2028` has **Cycle 1**, **Cycle 2**, and **Cycle 3**
+
+Fee types interact with cycles:
+- **Per Month** — charged every month across all cycles (24 charges for a 2-year program)
+- **Per Term** — charged per term across all cycles
+- **Per Cycle** — charged **once per cycle** (2 charges for a 2-year program)
+- **Per Tenure** — charged **once for the entire program** (1 charge total)
+
+### Multi-Year in the Terms UI
+
+When setting up terms for a multi-year program, the month checkboxes show grouped by cycle:
+
+```
+Year 1 (2025-2026): [Apr] [May] [Jun] ... [Mar]
+Year 2 (2026-2027): [Apr] [May] [Jun] ... [Mar]
+```
+
+### Current Year Settings
+
+The Institute tab has **two** dropdowns:
+- **Current Academic Year** — For standard 1-year programs
+- **Current Multi-Year** — For multi-year programs
+
+When the system needs to determine which year to show for a student, **multi-year enrollment takes priority**. If a student is enrolled in both "2025-2026" and "2025-2027", the multi-year one is shown first.
+
+---
+
+## Part 7: Recording Payments — The Accountant's Way (Backend)
 
 ### The Admin's Dashboard
 
-When the admin logs into WordPress, they go to **qTap Education** and see several tabs. For payments, the most important one is:
+When the admin logs into WordPress, they go to **qTap Finance** and see several tabs. For payments, the most important one is:
 
-**Verify Payments** — Think of this as the admin's inbox. Whenever a parent says *"I paid!"*, it shows up here for the admin to check and approve.
+**Verify Payments** — The admin's inbox. Whenever a parent says *"I paid!"*, it shows up here for the admin to check and approve.
 
 ### How the Verification Process Works
 
-**Imagine this scenario:**
-
-1. Riya's dad transfers ₹18,000 to the school's bank account for Tuition Fee
-2. He goes to the school website and submits the payment details (UTR number, date, screenshot)
+1. Riya's dad transfers ₹18,000 to the school's bank account
+2. He submits the payment details on the website (UTR number, date, screenshot)
 3. The payment shows up in the admin's **Verify Payments** tab
-
-**What the admin sees:**
-
-| Field | Value |
-|-------|-------|
-| Student | Riya (Grade 5 - A) |
-| Fee Category | Tuition Fee |
-| Amount | ₹18,000 |
-| Payment Method | Bank Transfer |
-| UTR/Reference | UTIB12345678 |
-| Payment Date | June 10, 2025 |
-| Receipt | (attached screenshot) |
-| Notes | "Paid via NEFT" |
 
 **The admin has two choices:**
 
-- **Verify** (green button) — *"Yes, I checked the bank statement and this payment is real!"*
-  - The payment amount gets added to "Amount Paid"
-  - If the full amount is paid, status changes to **Paid**
-  - If only part is paid, status changes to **Partial**
-  - The parent gets a notification: *"Your payment has been verified!"*
+- **Verify** — *"Yes, this payment is real!"*
+  - Amount gets added to "Amount Paid"
+  - Status changes to **Paid** (or **Partial** if not fully paid)
+  - Parent gets a notification
 
-- **Reject** (red button) — *"I couldn't find this transaction in our bank records"*
-  - The admin writes a reason (e.g., "UTR number not found in bank statement")
-  - The payment goes back to **Pending**
-  - The parent gets a notification: *"Your payment was not verified. Reason: ..."*
-  - The parent can try submitting again with correct details
+- **Reject** — *"I couldn't find this transaction"*
+  - Admin writes a reason
+  - Payment goes back to **Pending**
+  - Parent gets a notification with the reason
 
 ### Online Payments — The Easy Mode
 
-When a parent pays **online** (through Zaakpay, credit card, UPI on the website):
+When a parent pays **online** (through the payment gateway):
 - The system records the payment **automatically**
 - No admin verification needed!
-- The payment goes straight from **Pending** to **Paid**
-- It's like a self-checkout at a supermarket — the machine handles everything
+- Payment goes straight from **Pending** to **Paid**
 
 ### Understanding Payment Statuses
 
-Here's a cheat sheet for what each status means:
-
 | Status | What It Means | Color |
 |--------|--------------|-------|
-| **Pending** | Not paid yet. The student still owes this money. | Yellow |
-| **Pending Review** | The parent says they paid, but the admin hasn't checked yet. | Blue |
-| **Partial** | Some money was paid, but not the full amount. | Yellow |
-| **Paid** | All done! The full amount has been received. | Green |
-| **Overdue** | The due date has passed, and the fee hasn't been paid. Uh oh! | Red |
-| **Exempt** | Free pass! No payment needed. | Blue |
-
-### Payment Methods the System Supports
-
-| Method | How It Works |
-|--------|-------------|
-| **Cash** | Parent hands over cash at the school office |
-| **UPI** | Instant transfer using apps like Google Pay, PhonePe |
-| **Bank Transfer** | NEFT / RTGS / IMPS transfer to school's bank account |
-| **Cheque** | Parent writes a cheque |
-| **Card** | Credit or debit card payment |
-| **Online** | Paid through the website checkout (WooCommerce + payment gateway) |
+| **Pending** | Not paid yet | Yellow |
+| **Pending Review** | Parent says they paid, admin hasn't checked | Blue |
+| **Partial** | Some money paid, not the full amount | Yellow |
+| **Paid** | All done! Full amount received | Green |
+| **Overdue** | Due date passed, fee unpaid | Red |
+| **Exempt** | Free pass! No payment needed | Blue |
 
 ---
 
-## Part 5: Paying Fees — The Parent's Way (Frontend)
-
-> *This section is written for you to show your parents! It explains how they can view and pay fees from the school's website.*
+## Part 8: Paying Fees — The Parent's Way (Frontend)
 
 ### Step 1: Log In to the School Website
 
-1. Open the school's website in a browser
-2. Click **Log In** (or go to "My Account" if it's a WooCommerce site)
+1. Open the school's website
+2. Click **Log In**
 3. Enter username and password
-4. You're in!
 
 ### Step 2: Go to the Fees Page
 
-After logging in, look for a **"Fees"** page or a **"Finance Fees"** section in your account dashboard.
-
-**What you'll see:**
+After logging in, look for a **"Fees"** page. You'll see:
 
 - **Your Info** at the top: Name, Grade, Division, Academic Year
-- **Fee Cards** — one card for each fee. Each card shows:
-  - Fee name (e.g., "Tuition Fee")
-  - Amount due (e.g., ₹18,000)
-  - Due date (e.g., "Jun 15, 2025")
-  - How much you've already paid
-  - Status badge (Pending, Paid, Overdue, etc.)
-  - A "Pay" button (if you still owe money)
-- **Summary** at the bottom:
-  - Total Fees: ₹28,000
-  - Total Paid: ₹5,000
-  - Balance Due: ₹23,000
+- **Fee Cards** — one for each billing period, with line items showing:
+  - Fee name and type (e.g., "Tuition Fee - Per Term")
+  - Amount due, amount paid, balance
+  - Due date and status badge
+  - A "Pay" button
+- **Summary** at the bottom: Total Fees, Total Paid, Balance Due
 
 ### Method A: Pay Online (Recommended)
 
-This is the fastest way. The payment is recorded automatically — no waiting!
+1. Click **"Pay Now"** on a fee card (or **"Pay All Dues"** at the bottom)
+2. Choose payment method (Card, UPI, Net Banking)
+3. Complete the payment
+4. Fee card shows green **"Paid"** badge!
 
-1. Find the fee card you want to pay (e.g., "Tuition Fee")
-2. Click the **"Pay Now"** button
-   - Or click **"Pay All Dues"** at the bottom to pay everything at once
-3. You'll be taken to a **checkout page** (like shopping online)
-4. Choose your payment method:
-   - Credit/Debit Card
-   - UPI
-   - Net Banking
-   - Wallets (if available)
-5. Complete the payment
-6. You'll be redirected back to the fees page
-7. The fee card now shows a green **"Paid"** badge!
-8. You'll also receive a **confirmation notification** (email/WhatsApp/SMS)
+### Method B: Pay Offline
 
-### Method B: Pay Offline (Bank Transfer, Cash, UPI outside the site)
+1. Click **"Submit Offline Payment"**
+2. Fill in: Payment Method, Reference/UTR Number, Date, Receipt Screenshot
+3. Click **Submit**
+4. Badge shows **"Pending Verification"** until admin verifies
 
-Use this if you already paid via bank transfer, UPI app, or cash at the school.
+### WhatsApp Fee Lookup
 
-1. Find the fee card you want to mark as paid
-2. Click **"Submit Offline Payment"**
-3. An inline form appears with these fields:
-
-   | Field | What to Enter | Required? |
-   |-------|--------------|-----------|
-   | Amount | Pre-filled with balance due | (display only) |
-   | Payment Method | Choose from dropdown (UPI, Bank Transfer, Cash, etc.) | Yes |
-   | Reference/UTR Number | The transaction ID from your bank/UPI app | Yes |
-   | Payment Date | When you made the payment | Yes (defaults to today) |
-   | Receipt Screenshot | Upload a photo/PDF of your payment receipt | No (but helpful!) |
-   | Notes | Any extra info for the school | No |
-
-4. Click **Submit**
-5. You'll see a success message: *"Payment details submitted! Pending verification by the administrator."*
-6. The fee card now shows a blue **"Pending Verification"** badge
-7. The school admin will review and verify your payment
-8. Once verified, you'll get a notification and the badge turns green: **"Paid"**
-
-### Method C: Direct Payment Links
-
-Sometimes the school sends you a **payment link** via WhatsApp or SMS. It looks like:
-
-```
-https://school-website.com/fees/pay/123/
-```
-
-When you click it:
-1. If you're not logged in, you'll be asked to log in first
-2. If online payments are enabled, you go straight to checkout
-3. If online payments are off, you're taken to the fees page with the offline form open
-4. Complete the payment using Method A or B above
-
-### How to View a Receipt
-
-After a payment is verified (either automatically for online, or by the admin for offline):
-1. Go to the Fees page
-2. Find the fee card that shows **"Paid"**
-3. The "Paid" badge is clickable — click on it!
-4. A receipt opens in a new tab that you can print or save
+Schools can integrate with WhatsApp to let parents check fees via chat. The system provides an API that returns pending payments in WhatsApp's interactive list format — parents can view and pay directly from WhatsApp.
 
 ---
 
-## Part 6: The Journey of a Payment
-
-Here's how a payment travels through the system from start to finish:
+## Part 9: The Journey of a Payment
 
 ### Path A: Online Payment (The Fast Lane)
 
 ```
 Parent clicks "Pay Now"
-       |
-       v
-  Checkout page opens
-       |
-       v
-  Parent completes payment
-  (card, UPI, net banking)
-       |
-       v
-  System AUTOMATICALLY records it
-  (no waiting, no admin needed)
-       |
-       v
-  Status: PAID
-       |
-       v
-  Parent gets confirmation
-  (email / WhatsApp / SMS)
+       → Checkout page opens
+       → Parent completes payment
+       → System AUTOMATICALLY records it
+       → Status: PAID
+       → Parent gets confirmation
 ```
 
 ### Path B: Offline Payment (The Verified Lane)
 
 ```
-Parent pays via bank transfer,
-cash, or UPI app
-       |
-       v
-Parent goes to school website
-and submits payment details
-(UTR, date, receipt)
-       |
-       v
-Status: PENDING REVIEW
-(waiting for admin to check)
-       |
-       +----------+----------+
-       |                     |
-       v                     v
-  Admin VERIFIES         Admin REJECTS
-  (payment is real)      (can't find it)
-       |                     |
-       v                     v
-  Status: PAID          Status: PENDING
-       |                 (parent can try
-       v                  again with
-  Parent notified        correct details)
-  "Payment verified!"        |
-                             v
-                        Parent notified
-                        "Payment rejected.
-                         Reason: ..."
+Parent pays via bank/UPI/cash
+       → Submits details on website
+       → Status: PENDING REVIEW
+       → Admin VERIFIES or REJECTS
+       → If verified: PAID + notification
+       → If rejected: PENDING + reason sent
 ```
 
 ### Path C: Overdue (The Reminder Lane)
 
 ```
-Fee has a due date (e.g., Jun 15)
-       |
-       v
-  System sends EARLY REMINDER
-  before the due date
-       |
-       v
-  Due date arrives...
-  Did the parent pay?
-       |
-       +--------+---------+
-       |                  |
-       v                  v
-    YES: Paid          NO: Not paid
-    (all good!)           |
-                          v
-                    Status: OVERDUE
-                          |
-                          v
-                    System sends
-                    OVERDUE REMINDER
-                          |
-                          v
-                    Parent pays
-                    (online or offline)
-                          |
-                          v
-                    Status: PAID
+Fee has a due date
+       → System sends EARLY REMINDER
+       → Due date arrives...
+       → If paid: All good!
+       → If not: Status: OVERDUE
+       → System sends OVERDUE REMINDER
+       → Parent pays → Status: PAID
 ```
 
 ---
@@ -440,18 +442,24 @@ Fee has a due date (e.g., Jun 15)
 | Term | Simple Meaning |
 |------|---------------|
 | **Academic Year** | The school year, e.g., "2025-2026" |
+| **Multi-Year** | A program spanning multiple years, e.g., "2025-2027" |
+| **Cycle** | A 12-month slice of a multi-year program |
 | **Grade** | The class level (Grade 1, Grade 5, etc.) |
 | **Division** | The section within a grade (A, B, C) |
 | **Fee Matrix** | The master price list of all fees |
 | **Slab** | A single fee category (Tuition, Transport, Lab, etc.) |
+| **Fee Type** | How a charge is calculated: Per Month, Per Term, Per Cycle, or Per Tenure |
+| **Collection Mode** | How often payments are grouped: Monthly, Quarterly, Half Yearly, Full Year, Full Tenure |
+| **Academic Term** | A chunk of the year (Term 1, Term 2) with its own months and due date |
 | **Enrollment** | Registering a student for a specific year, grade, and division |
-| **Payment Record** | A single fee entry for a student (e.g., "Riya owes ₹18,000 for Tuition") |
-| **Transaction** | The actual act of paying money — with details like method, reference number, date |
+| **Adjustment** | A per-student discount or surcharge on specific slabs |
+| **Payment Record** | A billing period entry for a student with line items |
+| **Transaction** | The actual act of paying money — with method, reference number, date |
+| **Payment Cycle** | Per-student override of how billing periods are grouped |
 | **Verification** | The admin checking that an offline payment is real |
 | **Exempt** | A student who doesn't have to pay (RTE / scholarship) |
-| **UTR** | Unique Transaction Reference — the ID number your bank gives when you transfer money |
-| **WooCommerce** | A popular online shopping plugin that handles the checkout and payment gateway |
-| **Zaakpay** | A payment gateway (like a digital cash register) that processes card/UPI payments |
+| **UTR** | Unique Transaction Reference — the ID from your bank |
+| **WooCommerce** | Online shopping plugin that handles checkout and payment gateway |
 
 ---
 
@@ -459,12 +467,15 @@ Fee has a due date (e.g., Jun 15)
 
 - **Online payments** are instant and automatic — no admin work needed
 - **Offline payments** need the admin to verify before they count
-- The **Fee Matrix** is the source of truth — change it, and all payments update automatically
+- The **Fee Matrix** is the source of truth — with granular fee types for flexible billing
+- **Academic Terms** define the billing structure and due dates
 - **Enrolling** a student is the trigger that creates all their fee records
+- **Adjustments** let you give individual discounts or add surcharges
+- **Multi-year programs** work just like standard years, with Per Cycle and Per Tenure handling the billing correctly
 - Every payment has a **status** that tells you exactly where it stands
 - Parents can always check their fees online — no need to call the school!
 
 ---
 
-*Guide version: 1.0 | For qTap Finance v3.0.7+*
+*Guide version: 2.0 | For qTap Finance v3.10.9+*
 *Written with care for curious minds of all ages.*

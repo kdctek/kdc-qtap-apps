@@ -2,6 +2,10 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.6.8] - 2026-03-26
+### Added
+- **CSV header format toggle** — export UI now shows Labels (Human-readable) or Slugs (Machine-readable) radio option under CSV Options; default is Labels; header format preference passed to child plugins via `_csv_header_format` key in `$export_data`
+
 ## [2.6.7] - 2026-03-26
 ### Fixed
 - **Export toggle-all not working** — the "— toggle all" link on export groups did nothing on the Export tab; JS handler was missing from `render_export_content()`, also now triggers `change` event so filter panels show/hide correctly

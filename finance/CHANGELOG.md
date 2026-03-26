@@ -2,6 +2,28 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.0] - 2026-03-26
+
+### Added
+- **Cross-Year Overview report** — new "Overview" tab in Reports aggregates totals across all academic years (standard + multi-year) in one summary table with Group, Year, Students, Total Due, Received, Balance columns; lazy-loaded on first click with CSV export
+- **Groups CSV import/export** — dedicated export checkbox, CSV sheet (`qtap_finance_groups`), import target with "Replace all" / "Update existing" options, and sample template
+- **Fee matrix autosave on blur** — individual fields save via dedicated AJAX handler (`autosave_fee_field`), bypassing PHP `max_input_vars` limits; ✓/✗ indicators per field
+- **Full Cycle collection mode** — new `full_cycle` option for multi-year programs (one billing period per 12-month cycle)
+- **max_input_vars detection** — full-form save detects PHP truncation and shows clear error message
+
+### Changed
+- **Fee matrix grid transposed** — grades as rows, fee_types as columns (previously fee_types as rows)
+- **Fee matrix CSV rewritten** — 12-column format exports all 4 fee_types with `slab_type`, `collection_mode`, `fee_type`, `enabled`; import handles standard/custom slabs and `_show_range` rows
+- **Fee matrix JS extracted** — 800 lines moved from inline PHP to `assets/js/kdc-qtap-finance-fee-matrix.js` with `wp_localize_script`; trait reduced from 1889 to 1093 lines
+- **Per Tenure disabled by default** — new slabs/years default all fee_types to disabled
+- **Beginner's guide v2.1** — added Part 6B: Standard + Multi-Year coexistence (fee matrix, enrollments, reports)
+
+### Fixed
+- **Division by zero** — `validate_payment_cycle_for_term()` crashed in PHP 8 for `full_tenure` (period_size=0)
+- **Broken custom slab template** — unclosed `</div>` in JS template caused malformed DOM
+- **Singular/plural grade count** — "1 grades configured" → "1 grade configured"
+- **Dead `curCode` variable** — removed orphaned `kdcFeeMatrixCurrencyCode` reference
+
 ## [3.10.12] - 2026-03-26
 
 ### Added

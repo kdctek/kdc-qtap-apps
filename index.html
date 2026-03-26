@@ -6,9 +6,10 @@
 <title>qTap Apps</title>
 <style>
 :root{--bg:#f6f8fa;--bg-card:#fff;--bg-hover:#f0f1f3;--text:#1f2328;--text-secondary:#656d76;--border:#d1d9e0;--accent:#e36d1e;--accent-hover:#c75a12;--badge-bg:#f0f0f1;--badge-text:#656d76;--shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);--shadow-hover:0 4px 12px rgba(0,0,0,.08);--radius:10px;--font:-apple-system,BlinkMacSystemFont,"Segoe UI","Noto Sans",Helvetica,Arial,sans-serif;--mono:ui-monospace,SFMono-Regular,"SF Mono",Menlo,Consolas,monospace}
-@media(prefers-color-scheme:dark){:root{--bg:#0d1117;--bg-card:#161b22;--bg-hover:#1c2128;--text:#e6edf3;--text-secondary:#8b949e;--border:#30363d;--badge-bg:#21262d;--badge-text:#8b949e;--shadow:0 1px 3px rgba(0,0,0,.2);--shadow-hover:0 4px 12px rgba(0,0,0,.3)}}
+@media(prefers-color-scheme:dark){:root{--bg:#0d1117;--bg-card:#161b22;--bg-hover:#1c2128;--text:#e6edf3;--text-secondary:#8b949e;--border:#30363d;--badge-bg:#21262d;--badge-text:#8b949e;--shadow:0 1px 3px rgba(0,0,0,.2);--shadow-hover:0 4px 12px rgba(0,0,0,.3)}:root .badge--premium{background:#3d2e00;color:#f5c96d}:root .badge--beta{background:#0a2744;color:#6db3f2}:root .badge--alpha{background:#2d1541;color:#c9a0dc}:root .badge--subscription{background:#0a2e33;color:#6ec6d4}}
 [data-theme=light]{--bg:#f6f8fa;--bg-card:#fff;--bg-hover:#f0f1f3;--text:#1f2328;--text-secondary:#656d76;--border:#d1d9e0;--badge-bg:#f0f0f1;--badge-text:#656d76;--shadow:0 1px 3px rgba(0,0,0,.06),0 1px 2px rgba(0,0,0,.04);--shadow-hover:0 4px 12px rgba(0,0,0,.08)}
 [data-theme=dark]{--bg:#0d1117;--bg-card:#161b22;--bg-hover:#1c2128;--text:#e6edf3;--text-secondary:#8b949e;--border:#30363d;--badge-bg:#21262d;--badge-text:#8b949e;--shadow:0 1px 3px rgba(0,0,0,.2);--shadow-hover:0 4px 12px rgba(0,0,0,.3)}
+[data-theme=dark] .badge--premium{background:#3d2e00;color:#f5c96d}[data-theme=dark] .badge--beta{background:#0a2744;color:#6db3f2}[data-theme=dark] .badge--alpha{background:#2d1541;color:#c9a0dc}[data-theme=dark] .badge--subscription{background:#0a2e33;color:#6ec6d4}
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:var(--font);background:var(--bg);color:var(--text);line-height:1.6;transition:background .3s,color .3s}
 .header{background:var(--bg-card);border-bottom:1px solid var(--border);padding:16px 0;position:sticky;top:0;z-index:10;backdrop-filter:blur(12px);transition:background .3s,border-color .3s}
@@ -33,6 +34,13 @@ main{max-width:960px;margin:0 auto;padding:40px 24px 80px}
 .card h2{font-size:16px;font-weight:600;letter-spacing:-.01em}
 .card .version{font-family:var(--mono);font-size:12px;color:var(--badge-text);background:var(--badge-bg);padding:3px 8px;border-radius:6px;white-space:nowrap}
 .card .desc{font-size:13px;color:var(--text-secondary);line-height:1.5;flex:1}
+.card-badges{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px}
+.badge{font-size:11px;font-weight:600;padding:2px 8px;border-radius:12px;line-height:1.5;white-space:nowrap}
+.badge--premium{background:#fff3cd;color:#856404}
+.badge--beta{background:#cce5ff;color:#004085}
+.badge--alpha{background:#e8daef;color:#4a235a}
+.badge--subscription{background:#d1ecf1;color:#0c5460;text-decoration:none;transition:background .2s}
+.badge--subscription:hover{background:#bee5eb}
 .card-docs{display:flex;flex-wrap:wrap;gap:6px;margin-top:12px}
 .card-docs a{font-size:12px;color:var(--text-secondary);text-decoration:none;padding:4px 10px;border-radius:6px;background:var(--badge-bg);transition:color .2s,background .2s}
 .card-docs a:hover{color:var(--accent);background:var(--bg-hover)}
@@ -89,9 +97,17 @@ applyTheme(getTheme());
 fetch('versions.json').then(r=>r.json()).then(data=>{
 const grid=document.getElementById('apps');
 Object.entries(data.plugins).forEach(([slug,info])=>{
+if(info.status==='private') return;
 const id=slugToId[slug]||slug;
 const card=document.createElement('div');
 card.className='card';
+let badges='';
+const badgeItems=[];
+if(info.is_premium) badgeItems.push('<span class="badge badge--premium">Premium</span>');
+if(info.status==='beta') badgeItems.push('<span class="badge badge--beta">Beta</span>');
+if(info.status==='alpha') badgeItems.push('<span class="badge badge--alpha">Alpha</span>');
+if(info.subscription) badgeItems.push('<a href="https://qtap.app" target="_blank" rel="noopener noreferrer" class="badge badge--subscription">Subscription</a>');
+if(badgeItems.length) badges='<div class="card-badges">'+badgeItems.join('')+'</div>';
 let docs='';
 if(info.docs&&info.docs.length){
 docs='<div class="card-docs">';
@@ -100,7 +116,7 @@ docs+=`<a href="${id}/?doc=${d.file.replace('.md','')}">${d.name}</a>`;
 });
 docs+='</div>';
 }
-card.innerHTML=`<div class="card-header"><h2>${info.name}</h2><span class="version">v${info.version}</span></div><p class="desc">${info.description||''}</p>${docs}<a href="${id}/" class="card-footer">Changelog<span class="arrow">&rarr;</span></a>`;
+card.innerHTML=`<div class="card-header"><h2>${info.name}</h2><span class="version">v${info.version}</span></div>${badges}<p class="desc">${info.description||''}</p>${docs}<a href="${id}/" class="card-footer">Changelog<span class="arrow">&rarr;</span></a>`;
 grid.appendChild(card);
 });
 });

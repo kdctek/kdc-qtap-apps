@@ -8,6 +8,9 @@
       "slug": "kdc-qtap",
       "requires_php": "7.4",
       "requires_wp": "5.8",
+      "status": "stable",
+      "is_premium": false,
+      "subscription": false,
       "description": "Central dashboard, notifications, OTP, import/export for the qTap suite.",
       "docs": [
         {"name": "Notifications", "file": "notifications.md"},
@@ -20,6 +23,9 @@
       "slug": "kdc-qtap-mobile",
       "requires_php": "7.4",
       "requires_wp": "5.8",
+      "status": "stable",
+      "is_premium": true,
+      "subscription": false,
       "description": "WhatsApp number management with OTP verification for WooCommerce."
     },
     "kdc-qtap-finance": {
@@ -28,6 +34,9 @@
       "slug": "kdc-qtap-finance",
       "requires_php": "7.4",
       "requires_wp": "5.8",
+      "status": "stable",
+      "is_premium": true,
+      "subscription": false,
       "description": "Academic years, grades, fee matrix, enrollments, and payments.",
       "docs": [
         {"name": "Beginner's Guide", "file": "beginners-guide.md"},
@@ -41,6 +50,9 @@
       "slug": "kdc-qtap-events",
       "requires_php": "7.4",
       "requires_wp": "5.8",
+      "status": "beta",
+      "is_premium": false,
+      "subscription": false,
       "description": "Event management with venues, hosts, tickets, and attendee tracking."
     },
     "kdc-qtap-admin": {
@@ -49,6 +61,9 @@
       "slug": "kdc-qtap-admin",
       "requires_php": "7.4",
       "requires_wp": "5.8",
+      "status": "alpha",
+      "is_premium": false,
+      "subscription": false,
       "description": "API key management, usage metering, and credit-based billing."
     },
     "kdc-qtap-kyc": {
@@ -57,6 +72,9 @@
       "slug": "kdc-qtap-kyc",
       "requires_php": "7.4",
       "requires_wp": "5.8",
+      "status": "beta",
+      "is_premium": false,
+      "subscription": true,
       "description": "Know Your Customer verification and document management."
     },
     "kdc-qtap-wa": {
@@ -65,6 +83,9 @@
       "slug": "kdc-qtap-wa",
       "requires_php": "7.4",
       "requires_wp": "5.8",
+      "status": "private",
+      "is_premium": false,
+      "subscription": true,
       "description": "Extended WhatsApp Business API integration and message templates."
     }
   }

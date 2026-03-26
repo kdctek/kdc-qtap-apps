@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.4] - 2026-03-26
+
+### Added
+- **Fee Matrix [Grid] import** — new CSV import type that accepts a school-friendly grid format (grades as rows, fee slabs as columns) with two-row header encoding slab slugs and fee types; includes fuzzy matching for slabs and grades, full verification preview with slab mapping dropdowns, and zero-amount auto-disable
+
+### Changed
+- **Fees tab rewritten** — now shows single summary table with groups as rows and fee type columns (Per Month, Per Term, Per Cycle, Per Tenure, Annual Total) totalled across all slabs, replacing the per-slab per-grade breakdowns
+
 ## [3.11.3] - 2026-03-26
 
 ### Fixed

@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.6] - 2026-03-26
+
+### Fixed
+- **Fees tab bracket labels** — groups without "Include in Report" now display with `[brackets]` in the Fees tab, matching the Summary tab convention
+
 ## [3.11.5] - 2026-03-26
 
 ### Changed

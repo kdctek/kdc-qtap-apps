@@ -2,6 +2,13 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.10.11] - 2026-03-26
+
+### Changed
+- **Fee Matrix CSV export rewritten** — exports all 4 fee_types (per_month, per_term, per_cycle, per_tenure) per grade instead of picking one; new columns: `slab_type`, `collection_mode`, `fee_type`, `enabled`; removed dead `is_na` column
+- **Fee Matrix CSV import rewritten** — imports full fee_types structure for standard slabs, flat grades for custom slabs; handles `_show_range` setting rows; proper standard/custom slab distinction via `slab_type` column
+- **Fee Matrix sample CSV updated** — new 12-column format with realistic examples showing multiple fee_types, collection modes, custom slabs with due_date, and show_range rows
+
 ## [3.10.10] - 2026-03-26
 
 ### Added

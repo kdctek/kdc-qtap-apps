@@ -2,6 +2,13 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.6.7] - 2026-03-26
+### Fixed
+- **Export toggle-all not working** — the "— toggle all" link on export groups did nothing on the Export tab; JS handler was missing from `render_export_content()`, also now triggers `change` event so filter panels show/hide correctly
+
+### Changed
+- **`.gitignore` updates** — added macOS `Icon?` and `_*/` to all plugin `.gitignore` files; created `.gitignore` for kdc-qtap-finance and kdc-qtap-admin
+
 ## [2.6.6] - 2026-03-25
 ### Changed
 - **Update highlight border** — plugin cards with available updates now show a border in the WP admin theme color for visual emphasis

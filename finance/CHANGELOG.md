@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.10.10] - 2026-03-26
+
+### Added
+- **Groups CSV export** — new "Groups" checkbox in export UI with dedicated `qtap_finance_groups` CSV sheet (one row per group item with group metadata repeated)
+- **Groups CSV import** — new "Groups" import target with field mapping, "Replace all" and "Update existing" options, two-pass aggregation by group title
+- **Groups sample CSV template** — instruction row + sample groups with grade items and group references
+- **Groups JSON import** — dedicated `groups` section handler for JSON import (previously only via General Settings)
+
 ## [3.9.6]
 
 ### Fixed

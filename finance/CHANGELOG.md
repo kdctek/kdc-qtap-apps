@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.2] - 2026-03-26
+
+### Added
+- **Fees tab in Reports** — new last tab showing fee matrix rate card per slab with columns: Grade, Per Month, Per Term, Per Cycle, Per Tenure, Annual Total; one DataTable per slab with collection mode badge and CSV export
+
 ## [3.11.1] - 2026-03-26
 
 ### Added

@@ -2,6 +2,18 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.7] - 2026-03-26
+
+### Improved
+- **Fee summary card UI** — added proper CSS layout for summary rows (flex spacing, visual hierarchy, border separators) and a progress bar showing paid vs total percentage
+- **Import refactor** — streamlined import class by extracting grid import logic into a dedicated trait
+
+### Fixed
+- **Overview tab academic year** — dropdown selection now correctly filters the overview data instead of always showing current year
+- **Overview summary groups** — all configured groups now display even when they have zero enrollments
+- **Overview user indexing** — fixed array index vs user_id mismatch in enrollment lookups
+- **Overview group refs** — resolved group references by title instead of non-existent ID field
+
 ## [3.11.6] - 2026-03-26
 
 ### Fixed

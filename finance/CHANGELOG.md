@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.3] - 2026-03-26
+
+### Fixed
+- **Report 500 error** — fixed fatal error from non-existent `get_months_count()` method; replaced with terms-based month calculation
+- **Fees tab annual total** — now correctly sums all 4 fee types (per_month × months + per_term × terms + per_cycle × cycles + per_tenure)
+
 ## [3.11.2] - 2026-03-26
 
 ### Added

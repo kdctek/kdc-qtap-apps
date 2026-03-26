@@ -2,6 +2,24 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.10.12] - 2026-03-26
+
+### Added
+- **Full Cycle collection mode** — new `full_cycle` option in Collection Mode dropdown for multi-year programs
+- **Fee matrix autosave** — individual fields save on blur via dedicated AJAX handler, bypassing PHP `max_input_vars` limits
+- **max_input_vars detection** — full-form save now detects PHP truncation and shows a clear error message
+
+### Changed
+- **Fee matrix grid transposed** — grades as rows, fee_types as columns (was: fee_types as rows, grades as columns)
+- **Inline JS extracted** — 800 lines moved to `assets/js/kdc-qtap-finance-fee-matrix.js` with `wp_localize_script`; PHP trait reduced from 1889 to 1093 lines
+- **Per Tenure no longer enabled by default** — new slabs/years default all fee_types to disabled
+
+### Fixed
+- **Division by zero** — `validate_payment_cycle_for_term()` crashed in PHP 8 when `full_tenure` (period_size=0) was passed
+- **Broken custom slab template** — unclosed `</div>` in JS template caused malformed DOM when cloning new custom slabs
+- **Singular/plural grade count** — "1 grades configured" now correctly shows "1 grade configured"
+- **Dead `curCode` variable** — removed orphaned `kdcFeeMatrixCurrencyCode` reference from JS
+
 ## [3.10.11] - 2026-03-26
 
 ### Changed

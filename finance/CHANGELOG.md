@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.5] - 2026-03-26
+
+### Changed
+- **Monospace numbers in reports** — numeric columns use monospace font (`ui-monospace, SF Mono, Menlo, Consolas`) with `tabular-nums` for consistent digit-width alignment across rows
+
 ## [3.11.4] - 2026-03-26
 
 ### Added

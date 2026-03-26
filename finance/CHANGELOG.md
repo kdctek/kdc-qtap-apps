@@ -2,6 +2,15 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.1] - 2026-03-26
+
+### Added
+- **Per-slab Save button** — each fee slab accordion now has a dedicated Save button that saves all fields for that slab in one AJAX request, bypassing `max_input_vars` limits
+
+### Fixed
+- **Fee matrix autosave not working** — fixed missing script dependency (`kdc-qtap-finance-admin`) causing `kdcQtapFinance` to be undefined when autosave fired
+- **Autosave UX** — made autosave silent on success (no spinner/checkmark); only shows error indicator on failure
+
 ## [3.11.0] - 2026-03-26
 
 ### Added

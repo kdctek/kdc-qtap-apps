@@ -12,6 +12,7 @@
 4. [Enrollments — Giving Each Student Their Fee Sheet](#part-4-enrollments--giving-each-student-their-fee-sheet)
 5. [Adjustments — Discounts & Surcharges](#part-5-adjustments--discounts--surcharges)
 6. [Multi-Year Programs](#part-6-multi-year-programs)
+6B. [Standard + Multi-Year — Working Together](#part-6b-standard--multi-year--working-together)
 7. [Recording Payments — The Accountant's Way (Backend)](#part-7-recording-payments--the-accountants-way-backend)
 8. [Paying Fees — The Parent's Way (Frontend)](#part-8-paying-fees--the-parents-way-frontend)
 9. [The Journey of a Payment](#part-9-the-journey-of-a-payment)
@@ -313,6 +314,102 @@ When the system needs to determine which year to show for a student, **multi-yea
 
 ---
 
+## Part 6B: Standard + Multi-Year — Working Together
+
+### The Common Setup
+
+Most schools have a mix:
+
+| Grades | Academic Year | Duration | Type |
+|--------|--------------|----------|------|
+| Playgroup – Grade X | 2025-2026 | 1 year (12 months) | Standard |
+| Grade XI – Grade XII | 2025-2027 | 2 years (24 months) | Multi-Year |
+
+These are **two separate academic years** with their own fee matrices, terms, and enrollments.
+
+### Separate Fee Matrices
+
+Each academic year gets its own fee matrix:
+
+**Fee Matrix for 2025-2026 (Standard — Playgroup to X):**
+
+| Slab | Fee Type | Playgroup | Grade V | Grade X |
+|------|----------|-----------|---------|---------|
+| Tuition Fee | Per Month | ₹8,000 | ₹12,000 | ₹18,000 |
+| Term Fee | Per Term | ₹3,000 | ₹4,000 | ₹5,500 |
+| PTA | Per Tenure | ₹500 | ₹500 | ₹500 |
+
+**Fee Matrix for 2025-2027 (Multi-Year — XI & XII):**
+
+| Slab | Fee Type | Grade XI | Grade XII |
+|------|----------|----------|-----------|
+| Tuition Fee | Per Month | ₹30,750 | ₹30,750 |
+| Term Fee | Per Cycle | ₹22,500 | ₹22,500 |
+| PTA | Per Tenure | ₹500 | ₹500 |
+
+Notice: The multi-year matrix uses **Per Cycle** for Term Fee (charged once per 12-month cycle = twice over 2 years) and **Per Tenure** for PTA (charged once for the full 2-year program).
+
+### Separate Enrollments
+
+Each student gets enrolled in their respective academic year:
+
+| Student | Grade | Academic Year | Fee Matrix Used |
+|---------|-------|--------------|-----------------|
+| Riya | V | 2025-2026 | Standard (12 months) |
+| Aman | X | 2025-2026 | Standard (12 months) |
+| Priya | XI | 2025-2027 | Multi-Year (24 months) |
+| Rahul | XI | 2025-2027 | Multi-Year (24 months) |
+
+Priya is enrolled for the **full 2-year tenure** (2025-2027). She starts in Grade XI and moves to Grade XII — but her enrollment record stays as a single entry for "2025-2027".
+
+### What Each Student Pays
+
+**Riya (Grade V, 2025-2026):**
+
+| Fee Type | Count | Amount | Total |
+|----------|-------|--------|-------|
+| Tuition (per_month) | 12 months | ₹12,000 | ₹1,44,000 |
+| Term Fee (per_term) | 3 terms | ₹4,000 | ₹12,000 |
+| PTA (per_tenure) | 1 | ₹500 | ₹500 |
+| **Total** | | | **₹1,56,500** |
+
+**Priya (Grade XI, 2025-2027):**
+
+| Fee Type | Count | Amount | Total |
+|----------|-------|--------|-------|
+| Tuition (per_month) | **24 months** | ₹30,750 | ₹7,38,000 |
+| Term Fee (per_cycle) | **2 cycles** | ₹22,500 | ₹45,000 |
+| PTA (per_tenure) | **1 (entire program)** | ₹500 | ₹500 |
+| **Total** | | | **₹7,83,500** |
+
+### Reports Are Year-Scoped
+
+Each report runs for **one academic year at a time**:
+
+- **Select 2025-2026** → See Playgroup through Grade X students, their receivables, payments, and balances for that 12-month year.
+- **Select 2025-2027** → See Grade XI and XII students, their full 2-year receivables, payments, and balances across both cycles.
+
+You **cannot** see Playgroup through XII in a single report — they're on different billing programs with different term structures and durations.
+
+### Why This Makes Sense
+
+Mixing a 12-month and 24-month program in one report would produce confusing columns:
+- Standard students have 3 terms
+- Multi-year students have 6 terms (3 per cycle × 2 cycles)
+- Their total receivable periods are completely different
+
+The separation keeps each report clean, accurate, and easy to read.
+
+### The Next Batch
+
+When the next academic year starts:
+- **2026-2027** — A new standard year for Playgroup through X (new fee matrix, new enrollments)
+- **2026-2028** — A new multi-year for the next batch of XI students (potentially different prices)
+
+Students already enrolled in 2025-2027 continue — their enrollment covers both years. The 2026-2028 fee matrix only applies to **new students** joining in 2026.
+
+---
+
 ## Part 7: Recording Payments — The Accountant's Way (Backend)
 
 ### The Admin's Dashboard
@@ -477,5 +574,5 @@ Fee has a due date
 
 ---
 
-*Guide version: 2.0 | For qTap Finance v3.10.9+*
+*Guide version: 2.1 | For qTap Finance v3.10.12+*
 *Written with care for curious minds of all ages.*

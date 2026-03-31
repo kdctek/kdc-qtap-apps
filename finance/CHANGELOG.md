@@ -2,6 +2,13 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.18] - 2026-03-31
+
+### Changed
+- **Card header redesign** — two-row layout: row 1 has term name (bold) + aggregate status badge (pending/paid/partial/overdue) + collapse chevron; row 2 has month range + due date with calendar icon; due date moved from body to header
+- **PHP term response** — added `term_name`, `term_range`, and `term_status` fields for structured header rendering
+- **Mobile footer** — at ≤480px, "Pay Together" checkbox takes full width; offline icon stays inline with Pay button
+
 ## [3.11.17] - 2026-03-31
 
 ### Added

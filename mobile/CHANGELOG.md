@@ -2,6 +2,18 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.10.19] - 2026-03-31
+
+### Added
+- New `qtap/mobile-login` Gutenberg block — renders `wp_login_form()` with full OTP support
+- New `[kdc_qtap_mobile_login]` shortcode — same login form for any page builder (BeaverBuilder, Elementor, etc.)
+- Block attributes: heading, description, social login toggle, redirect URL
+- BeaverBuilder login module field selector (`input[name="fl-login-form-name"]`) added to generic detection
+- Generic username autocomplete selector (`input[type="text"][autocomplete="username"]`)
+
+### Changed
+- Login form block shows "You are logged in as X" with logout link when user is already authenticated
+
 ## [2.10.18] - 2026-03-31
 
 ### Added

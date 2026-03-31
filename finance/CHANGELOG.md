@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.9] - 2026-03-31
+
+### Fixed
+- **Font size legibility** — increased all font sizes across the fees block; minimum is now 12px, main content text is 14px+, ensuring readability on mobile and small screens
+
 ## [3.11.8] - 2026-03-31
 
 ### Added

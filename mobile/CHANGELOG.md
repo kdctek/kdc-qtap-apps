@@ -2,6 +2,16 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.10.20] - 2026-03-31
+
+### Added
+- Alignment option for `qtap/mobile-login` block (left, center, right, fullwidth) and `align` shortcode attribute
+- Logged-in state shows "Logout {name}" primary button with navigation links (Mobile page, Fees page if finance plugin active)
+- `login_form_defaults` filter hides "Remember Me" checkbox from `wp_login_form()` output
+
+### Changed
+- CSS hides "Remember Me" across all login forms (wp-login.php, WooCommerce, frontend) — auth cookie always set with `remember=true`
+
 ## [2.10.19] - 2026-03-31
 
 ### Added

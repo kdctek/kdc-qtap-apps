@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.16] - 2026-03-31
+
+### Fixed
+- **Font-size root cause fix** — override `--kdc-qtap-font-size-xs/sm/base/lg` CSS custom properties with absolute `px` values on the fees block container; parent components (buttons, badges, inputs, card titles) use these vars with `rem` which bypasses any container font-size — block-scoped vars ensure 12/14/16/18px regardless of theme root
+
 ## [3.11.15] - 2026-03-31
 
 ### Fixed

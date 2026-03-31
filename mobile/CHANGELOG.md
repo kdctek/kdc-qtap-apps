@@ -2,6 +2,21 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.10.21] - 2026-03-31
+
+### Added
+- WooCommerce My Account link in login block nav row (when WooCommerce active)
+- Full-page loading overlay with spinner on OTP login and social login button clicks
+- `showForm` block attribute and `form` shortcode attribute — hide login form for logged-out users while keeping logged-in state
+- `showLinks` block attribute and `links` shortcode attribute — show nav links (Mobile, Fees, My Account) for logged-out users when form is hidden
+- "Show Nav Links" toggle in block editor (only visible when "Show Login Form" is off)
+- Extracted `get_login_block_nav_links()` private helper for reuse across logged-in/logged-out states
+- Login overlay removed on AJAX error so users can retry
+- Social login button click interceptor for Google Sign-In and common social login plugins
+
+### Changed
+- Hidden "Remember Me" checkbox across all login forms via CSS and `login_form_defaults` filter
+
 ## [2.10.20] - 2026-03-31
 
 ### Added

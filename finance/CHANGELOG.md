@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.10] - 2026-03-31
+
+### Added
+- **WooCommerce My Account Fees tab** — added a dedicated "Fees" endpoint and menu item in the WooCommerce My Account sidebar; renders the full fees block at `my-account/fees/` with dynamic label from custom settings
+
 ## [3.11.9] - 2026-03-31
 
 ### Fixed

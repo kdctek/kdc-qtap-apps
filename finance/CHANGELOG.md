@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.17] - 2026-03-31
+
+### Added
+- **Year selection persistence** — selected academic year saved to `sessionStorage`; persists across page navigation within the session; priority: URL `?year=` → sessionStorage → default
+
+### Fixed
+- **Trickle disables Pay button** — when a regular term's "Pay Together" checkbox is disabled by trickle logic, the corresponding "Pay" button is now also disabled (opacity 0.5); re-enables when the previous term is selected
+- **Custom/user fee buttons independent** — custom and user fee pay buttons are never affected by the trickle logic (only regular term buttons)
+- **Offline icon always enabled** — offline payment icon stays active regardless of trickle state
+
 ## [3.11.16] - 2026-03-31
 
 ### Fixed

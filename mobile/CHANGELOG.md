@@ -2,6 +2,24 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.11.1] - 2026-03-31
+
+### Changed
+- Multi-user account selection now renders inline within the login form instead of a fixed-position modal overlay
+- User selection styles moved from inline JS `<style>` tag to CSS file
+- "Logout" button in modal replaced with "Back" link for inline flow
+
+### Added
+- WooCommerce My Account link in login block nav row
+- Full-page loading overlay with spinner on OTP login and social login button clicks
+- `showForm` block/shortcode attribute — hide login form for logged-out users
+- `showLinks` block/shortcode attribute — show nav links when form is hidden
+- Shortcode boolean attributes accept `true`/`false`/`yes`/`no` (not just `1`/`0`)
+- `get_login_block_nav_links()` private helper for reusable nav link generation
+
+### Fixed
+- Hidden "Remember Me" checkbox across all login forms via CSS and `login_form_defaults` filter
+
 ## [2.11.0] - 2026-03-31
 
 ### Changed

@@ -2,6 +2,11 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.10.22] - 2026-03-31
+
+### Fixed
+- Shortcode boolean attributes now accept `true`/`false`/`yes`/`no` in addition to `1`/`0` — fixes `[kdc_qtap_mobile_login form=false links=true]` not working
+
 ## [2.10.21] - 2026-03-31
 
 ### Added

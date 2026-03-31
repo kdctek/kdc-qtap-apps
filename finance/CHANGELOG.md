@@ -2,6 +2,27 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.8] - 2026-03-31
+
+### Added
+- **Payment Order Rules** — per-type configurable enforcement (strict/warn/none) for regular, custom, and user fees with admin settings
+- **Cross-year sequential enforcement** — unpaid fees from prior academic years block or warn current year payments based on rule type
+- **Multi-payment selection** — "Pay Together" checkboxes with trickle logic (strict fees sequential, warn/none always enabled) and sticky "Pay Selected" bar
+- **Offline bank icon** — inline bank dashicon link that opens the offline payment form on click; available on term, custom, and user fee cards
+
+### Changed
+- **Fees block typography rework** — established consistent rem-based type scale; replaced all inline `font-size`/`font-weight` with CSS classes (`.kdc-qtap-finance-term-line-items`, `.kdc-qtap-finance-detail-row`, `.kdc-qtap-finance-section-title`, `.kdc-qtap-finance-banner`, `.kdc-qtap-finance-form-header`)
+- **CSS refactor** — removed all inline styles from JS; moved to dedicated CSS classes with BEM-like modifiers (`--muted`, `--bold`, `--warning`, `--error`)
+- **Dynamic fee labels** — section titles and button text now use configurable `custom_labels` from settings instead of hardcoded "Fees"
+
+### Fixed
+- **Custom fee sync** — `sync_payments_on_fee_matrix_save()` now includes `_custom_slabs` so new custom fees are created for existing enrolled students
+- **Term due date sync** — updating academic term due dates now propagates to all existing unpaid payments
+- **Trickle checkbox scope** — only `strict`-type checkboxes follow sequential trickle; `warn`/`none` types are always enabled
+- **Dashicons on frontend** — enqueued `dashicons` CSS for offline bank icon rendering
+- **Duplicate class attributes** — merged split `class=` attributes on offline icon `<a>` elements
+- **Warning alignment** — warnings placed after card footer (not inline); fixed left padding misalignment
+
 ## [3.11.7] - 2026-03-26
 
 ### Improved

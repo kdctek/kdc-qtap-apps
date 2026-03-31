@@ -2,6 +2,12 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.11.0] - 2026-03-31
+
+### Changed
+- `/mobile/` endpoint page now renders `wp_login_form()` with full OTP support instead of a plain "Log In" link
+- Endpoint login notice reuses `render_login_block()` for consistent login experience across all pages
+
 ## [2.10.22] - 2026-03-31
 
 ### Fixed

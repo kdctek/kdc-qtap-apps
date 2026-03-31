@@ -2,6 +2,17 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.11.3] - 2026-03-31
+
+### Added
+- Last login datetime shown on multi-user account selection cards
+- Remember last selected account via localStorage — highlighted and sorted first on next login
+- `kdc_qtap_last_login` user meta saved on each OTP login for last login tracking
+
+### Changed
+- Stronger hover effect on account selection cards — visible lift, shadow, and border color change
+- Last-used account card highlighted with primary color border
+
 ## [2.11.2] - 2026-03-31
 
 ### Fixed

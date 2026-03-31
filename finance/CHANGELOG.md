@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.19] - 2026-03-31
+
+### Changed
+- **Card header label parsing** — JS now parses `term_label` into structured parts (term name, academic year, range) when PHP fields are unavailable; academic year shown in normal weight via `.kdc-qtap-finance-card-header__year` CSS class
+- **Inline style cleanup** — replaced last inline `style="margin-bottom:20px"` on redirect message with `.kdc-qtap-finance-redirect-message` CSS class
+
 ## [3.11.18] - 2026-03-31
 
 ### Changed

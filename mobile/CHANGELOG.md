@@ -2,6 +2,21 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.10.18] - 2026-03-31
+
+### Added
+- Generic login form detection — OTP login now works with any login form (BeaverBuilder, Elementor, Ultimate Member, custom shortcodes, modals)
+- MutationObserver watches for dynamically inserted login forms (AJAX, modals, page builder renders)
+- Hidden `<template>` in wp_footer — JS clones OTP fields into detected forms that weren't covered by PHP hooks
+- BeaverBuilder login module hook (`fl_builder_after_render_module`) for direct PHP injection
+- Page builder CSS overrides (`.fl-login-form`, `.elementor-form`, `.um-form`) for phone field width
+
+### Changed
+- Refactored login OTP JS from single-form global caching to per-form scoped `setupOtpFlow()` — supports multiple login forms on same page
+- Removed hardcoded font-size/padding from WooCommerce CSS — parent framework's `.kdc-qtap-input` handles styling
+- Replaced inline styles in mobile editor block JS with CSS classes (`.kdc-qtap-btn--compact`, `.kdc-qtap-email-otp-input`)
+- wp-login.php phone field now matches native input size (24px font, 3px padding)
+
 ## [2.10.17] - 2026-03-25
 
 ### Added

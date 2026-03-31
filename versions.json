@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-03-31T07:00:57Z",
+  "updated_at": "2026-03-31T12:59:22Z",
   "plugins": {
     "kdc-qtap": {
       "version": "2.6.8",
@@ -13,12 +13,18 @@
       "subscription": false,
       "description": "Central dashboard, notifications, OTP, import/export for the qTap suite.",
       "docs": [
-        {"name": "Notifications", "file": "notifications.md"},
-        {"name": "Template Variables", "file": "template-variables.md"}
+        {
+          "name": "Notifications",
+          "file": "notifications.md"
+        },
+        {
+          "name": "Template Variables",
+          "file": "template-variables.md"
+        }
       ]
     },
     "kdc-qtap-mobile": {
-      "version": "2.10.17",
+      "version": "2.10.18",
       "name": "qTap Mobile",
       "slug": "kdc-qtap-mobile",
       "requires_php": "7.4",
@@ -26,7 +32,8 @@
       "status": "stable",
       "is_premium": true,
       "subscription": false,
-      "description": "WhatsApp number management with OTP verification for WooCommerce."
+      "description": "WhatsApp number management with OTP verification for WooCommerce.",
+      "updated_at": "2026-03-31T12:59:22Z"
     },
     "kdc-qtap-finance": {
       "version": "3.11.16",
@@ -39,8 +46,14 @@
       "subscription": false,
       "description": "Academic years, grades, fee matrix, enrollments, and payments.",
       "docs": [
-        {"name": "Beginner's Guide", "file": "beginners-guide.md"},
-        {"name": "WhatsApp Templates", "file": "whatsapp-templates.md"}
+        {
+          "name": "Beginner's Guide",
+          "file": "beginners-guide.md"
+        },
+        {
+          "name": "WhatsApp Templates",
+          "file": "whatsapp-templates.md"
+        }
       ]
     },
     "kdc-qtap-events": {

@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.12.1] - 2026-03-31
+
+### Fixed
+- **Pay button trickle logic** — individual Pay button now stays disabled until all previous terms are actually paid (not just when checkbox is enabled); trickle still enables checkboxes for batch selection via sticky footer
+- **Duplicate "Pay Selected" bar** — fixed sticky payment bar duplicating on year change by removing stale bar before inserting new one
+
 ## [3.12.0] - 2026-03-31
 
 ### Added

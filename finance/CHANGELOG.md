@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.13] - 2026-03-31
+
+### Fixed
+- **`/fees/` page conflict** — removed redundant `query_vars` filter that was causing WordPress to treat `fees` as a global query variable; `add_rewrite_endpoint` with `EP_PAGES` already handles the query var internally (matching the mobile plugin pattern)
+
 ## [3.11.12] - 2026-03-31
 
 ### Added

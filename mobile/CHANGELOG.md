@@ -2,6 +2,13 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.11.2] - 2026-03-31
+
+### Fixed
+- User selection card text now uses `inherit` for theme-first color cascade (Theme → qTap → WooCommerce → WordPress defaults)
+- Muted text uses `opacity` instead of hardcoded colors — works with any theme
+- Back link inherits theme link color
+
 ## [2.11.1] - 2026-03-31
 
 ### Changed

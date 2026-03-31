@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.14] - 2026-03-31
+
+### Changed
+- **Fee card header cleanup** — removed `border-bottom`, `margin-bottom`, and `padding-bottom` from card headers inside fees block; removed amount display from card headers for cleaner collapsed view
+
 ## [3.11.13] - 2026-03-31
 
 ### Fixed

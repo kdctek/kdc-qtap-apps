@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.11] - 2026-03-31
+
+### Added
+- **URL `?year=` parameter** — fees block reads `?year=2026-2027` from URL to pre-select academic year; smart resolution for short form (`?year=2026` resolves based on current month using June cutoff); validates against configured years
+
+### Changed
+- **Typography cascade** — font sizes now use `em` (not `rem`) relative to container baseline; cascade: qTap custom variable → theme default → 14px minimum floor via `max(var(--kdc-qtap-font-size-base, 1em), 14px)`
+
 ## [3.11.10] - 2026-03-31
 
 ### Added

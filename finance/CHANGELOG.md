@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.15] - 2026-03-31
+
+### Fixed
+- **Typography simplification** — removed all fractional em/rem font-size values that caused compounding; children now inherit container baseline naturally; form fields (input/select/textarea/label) use `font-size: inherit` to override theme/WooCommerce smaller sizes; only hints and summary totals use explicit px
+
 ## [3.11.14] - 2026-03-31
 
 ### Changed

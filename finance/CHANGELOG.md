@@ -2,6 +2,28 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.12.0] - 2026-03-31
+
+### Added
+- **WooCommerce My Account Fees tab** — dedicated `fees` endpoint in My Account sidebar using `EP_PAGES` (matching mobile plugin pattern)
+- **URL `?year=` parameter** — fees block reads `?year=2026-2027` or `?year=2026` (smart resolution via June cutoff) to deep-link academic years
+- **Year persistence** — selected academic year saved to `sessionStorage`; persists across page navigation
+- **Collapsible fee cards** — term, custom, and user fee cards collapsed by default; click header to expand; chevron indicator with `aria-expanded`
+- **Card header redesign** — two-row layout: term name + range (inline) + status badge + chevron on row 1; due date with calendar icon on row 2; JS parses `term_label` into structured parts
+- **Aggregate term status** — PHP computes `term_status` (paid/partial/overdue/pending) from line items; displayed as badge in card header
+- **Pay Together hides individual pay** — checking "Pay Together" hides the card's pay-actions; unchecking or disabled checkbox shows them again
+
+### Changed
+- **Typography: CSS custom properties** — override `--kdc-qtap-font-size-xs/sm/base/lg` on fees block container with absolute px values (12/14/16/18px); all parent components resolve correctly regardless of theme root
+- **Card layout: flex column** — `.kdc-qtap-card` is now `display:flex; flex-direction:column; min-width:0` preventing child overflow; inline form uses negative margin for full-bleed within card padding
+- **Mobile responsive** — line items table converts to 2x2 grid (label/sublabel left, amount/status right); footer checkbox full-width with offline icon + pay button sharing second row; `.kdc-qtap-finance-pay-actions` wrapper keeps icon and button together
+- **No inline styles** — all remaining inline `style=` replaced with CSS classes; only dynamic values (progress bar width, form display:none) remain inline
+
+### Fixed
+- **`/fees/` page 404** — removed redundant `query_vars` filter; endpoint uses `EP_PAGES` only (not `EP_ROOT`)
+- **Trickle disables Pay button** — term Pay button disabled alongside its checkbox; custom/user fee buttons and offline icon independent
+- **Card header border** — removed `border-bottom`, `margin-bottom`, `padding-bottom` from card headers in fees block
+
 ## [3.11.19] - 2026-03-31
 
 ### Changed

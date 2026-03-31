@@ -2,6 +2,11 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.11.4] - 2026-03-31
+
+### Fixed
+- Mobile editor block form fields now match finance block sizing — overrides `--kdc-qtap-font-size-*` CSS vars with absolute `px` values at block root (same pattern as kdc-qtap-finance)
+
 ## [2.11.3] - 2026-03-31
 
 ### Added

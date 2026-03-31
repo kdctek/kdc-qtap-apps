@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.11.12] - 2026-03-31
+
+### Added
+- **Collapsible fee cards** — term, custom, and user fee cards are collapsed by default showing header + footer; click header to expand and reveal line items; chevron indicator rotates on toggle with `aria-expanded` accessibility
+
+### Fixed
+- **`/fees/` page 404** — WooCommerce My Account endpoint renamed from `fees` to `qtap-fees` to avoid rewrite collision with the existing `/fees/` WordPress page; My Account tab now at `my-account/qtap-fees/`
+
 ## [3.11.11] - 2026-03-31
 
 ### Added

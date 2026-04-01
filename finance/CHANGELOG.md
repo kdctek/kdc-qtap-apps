@@ -2,6 +2,13 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.12.3] - 2026-04-01
+
+### Changed
+- **Enrollment card layout** — year (bold) + grade inline on one row; due date and terms as separate lines below; amount + status badge stacked on the right column
+- **Enrollment card term details** — shows term count, outstanding terms pending, and next due date with calendar icon
+- **Enrollment card badge** — split into amount (bold) + status label (badge); larger badge size
+
 ## [3.12.2] - 2026-04-01
 
 ### Added

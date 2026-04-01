@@ -2,6 +2,15 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.12.2] - 2026-04-01
+
+### Added
+- **My Account enrollment summary cards** — WooCommerce My Account dashboard now shows enrollment cards per academic year with grade, division, and payment status badge (Paid/due/overdue) instead of the full fees block
+- **`get_user_year_summaries()`** — new Payment class method for efficient per-year payment totals in a single DB query
+
+### Changed
+- Dashboard enrollment cards link to standalone `/fees/?year=` page instead of WooCommerce endpoint URL
+
 ## [3.12.1] - 2026-03-31
 
 ### Fixed

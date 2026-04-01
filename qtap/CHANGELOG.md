@@ -2,6 +2,15 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.6.9] - 2026-04-01
+### Fixed
+- **Import UPDATED count showing in admin bar** — WP pseudo-cron stray output leaked the updated count as raw text at the top of the page instead of in the stats card; cron entry point now wrapped in output buffering
+- **Import results missing `updated` key** — inline CSV progress results array now merges with defaults to ensure all stat keys exist
+
+### Changed
+- **Offloaded job methods from kdc-qtap.php** — moved 5 thin wrapper methods (`run_job_processor`, `process_import_job_public`, `process_export_job_public`, `run_job_cleanup`, `run_job_notification`) to `KDC_qTap_Job_Processor` with static `init_hooks()` registration
+- **AJAX job handler calls processor directly** — removed dependency on main plugin instance for job processing
+
 ## [2.6.8] - 2026-03-26
 ### Added
 - **CSV header format toggle** — export UI now shows Labels (Human-readable) or Slugs (Machine-readable) radio option under CSV Options; default is Labels; header format preference passed to child plugins via `_csv_header_format` key in `$export_data`

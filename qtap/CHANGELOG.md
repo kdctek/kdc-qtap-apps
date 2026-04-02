@@ -2,6 +2,10 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.6.10] - 2026-04-02
+### Added
+- **Login as user in Users table** — "Login as {name}" action link added to user row actions in the admin Users list, reusing the existing session switch handler and admin bar "Switch back" button
+
 ## [2.6.9] - 2026-04-01
 ### Fixed
 - **Import UPDATED count showing in admin bar** — WP pseudo-cron stray output leaked the updated count as raw text at the top of the page instead of in the stats card; cron entry point now wrapped in output buffering

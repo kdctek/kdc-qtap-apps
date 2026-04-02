@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.13.1] - 2026-04-02
+
+### Added
+- **qTap FAB Menu** — draggable floating action button on all pages for logged-in users; position persists via localStorage; viewport-aware menu opens up/down based on screen position; dynamic items: Fees, Mobile, Dashboard, Switch Student (sub-menu), Logout
+- **FAB admin setting** — "qTap Menu (FAB)" checkbox in Finance admin Institute tab to enable/disable the FAB
+- **WC My Account "Switch Student" endpoint** — new sidebar menu item + `/my-account/switch-student/` page showing associated users bar; only visible when user has associations
+
+### Fixed
+- **Associated users bar not showing on WC pages** — WooCommerce action hooks pass endpoint value as first arg, which overwrote the `$echo` parameter making it falsy; method now always echoes directly
+
 ## [3.13.0] - 2026-04-02
 
 ### Added

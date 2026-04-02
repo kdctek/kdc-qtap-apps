@@ -2,6 +2,122 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.13.3] - 2026-04-02
+
+### Added
+- **Menu icons** — Lucide SVG icons for `downloads` (download), `switch` (users-round), `payment-methods` (credit-card), `lost-password` (key-round) in My Account sidebar
+- **Cart FAB on desktop** — cart FAB now shows on desktop when qTap FAB menu is enabled (positioned above FAB at 90px)
+
+### Changed
+- **Orders label** — renamed from "Receipt" to "Receipts" (plural) in both menu and page title
+- **Orders icon** — restored to Lucide `receipt` SVG
+- **Menu reorder** — added `downloads`, `payment-methods`, `switch`, `lost-password` to the ordered menu array
+
+## [2.13.2] - 2026-04-02
+
+### Changed
+- Moved qTap Menu (FAB) setting from WhatsApp API tab to General tab under new "UI Enhancements" section
+- FAB setting now saves via General tab form handler (previously used `register_setting` which didn't work with manual form submission)
+
+## [2.13.1] - 2026-04-02
+
+### Changed
+- Login with OTP settings moved to a dedicated **"Login with OTP"** tab (extracted from General tab)
+- JS auto-enters OTP mode on all login forms when enabled — hides username/password, shows phone field immediately
+- Form Label injected via JS above phone field on `wp_login_form()` forms
+- Phone field font size fixed to 16px in login OTP and standalone form CSS
+- `render_otp_login_form()` fires `login_form` action for third-party plugins (Google Site Kit)
+
+### Added
+- `otpEnabled`, `formLabel`, `fieldLabel` passed to frontend JS via `wp_localize_script`
+- qTap FAB menu: draggable floating action button with contextual links (from separate agent)
+
+## [2.13.0] - 2026-04-02
+
+### Added
+- Standalone OTP login form: when "Login with OTP" is enabled, the `qtap/mobile-login` block and shortcode render phone + OTP fields directly without username/password
+- New admin settings: **Form Label** (text above phone field) and **Field Label** (phone input label)
+- `render_otp_login_form()` method for standalone OTP HTML generation
+- `setupStandaloneOtpFlow()` JS function for the OTP-only form with full verify/login/multi-account flow
+
+### Changed
+- Social login hooks (`kdc_qtap_login_social_buttons`) always fire regardless of OTP mode
+- When OTP disabled, `wp_login_form()` renders as before with JS-based OTP injection on mobile detection
+
+## [2.12.4] - 2026-04-01
+
+### Changed
+- Login block/shortcode nav links reordered: My Account → Fees → Mobile
+- Fees and Mobile links now use WooCommerce My Account endpoint URLs (`/my-account/fees/`, `/my-account/mobile/`) when WooCommerce is active, falling back to standalone page URLs (`/fees/`, `/mobile/`) otherwise
+
+## [2.12.3] - 2026-04-01
+
+### Fixed
+- Desktop My Account nav: proper padding (`8px 20px 8px 10px`), min-width 140px, no nav container padding
+- Matched theme selector specificity (`.woocommerce .woocommerce-MyAccount-navigation ul li a`) to override theme's `padding: 8px`
+- Logout separator moved to `<li>` for full-width border line
+- Content margin increased to 20px for better spacing from nav border
+
+## [2.12.2] - 2026-04-01
+
+### Changed
+- Desktop My Account nav: compact width with `fit-content`, right border separator, no background box
+- Dashboard visible on desktop, hidden on mobile bottom nav
+- Removed all stray borders from theme WooCommerce nav styles with aggressive resets
+
+### Fixed
+- Nav width override with `!important` to defeat theme's explicit width rules
+- Stray borders on nav items from theme's default WooCommerce list styling
+
+## [2.12.1] - 2026-04-01
+
+### Changed
+- My Account menu reordered: Fees, Mobile, Receipt, Addresses, Edit, Log out
+- Desktop nav column narrowed to 160px with flex layout for more content space
+
+## [2.12.0] - 2026-04-01
+
+### Added
+- WooCommerce My Account UI enhancements: mobile bottom navigation bar with Lucide icons, floating cart FAB, auto-hide on scroll
+- Desktop sidebar icons for My Account navigation items
+- Dashboard menu item removed, "Orders" renamed to "Receipt"
+- Password fields hidden on Edit Account page (OTP-based login replaces password)
+
+### Fixed
+- `rename_orders_title` filter now checks `is_main_query()` to avoid renaming titles in nav menus and widgets
+- Password fieldset hiding scoped to `.woocommerce-EditAccountForm` only, checking legend text instead of all fieldset content
+
+## [2.11.9] - 2026-04-01
+
+### Added
+- Session expiry timer on multi-account selection screen — auto-resets login form with "Login took longer than expected" message when verify token expires
+- Countdown shown in last 30 seconds before session expiry
+
+### Changed
+- Verify token transient now uses OTP validity setting (default 5 minutes, minimum 5 minutes) instead of hardcoded 120 seconds
+
+## [2.11.8] - 2026-03-31
+
+### Fixed
+- Fixed actual root cause of horizontal scroll on mobile — intl-tel-input library sets `.iti { display: inline-block }` which ignores parent width constraints; overridden to `display: block` within mobile block context
+
+## [2.11.7] - 2026-03-31
+
+### Fixed
+- Fixed root cause of horizontal scroll on mobile — added `box-sizing: border-box` to `.kdc-qtap-card` within mobile block so padding is included in width calculation
+- Reduced card padding from 16px to 12px on small screens (≤480px) for more breathing room
+- Removed `overflow: hidden` band-aids from block wrapper, form fields, and endpoint CSS that were masking the issue
+
+## [2.11.6] - 2026-03-31
+
+### Fixed
+- Fixed horizontal scroll on `/mobile/` endpoint page — added `overflow-x: hidden` to endpoint wrapper and content area, reduced mobile padding
+
+## [2.11.5] - 2026-03-31
+
+### Fixed
+- Fixed horizontal scroll on mobile screens when add mobile form opens — constrained `.iti` phone field container and block wrapper to `max-width: 100%` with `overflow: hidden`
+
 ## [2.11.4] - 2026-03-31
 
 ### Fixed

@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.13.3] - 2026-04-02
+
+### Changed
+- **Switch endpoint slug** — changed from `switch-student` to `switch` so label changes don't break the URL
+- **Removed switch-back link** — removed from associated users bar (both WC dashboard and standalone fees page)
+
 ## [3.13.2] - 2026-04-02
 
 ### Removed

@@ -2,6 +2,25 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.13.0] - 2026-04-02
+
+### Added
+- **Associated Users** — bidirectional family group linking between WordPress users; admin manages associations on user profile page with searchable multi-select chip UI
+- **Bidirectional sync** — adding user A to user B's associations automatically adds B to A's list (and all group members see each other); removal also syncs
+- **Frontend user switching** — associated users bar on WooCommerce My Account dashboard, fees endpoint, and standalone fees page; instant login switch between family members
+- **Switch back** — transient-based (1hr TTL) switch-back link appears after switching, redirects to My Account
+- **Thank You page integration** — associated users bar on WooCommerce order confirmation when the order contains the Finance Fee product
+- **Non-WooCommerce fallback** — associated users bar renders at the top of the fees block when WooCommerce is not active
+- **Configurable label** — "Associated Users" field uses the plugin's customizable student label (e.g., "Associated Students")
+
+### Changed
+- **Enrollment card layout** — year (bold) + grade inline on one row; due date and terms as separate lines; amount + status badge stacked on right
+- **Enrollment card details** — shows term count, outstanding terms pending, next due date with calendar icon
+- **Enrollment card badge** — split into amount (bold) + status label (badge)
+- **Pay button trickle logic** — individual Pay button stays disabled until all previous terms are actually paid
+- **Duplicate "Pay Selected" bar** — fixed sticky payment bar duplicating on year change
+- **Dashboard cards link** — use standalone `/fees/?year=` page instead of WooCommerce endpoint URL
+
 ## [3.12.3] - 2026-04-01
 
 ### Changed

@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-04-01T07:41:04Z",
+  "updated_at": "2026-04-02T02:36:47Z",
   "plugins": {
     "kdc-qtap": {
       "version": "2.6.9",
@@ -33,10 +33,10 @@
       "is_premium": true,
       "subscription": false,
       "description": "WhatsApp number management with OTP verification for WooCommerce.",
-      "updated_at": "2026-04-01T07:41:04Z"
+      "updated_at": "2026-04-02T02:36:47Z"
     },
     "kdc-qtap-finance": {
-      "version": "3.12.3",
+      "version": "3.13.0",
       "name": "qTap Finance",
       "slug": "kdc-qtap-finance",
       "requires_php": "7.4",

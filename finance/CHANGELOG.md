@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.13.4] - 2026-04-02
+
+### Added
+- **Bulk "Associate Users"** — select multiple users on wp-admin Users page, apply bulk action to link them all as a family group; merges existing associations
+- **"Enrollment" column** — shows Grade Division [Year] per enrollment on Users list table, sortable
+- **"Associated" column** — shows clickable linked user names on Users list table, sortable
+- **Custom row actions** — Name column shows Edit, View, Delete, Send password reset on hover
+
+### Changed
+- **Hidden columns** — removed Username and Posts columns from Users list table for cleaner view
+
 ## [3.13.3] - 2026-04-02
 
 ### Changed

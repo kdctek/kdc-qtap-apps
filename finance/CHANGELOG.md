@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.13.5] - 2026-04-02
+
+### Changed
+- **Users table replan** — ID column is now the primary column (clickable to edit, with row actions); separate Last Name and First Name columns replace the Display Name column
+- **Meta-based sorting** — Last Name and First Name columns now sort alphabetically via `pre_get_users` hook with `meta_key` + `meta_value` ordering
+
 ## [3.13.4] - 2026-04-02
 
 ### Added

@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.13.2] - 2026-04-02
+
+### Removed
+- **FAB moved to kdc-qtap-mobile** — FAB trait, JS, CSS, and admin setting removed from finance plugin; single source of truth is now `kdc_qtap_mobile_enable_fab_menu` option in the mobile plugin
+
 ## [3.13.1] - 2026-04-02
 
 ### Added

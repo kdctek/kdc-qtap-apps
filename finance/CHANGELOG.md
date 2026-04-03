@@ -2,6 +2,15 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.13.7] - 2026-04-03
+
+### Changed
+- **Sync Payments via background processing** — uses Action Scheduler (WooCommerce) or WP Cron fallback; processes users in batches of 50 to avoid timeouts and memory exhaustion
+- **Sync Payments UI** — button now shows real-time progress via polling (e.g., "Processing 150 of 800 users..."), with final success/error count
+
+### Fixed
+- **Sync Payments JS** — wrong year selector ID (`matrix-year` → `year-select`) and wrong localized variable (`kdcQtapFinanceAdmin` → `kdcQtapFinance`)
+
 ## [3.13.6] - 2026-04-03
 
 ### Added

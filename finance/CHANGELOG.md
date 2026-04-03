@@ -2,6 +2,18 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.13.9] - 2026-04-03
+
+### Added
+- **Force Reset & Sync** button — allows admins to cancel a stuck/stale sync and restart from scratch; cancels pending Action Scheduler batches
+- **Auto-stale detection** — syncs running longer than 5 minutes are automatically flagged as stale with a clear warning message
+- **Sync logs panel** — real-time monospace log display showing started time, deleted count, enrolled total, processed, synced, errors, and elapsed time
+- **Progress bar** — visual percentage bar during sync processing
+- **Auto-check on page load** — Fee Matrix page automatically detects running or stale syncs and shows status/logs
+
+### Changed
+- **Sync error handling** — "already in progress" error now shows Force Reset button; AJAX failures also show Force Reset for recovery
+
 ## [3.13.8] - 2026-04-03
 
 ### Changed

@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.13.8] - 2026-04-03
+
+### Changed
+- **Sync Payments — bulk SQL approach** — replaces ~15,000 individual cascade DELETEs with 2 bulk SQL queries (unpaid items + payments); regeneration batches reduced to 10 users/batch with only INSERTs needed
+- **Concurrent sync prevention** — blocks duplicate sync jobs; returns error if sync already in progress
+- **Progress percentage** — polling UI shows "Processing X of Y users... (Z%)"
+- **Due dates sync** moved from background batch to AJAX handler (lightweight bulk UPDATEs)
+
 ## [3.13.7] - 2026-04-03
 
 ### Changed

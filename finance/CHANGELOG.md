@@ -2,6 +2,15 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.13.6] - 2026-04-03
+
+### Added
+- **Sync Payments button** — dedicated button on Fee Matrix page to regenerate unpaid payments from current matrix amounts; paid payments are never affected
+- **AJAX sync handler** — `kdc_qtap_finance_sync_payments` action with confirmation dialog, spinner, and success/error feedback
+
+### Changed
+- **Fee matrix save no longer auto-syncs payment amounts** — only due dates are synced automatically on matrix save (lightweight); amount sync is now manual via the Sync Payments button
+
 ## [3.13.5] - 2026-04-02
 
 ### Changed

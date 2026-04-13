@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.14.1] - 2026-04-13
+
+### Added
+- **WCPDF receipt/invoice payment details** — shows "Paid With" method and "UTR / Ref" below the payment method on PDF receipts/invoices via `wpo_wcpdf_after_order_data` hook; online payments read `paywith_method` and `pay_utr` from order meta, offline/admin payments use transaction data, falls back to `TXN-{id}` if no UTR
+- **WCPDF receipt number integration** — `get_wcpdf_receipt_number()` helper reads `_wcpdf_receipt_number` / `_wcpdf_invoice_number` from WC order meta on-the-fly (no extra DB column)
+- **Receipt number in frontend** — shown next to status badge on fee cards
+- **Receipt number in admin** — shown below payment method in user profile transaction rows
+- **Receipt number in exports** — new "Receipt Number" column in transaction CSV/Excel exports
+- **`{{receipt_number}}` template variable** — available in WhatsApp/email notification templates
+
 ## [3.14.0] - 2026-04-13
 
 ### Added

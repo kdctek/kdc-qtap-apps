@@ -2,6 +2,20 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.14.0] - 2026-04-13
+
+### Added
+- **WooCommerce order for offline payments** — when WooCommerce is active, submitting an offline payment form now creates a WC order with `on-hold` status; admin approval sets it to `completed`, rejection sets it to `cancelled`
+- **WooCommerce order for admin-recorded transactions** — recording a payment from wp-admin user profile now creates a WC order with `completed` status immediately
+- **Order notes** — offline/admin orders include payment method, reference/UTR, and verification action notes
+- **Order metadata** — offline orders tagged with `_kdc_qtap_finance_offline_payment`, admin orders with `_kdc_qtap_finance_admin_recorded` for identification
+
+### Changed
+- **`create_fee_order()`** now accepts optional `$initial_status` parameter (default `'pending'`, backwards-compatible)
+- **`link_order_to_payment()`** visibility changed from `private` to `public` to support cross-trait order linking
+- **`Transaction::update()`** now supports `wc_order_id` field for backfilling order links
+- **Refund/cancel guard** — `process_refunded_order()` skips reversal for offline/admin-recorded orders to prevent double-debit
+
 ## [3.13.9] - 2026-04-03
 
 ### Added

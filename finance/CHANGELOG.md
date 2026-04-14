@@ -2,6 +2,13 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.14.3] - 2026-04-13
+
+### Changed
+- **Prior-year dues always block payment** — when a user has unpaid fees from a past academic year, Pay buttons are now disabled regardless of the `payment_order_regular` rule (previously, `warn` mode showed a banner but still allowed payment); within-year order still respects the rule
+- **Server-side cross-year enforcement** — `validate_sequential_payment()` now rejects submissions with prior-year dues for both `strict` and `warn` rules (only `none` bypasses)
+- **Individual fee pay button** now also disabled on prior-year dues (previously only term-level pay button was disabled)
+
 ## [3.14.2] - 2026-04-13
 
 ### Added

@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.14.5] - 2026-04-13
+
+### Added
+- **"Generate WooCommerce Order" checkbox on offline payment approval/rejection** — admins can now approve/reject historic offline payments without keeping a WC order; when unchecked, the linked WC order is trashed and unlinked from the transaction; only shown when the transaction has a linked WC order
+
 ## [3.14.4] - 2026-04-13
 
 ### Fixed

@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.14.4] - 2026-04-13
+
+### Fixed
+- **Prior-year dues block not sticking** — `updateStrictPayButtons()` was re-enabling the first term's pay button after our disable code ran, bypassing the cross-year block; now early-returns when `prior_year_dues` is true (v3.14.3 regression fix)
+
 ## [3.14.3] - 2026-04-13
 
 ### Changed

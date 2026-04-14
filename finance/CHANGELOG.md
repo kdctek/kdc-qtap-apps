@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.14.2] - 2026-04-13
+
+### Added
+- **"Generate WooCommerce Order" checkbox** — admin Record Payment modal now has an opt-out checkbox (checked by default) to skip WC order creation for transaction-only recording (e.g., reconciling historical payments); only shown when WooCommerce is active
+
 ## [3.14.1] - 2026-04-13
 
 ### Added

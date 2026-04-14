@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.14.6] - 2026-04-14
+
+### Added
+- **Flat enrollment meta backfill migration** — backfills `kdc_qtap_finance_grade_{year}` and `kdc_qtap_finance_division_{year}` user meta from the serialized `kdc_qtap_finance_enrollments` meta; runs once on upgrade to enable native indexed `meta_query` filtering on the WP admin users list
+
 ## [3.14.5] - 2026-04-13
 
 ### Added

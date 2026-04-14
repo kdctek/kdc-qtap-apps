@@ -2,6 +2,39 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.13.7] - 2026-04-14
+
+### Changed
+- qTap FAB "Back to Admin" button now only appears during an active "Login as {user}" session and properly triggers the parent switch-back flow, showing the original admin's name.
+
+## [2.13.6] - 2026-04-03
+
+### Added
+- Email row with mail icon on new line in mobile list
+- Email verification OTP form redesign — hint text, compact 100px input, card-style container
+- OTP required for removing mobile numbers — inline OTP form with confirm/cancel
+- OTP required for toggling WhatsApp notification preference
+- WooCommerce email template for OTP emails when WC is active (`WC()->mailer()->wrap_message()`)
+- Phone icon (Lucide) for numbers with WhatsApp disabled
+
+### Changed
+- Email OTP priority: WooCommerce mailer → parent notification → wp_mail fallback
+- WhatsApp toggle change on edit triggers "Send OTP" (same as number change)
+
+## [2.13.5] - 2026-04-03
+
+### Added
+- WhatsApp notification toggle per mobile number — checkbox in add/edit form, default enabled
+- List UI shows WhatsApp icon for enabled numbers, phone icon for disabled
+- `whatsapp` field saved in user meta mobile data structure
+- Helper functions: `kdc_qtap_get_whatsapp_enabled_numbers()` and `kdc_qtap_is_whatsapp_enabled()` for notification system filtering
+- Indian landline auto-detection: numbers starting with +91[2-5] default to WhatsApp unticked
+
+## [2.13.4] - 2026-04-02
+
+### Added
+- "Back to Admin" link in FAB menu for admin users (`manage_options` capability) — arrow-left Lucide SVG icon, links to wp-admin
+
 ## [2.13.3] - 2026-04-02
 
 ### Added
@@ -12,6 +45,11 @@ All notable changes to qTap Mobile are documented in this file.
 - **Orders label** — renamed from "Receipt" to "Receipts" (plural) in both menu and page title
 - **Orders icon** — restored to Lucide `receipt` SVG
 - **Menu reorder** — added `downloads`, `payment-methods`, `switch`, `lost-password` to the ordered menu array
+
+## [2.13.3] - 2026-04-02
+
+### Changed
+- FAB menu icons replaced from dashicons to Lucide SVGs matching My Account sidebar icons (Fees, Mobile/WhatsApp, Dashboard, Switch Student, Logout)
 
 ## [2.13.2] - 2026-04-02
 

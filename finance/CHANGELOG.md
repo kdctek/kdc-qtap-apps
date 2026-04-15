@@ -2,6 +2,26 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.2] - 2026-04-14
+
+### Added
+- **Staff Console dashboard** — landing view replaced with a proper dashboard: 4 stat cards (Enrolled Students, Today's Collections, Pending Verifications, Overdue Fees with outstanding amount), compact name/mobile/email search bar with Create New, two-column body showing Pending Verifications (actionable cards with Review buttons) and Recent Fee Orders (read-only with receipt numbers and customer drilldown links)
+- **`GET /wp-json/kdc/v1/qtap/staff-search?q=…`** — searches users by `user_login`, `user_email`, `display_name`, `first_name`/`last_name` user meta, and mobile number; returns matched users for the Staff Console picker
+- **Multi-match picker** — when search returns >1 user, the find panel now shows a clickable list instead of always taking the first match; smart prefill of name/email/mobile field on no-match based on input shape
+
+### Fixed
+- **Find user by name was failing** — old endpoint `/qtap/mobile/{identity}` only matched mobile/email; replaced with the new `/qtap/staff-search` endpoint that also covers first/last name meta
+
+## [3.15.1] - 2026-04-14
+
+### Added
+- **Split fee products** — grade-level and user-level fees now use distinct hidden WC products with their own SKUs (`QTAP-FEE-GRADE`, `QTAP-FEE-USER`); ensures separation in receipts, invoices, and product reports
+- **Migration to backfill flat enrollment meta** — writes per-year `kdc_qtap_finance_grade_{year}` and `kdc_qtap_finance_division_{year}` user meta from the serialized enrollments meta; enables indexed `meta_query` filtering on the WP admin users list
+
+### Fixed
+- **Staff Console login prompt** — now renders `wp_login_form()` inline instead of just a redirect link
+- **`set_profile_user()` setter** added to `KDC_qTap_Finance_User_Meta` so frontend contexts (Staff Console block) can initialize modal context without poking a private property
+
 ## [3.15.0] - 2026-04-14
 
 ### Added

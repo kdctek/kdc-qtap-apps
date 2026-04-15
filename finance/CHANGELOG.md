@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.12] - 2026-04-14
+
+### Fixed
+- **Report Balance columns formatting** — the new per-group `group_balance` columns (Term Balance, Custom Fees Balance, User Fees Balance, per-Month Balance) now match the rest: monospace currency font, tabular-nums, right-aligned
+
 ## [3.15.11] - 2026-04-14
 
 ### Fixed

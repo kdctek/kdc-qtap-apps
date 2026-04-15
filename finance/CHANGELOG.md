@@ -2,6 +2,13 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.6] - 2026-04-14
+
+### Changed
+- **Receipts pagination active** — `per_page` reduced from 50 to 20 so the existing pagination row appears when there are more than 20 records
+- **Status filter auto-applies** on checkbox toggle (`onchange="this.form.submit()"`); Apply button now `<noscript>` fallback only
+- **Report tab embedded full-width** in the Staff Console — passes `align => full` to the report block render and overrides its inner 1200px caps via scoped CSS so the year selector, controls, and report table expand to the full block width
+
 ## [3.15.5] - 2026-04-14
 
 ### Added

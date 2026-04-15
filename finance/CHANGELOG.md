@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.9] - 2026-04-14
+
+### Added
+- **Status icons** on Receipts — filter checkboxes and table cells now show Lucide status icons (completed → `check-circle-2`, processing → `loader`, on-hold → `pause-circle`, pending → `clock`, cancelled → `x-circle`, refunded → `undo-2`, failed → `alert-circle`, draft → `file-text`, POS statuses → `shopping-cart`/`coins`); table cells render icon-only with status label as tooltip (title attr)
+- **Order items modal** — `list` icon button on each receipts row opens a modal that lazy-loads the order's line items via AJAX (`kdc_qtap_finance_staff_order_items`); shows item name, qty, total, per-slab breakdown, and order total; closes on overlay click, X button, or Esc
+- **`kdc_qtap_finance_status_icon_info()`** helper — maps WC status slug to Lucide icon + color
+
+### Changed
+- **Receipts column order** — Status moved to 2nd-last position (between Receipt # and Actions) per layout request
+- **Report full-width** strengthened further — added selectors for `.kdc-report-pane`, `.kdc-report-tabs-body`, `.kdc-report-tabs-nav` and forced inner DataTables to 100% width; grade tabs (Fees, Summary, etc.) now stretch edge-to-edge inside the Staff Console
+
 ## [3.15.8] - 2026-04-14
 
 ### Fixed

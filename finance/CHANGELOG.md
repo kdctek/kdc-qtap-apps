@@ -2,6 +2,19 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.10] - 2026-04-14
+
+### Added
+- **Term / Month / Custom / User-fee balance columns** in the Report — each `Collection` + `Received` pair is followed by a `Balance` column (= max(0, collection − received)); aggregated rows recompute balance from summed collection/received to stay internally consistent
+- HTML-entity decode on Staff Console order-items modal response (`₹` and other entities render natively instead of as `&#8377;`)
+
+### Changed
+- **Order-items modal redesigned** — wider (720px), CSS-grid header separates name/qty from total, meta rows now in a two-column `<dl>` with light background, slab breakdown moved to a bordered card with per-row period/amount split, tabular-numerics for currency alignment, thicker bold grand-total footer
+- **Line item name for single-payment tenures/cycles** — `build_item_name()` now inspects the payment's items and uses `Full Tenure (range)` / `Full Cycle (range)` when the payment is homogeneous `per_tenure` / `per_cycle`, instead of the misleading `1st Term …` label; falls back to the existing slab-label logic for mixed / term / monthly payments
+
+### Fixed
+- **Report whitespace inside Staff Console** — removed the `margin-left: 0 !important` override that was cancelling the report block's `margin-left: calc(50% - 50vw)` breakout; the Report tab now truly fills the viewport when the block is `alignfull`
+
 ## [3.15.9] - 2026-04-14
 
 ### Added

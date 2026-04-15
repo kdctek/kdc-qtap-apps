@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.13] - 2026-04-14
+
+### Added
+- **Term Balance** toggle on the Report controls row — redistributes received overflow from earlier terms into later terms' received columns; advance-attributed amount rendered in dark grey italic (e.g., `1,30,800 +1,31,300`) so staff can see both the term's actual payment and the reporting attribution. Only applies to term/month received columns (skips Custom / User Fees)
+- **Column footer totals** on all Report tables — `<tfoot>` row sums each numeric column from currently-visible rows; styled with monospace + tabular-nums; included in CSV export (`footer: true`) and in every XLSX sheet (group tabs + Summary) via a new `buildTotalsRow()` helper
+- `total` i18n string for the footer label
+
+### Changed
+- **Report layout inside Staff Console** — header area (Academic Year, Download Excel, Reporting Breakup, toggles) now stays within the normal tab content width; only `#kdc-report-container` breaks out to `100vw` so the wide data tables expand edge-to-edge
+
 ## [3.15.12] - 2026-04-14
 
 ### Fixed

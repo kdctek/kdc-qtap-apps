@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.8] - 2026-04-14
+
+### Fixed
+- **Report tab whitespace inside Staff Console** — strengthened CSS override to nullify the 1200px caps on `#kdc-report-container`, `.kdc-report-controls`, `.kdc-report-group`, DataTables wrappers, and inner report tables so all grade tabs (Fees, Overview, per-grade) stretch edge-to-edge
+
+### Added
+- Lucide icons: `loader`, `pause-circle`, `x-circle`, `undo-2`, `alert-circle`, `list`, `x`, `package`
+
 ## [3.15.7] - 2026-04-14
 
 ### Added

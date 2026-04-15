@@ -24,7 +24,7 @@
       ]
     },
     "kdc-qtap-mobile": {
-      "version": "2.13.11",
+      "version": "2.14.0",
       "name": "qTap Mobile",
       "slug": "kdc-qtap-mobile",
       "requires_php": "7.4",

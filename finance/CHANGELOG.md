@@ -2,6 +2,127 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.30] - 2026-04-16
+
+### Added
+- **WC admin Orders table — Status icon column** — replaces the default text status column with a circular icon badge using the same icon mapping as the staff console. Positioned between `By` (parent plugin) and `Order` columns. Default fallback for unknown statuses.
+- **WC admin Orders table — Receipt # column** — clickable receipt number that opens the WC PDF Invoices receipt/invoice in a new tab. Positioned after `Actions` and before `Transaction ID`. Falls back to plain text if WC PDF Invoices plugin is not active.
+- **`kdc_qtap_finance_render_order_status()` helper** — single source of truth for rendering WC order status badges across the plugin (admin columns, staff console, user profile, receipts, emails). Accepts size/wrapper_size/show_label/tooltip/class args; handles `wc-` prefix and unknown status fallback.
+
+### Changed
+- **Staff console Receipts tab** — refactored inline status badge HTML to use the new `kdc_qtap_finance_render_order_status()` helper.
+- **User profile orders list** — now displays status icons (was text-only) via the new helper.
+
+## [3.15.29] - 2026-04-16
+
+### Changed
+- **Report group tabs default-sort by Student name** — `initDataTable()` resolves the `name` column's index dynamically (optional ID/Division columns shift positions) and passes that index to DataTables' `order` option. Previously the hard-coded `[1, 'asc']` could land on a fees column when ID was hidden.
+- **Term Split toggle pre-checked on load** — the checkbox HTML now carries `checked`; staff opt-out by unchecking (matches the new default-enabled behaviour).
+
+## [3.15.28] - 2026-04-16
+
+### Added
+- **Excess trickles forward** in `KDC_qTap_Finance_Payment::record_transaction()` — when an `amount_paid` would exceed `amount_due`, the overflow is no longer silently capped & lost. New `trickle_excess_forward()` finds the next pending regular payment for the same user/year (custom and user_fee buckets are skipped) via `find_next_pending_regular()` and recursively records the overflow against it. Each downstream payment writes its own `transaction` row with a "Excess X carried forward from payment #N" note.
+- **User credit (parked overflow)** — when no further pending regular payments remain, the leftover is stored in `kdc_qtap_finance_credit` user meta. New helpers in [kdc-qtap-finance-helper-functions.php](kdc-qtap-finance/includes/kdc-qtap-finance-helper-functions.php):
+  - `kdc_qtap_finance_get_user_credit( $user_id )` — read balance.
+  - `kdc_qtap_finance_add_user_credit( $user_id, $amount )` — append.
+  - `kdc_qtap_finance_consume_user_credit( $user_id, $amount )` — debit, returns amount used.
+- **Credit auto-applied to new transactions** — at the start of `record_transaction()` (regular bucket only, when method is not already `credit`), any remaining balance after `$amount` is consumed from the user's credit. A separate `credit` transaction record is written so the audit trail shows: paid via UPI ₹X + ₹Y from credit. The combined amount feeds into the same overflow / trickle path so cascading still works.
+- **User profile fee summary** now shows a green **Credit** pill (when balance > 0) right after Balance, with tooltip explaining auto-application.
+
+### Changed
+- Surfaced credit in [trait-kdc-qtap-finance-user-meta-rendering.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php) inside `.kdc-enrollment-card__summary`.
+
+## [3.15.27] - 2026-04-16
+
+### Fixed
+- **XLSX export ignored Term Split** — group sheets and the Summary sheet now call `redistributeTermBalance()` on their rows (when `#kdc-report-term-splt` is checked) before serialising with SheetJS, so exported values match the on-screen split (Collection + Received + per-term Balance).
+- **Footer totals hidden in Staff Console report** — DataTables' `.dataTables_scrollFoot` wrapper was being hidden/zero-sized by the staff-console overlay (which only set width on scroll/head/body). Added `.dataTables_scrollFoot` + inner to the width-reset list and force `display: block/table-footer-group` via explicit `!important` overrides in both the staff-console CSS and the standalone report CSS.
+
+### Reverted
+- **"Via" column in WC admin Orders table** added in 3.15.26 — removed from kdc-qtap-finance. Ownership moved to kdc-qtap-mobile (which will handle WhatsApp `created_via` detection in addition to POS/checkout/admin). Avoids duplicate columns when both plugins ran the hook.
+
+## [3.15.26] - 2026-04-16
+
+### Added
+- **"Via" column in WC admin Orders table** (HPOS + legacy) — narrow column (checkbox-width, 2.5em) inserted right after the checkbox column in both the HPOS orders list and the legacy shop_order posts list. Renders a dashicon keyed off `$order->get_created_via()` with the full value surfaced via tooltip. POS detection uses the same broad rules as the Receipts badge (`created_via` stripos + `_woocommerce_pos_uuid` meta + regex scan of all meta keys). Useful for diagnosing which `created_via` token a given POS plugin actually writes so staff can verify badge parity. Registered via:
+  - `manage_woocommerce_page_wc-orders_columns` + `manage_woocommerce_page_wc-orders_custom_column` (HPOS)
+  - `manage_edit-shop_order_columns` + `manage_shop_order_posts_custom_column` (legacy CPT)
+  - Admin CSS scoped to the orders screen only via `get_current_screen()` gate.
+
+## [3.15.25] - 2026-04-16
+
+### Fixed
+- **POS badge: `_woocommerce_pos_uuid` now authoritative** — explicit direct check for this meta key. Fallback regex relaxed from `/(^_?(wc)?pos(_|$))|cashier/i` to `/(?:^|_)(?:wc)?pos(?:_|$)/` so it also catches long keys like `_woocommerce_pos_uuid` where `pos` sits between underscores mid-key.
+
+## [3.15.24] - 2026-04-16
+
+### Changed
+- **Term Split now also redistributes Collection and Balance** — previously only Received columns were split. Now `redistributeTermBalance()` additionally splits each row's `_c` across terms using the same canonical mode-based cap, and recomputes per-term `_b = max(0, newC - newR)`. For annual-cycle students, Term Collection no longer dumps the full year into term 1; it mirrors the matrix plan's per-term splits (e.g., 1,31,300 / 1,30,800), matching what staff expect when the toggle is on.
+
+## [3.15.23] - 2026-04-16
+
+### Fixed
+- **POS badge still missed wcpos orders in production** — `created_via` check alone wasn't enough since some POS plugins don't set it. Detection now scans **all order meta keys** via a single regex `/(^_?(wc)?pos(_|$))|cashier/i` and flags the order when any matched key has a truthy scalar value. Covers wcpos `_pos`, woocommerce-pos `_wcpos_*`, Actuality POS `_pos_order` / `_pos_cashier`, and similar variants.
+
+## [3.15.22] - 2026-04-16
+
+### Fixed
+- **Term Split for annual-cycle students** — `redistributeTermBalance()` no longer relies on the row's own `_c` as a cap (which would equal the full annual amount for annual-cycle students, trapping their received in term 1). Now derives a canonical per-term cap via the **mode of non-zero `_c` values across all rows in the group** — the most common value is the matrix-plan amount. Annual-cycle payers' received amount spreads across terms matching the matrix plan, with the overflow into later terms rendered as a grey advance (`+amount`).
+
+### Changed
+- **POS badge detection broadened** — `$is_pos_order` now matches any `created_via` string containing `pos` (case-insensitive via `stripos`) and also checks `_pos` / `_pos_order` order meta, covering WooCommerce POS plugin variants that set different `created_via` tokens.
+
+## [3.15.21] - 2026-04-15
+
+### Added
+- **POS badge in Receipts tab** — amber pill with a coins icon next to the order number when `$order->get_created_via()` returns `woocommerce-pos` or `wcpos`; visually distinguishes in-store POS sales from online checkout orders. Tooltip: *"Created via WooCommerce POS"*.
+
+## [3.15.20] - 2026-04-15
+
+### Changed
+- **Checkbox ID** `#kdc-report-term-balance` → `#kdc-report-term-splt` (matches the renamed "Term Split" label). JS selectors updated in `kdc-qtap-finance-report.js`.
+
+## [3.15.19] - 2026-04-15
+
+### Changed
+- **Toggle renamed** `Term Balance` → `Term Split` with new tooltip: *"Split full-term payments across terms as an advance (shown in grey). Balance columns always show irrespective of this toggle."* Avoids the confusion where users read "Term Balance" as a column-visibility toggle rather than a reporting-split toggle.
+- **Balance columns always render** — reverted the `group_balance` filter added in 3.15.18; Term Balance / Month Balance / per-group balance columns now always show in the Report tables regardless of the Term Split toggle state.
+
+## [3.15.18] - 2026-04-15
+
+### Fixed
+- **Term Balance columns show regardless of toggle** — `getFilteredColumns()` now excludes `group_balance`-type columns (1st Term Balance, 2nd Term Balance, monthly balances, etc.) when `#kdc-report-term-balance` is unchecked. The toggle now controls both the advance-redistribution overlay and the visibility of the balance columns, consistent with how the checkbox is labeled.
+
+## [3.15.17] - 2026-04-15
+
+### Changed
+- **Report DOM restructure** — `#kdc-report-container` is now rendered as a **sibling** of `.kdc-qtap-finance-report-block` instead of nested inside it. Year selector + controls stay at standard page width via the block wrapper; the container gets the `alignfull` class when the block is aligned full and breaks out to `100vw` independently. Clean separation of concerns — no more fighting a parent's `overflow-x:auto` or width caps.
+- **Staff Console overlay CSS** simplified — applies the 100vw breakout directly to `#kdc-report-container` (now a sibling); removed the old `.kdc-report-tabs-body`-targeted rules that were a workaround for the nested structure.
+- **Frontend report CSS** — removed the old `.kdc-qtap-finance-report-block.alignfull #kdc-report-container { width: 100% }` rule (no longer matches); replaced with `#kdc-report-container.alignfull` full-viewport breakout.
+
+## [3.15.16] - 2026-04-15
+
+### Added
+- **`kdc_qtap_finance_get_latest_enrollment( $user_id )`** helper — returns the user's enrollment with the highest end-year (independent of institute's "current" year)
+- **`KDC_qTap_Finance_WooCommerce::apply_enrollment_meta( $order, $enforce_floor = false )`** static helper — single source of truth for writing student name, academic year, grade, division onto a WC order. Shared by the live hook and the on-demand backfill button
+- **`woocommerce_new_order` hook** — enrollment tagging now catches admin-created, POS, REST, and store-API orders (previously only front-end checkout via `woocommerce_checkout_order_created`)
+- **Re-run backfill** button in Receipts tab header — re-scans all orders with `date_paid >= 2026-04-01` via new AJAX action `kdc_qtap_finance_backfill_order_enrollment` and applies enrollment meta to any without it; shows count on completion
+
+### Changed
+- `add_enrollment_meta_to_order()` now writes to the **fee-order meta keys** (`_kdc_qtap_finance_academic_year`, `_grade`, `_division`, `_student_name`) instead of only the parallel `_enrollment_*` keys, so Receipts tab shows Year · Grade for non-fee orders (Cash, shop, POS). Writes are idempotent — only fills a key when not already set, so fee orders' own values are never overwritten. Parallel `_enrollment_*` keys still written for PDF fallback back-compat.
+
+## [3.15.15] - 2026-04-15
+
+### Fixed
+- **Order items modal — "Request failed" for non-fee orders** — removed the `_kdc_qtap_finance_is_fee_payment=yes` gate in `ajax_staff_order_items()` so the modal now loads line items for any WooCommerce order in the Receipts list (matches the relaxed query introduced in 3.15.14). Empty grade/year meta is trimmed so the header no longer shows stray separators.
+
+## [3.15.14] - 2026-04-15
+
+### Changed
+- **Receipts tab** now loads **all** WooCommerce orders (no longer restricted to `_kdc_qtap_finance_is_fee_payment=yes`); finance-linked orders get a small green **FEE** pill next to the order number so staff can still spot them at a glance
+- **Report layout inside Staff Console** — header, controls, AND the grade tabs nav now all stay within the normal tab content width; only `.kdc-report-tabs-body` (the actual data panes) breaks out to `100vw` via `calc(50% - 50vw)`
+
 ## [3.15.13] - 2026-04-14
 
 ### Added

@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.3] - 2026-04-14
+
+### Changed
+- **Staff Console UI made fluid** — removed the 1200px max-width cap; added `box-sizing: border-box` and `<h*>` font normalization so the console no longer inherits theme-specific heading styles (purple/serif); tables wrap in a horizontal-scroll container on narrow viewports
+- **Year switcher** in dashboard header — dropdown populated from configured academic years; switches the year context for Enrolled / Overdue / Outstanding stats via `?year=` query param; preserves other query args; `<noscript>` fallback button
+- **No `$` glyphs** — stat cards now use emoji (🎓 🪙 ⏳ ⚠️) instead of `dashicons-money-alt` which renders as a dollar sign in some themes
+- **Recent Fee Orders table** tightened — date moved under order # as subtext, View turned into icon-only button, amount nowrap + right-aligned, header cells nowrap, smaller padding
+
 ## [3.15.2] - 2026-04-14
 
 ### Added

@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.0] - 2026-04-14
+
+### Added
+- **Staff Console frontend block** (`kdc-qtap/staff-console`) — accredited staff (roles granted API access via qTap settings) can now find/create users, assign enrollments, record offline payments, and view fee orders **without visiting wp-admin**; reuses the existing admin user profile UI, modals, and AJAX handlers as-is — no new forms, endpoints, or capabilities
+- **Read-only WC Orders section** on user profile — shows fee order list with order #, date, amount, status, and WCPDF receipt number; "View" link opens customer `view-order` endpoint (never wp-admin order editor); rendered on both admin user profile and the new Staff Console block; skipped when WooCommerce is inactive
+- **`enqueue_profile_assets_for_user()`** public method on `KDC_qTap_Finance_User_Meta` — allows frontend blocks to enqueue the full admin profile asset stack (CSS + all JS modules + localized strings) for a given user
+
+### Changed
+- **Staff access model** — now uses the parent plugin's existing `kdc_qtap_can_access_rest_api()` permission for the new Staff Console block; admin configures which roles have access via qTap → Common Settings → API Settings → `rest_api_roles`
+
 ## [3.14.10] - 2026-04-14
 
 ### Added

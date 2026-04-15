@@ -2,6 +2,25 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.1] - 2026-04-16
+
+### Changed
+- **apps-registry.json** — bumped `kdc-qtap-finance` to v3.15.30 (Status icon column + Receipt # column on WC admin Orders table)
+
+## [2.7.0] - 2026-04-16
+
+### Added
+- **WooCommerce Orders Admin enhancements** (moved from kdc-qtap-mobile):
+  - "By" column showing order source with distinct icons (Checkout, Admin, WCPOS, WhatsApp, REST API)
+  - Transaction ID column with click-to-copy (single click, double-click for Order+TXN format, Enter/Space keyboard)
+  - Created Via filter dropdown above the orders list (HPOS + legacy)
+  - "Copy Transaction IDs" bulk action
+- New class `KDC_qTap_WooCommerce_Orders_Admin` in `includes/class-kdc-qtap-woocommerce-orders-admin.php`, loaded only when WooCommerce is active
+- Uses new namespaced keys (`kdc_qtap_order_by`, `kdc_qtap_order_txn_id`, `qtap_order_source`) to avoid collision during the transition window with older kdc-qtap-mobile versions that still carry the old code
+
+### Migration
+- Previously lived in kdc-qtap-mobile (<= 2.13.11). The mobile plugin will remove the code in its next release. During the transition (new parent + old mobile), both sets of columns may be visible briefly — no PHP errors, no hook collisions (distinct keys).
+
 ## [2.6.10] - 2026-04-02
 ### Added
 - **Login as user in Users table** — "Login as {name}" action link added to user row actions in the admin Users list, reusing the existing session switch handler and admin bar "Switch back" button

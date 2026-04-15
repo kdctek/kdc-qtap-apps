@@ -2,6 +2,21 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.5] - 2026-04-14
+
+### Added
+- **`kdc_qtap_finance_lucide()`** — inline Lucide SVG helper for frontend UI (16 icons: `graduation-cap`, `coins`, `clock`, `alert-triangle`, `users`, `receipt`, `shopping-cart`, `bar-chart-3`, `layout-dashboard`, `search`, `plus`, `plus-circle`, `eye`, `check-circle-2`, `arrow-left`, `external-link`, `file-text`); honors the icon-policy memory (Lucide on frontend)
+
+### Changed
+- **Staff Dashboard stat cards** now render Lucide SVGs instead of emojis (🎓 🪙 ⏳ ⚠️ → `graduation-cap` / `coins` / `clock` / `alert-triangle`)
+- **Receipts tab status filter** now uses `wc_get_order_statuses()` so custom order statuses from other plugins are included; defaults to `completed + processing` on first load
+- **Receipts table** improvements:
+  - **Payment** column shows method title + UTR/`transaction_id` underneath (from `pay_utr` / `transaction_id` order meta)
+  - **Customer** column appends `Year · Grade Division` line (from order meta, no labels)
+  - **Receipt #** is clickable when WCPDF is available — opens receipt PDF in a new tab via `WPO_WCPDF()->endpoint->get_document_link()` (falls back to invoice)
+  - Action buttons use Lucide (`eye` for View)
+- **Menu:** POS opens in new tab; Report is now an internal tab that renders the existing report block inline (no separate page needed)
+
 ## [3.15.4] - 2026-04-14
 
 ### Added

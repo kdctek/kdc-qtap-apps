@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.14.8] - 2026-04-14
+
+### Added
+- **Fee breakup on offline/admin WC orders** — `create_fee_order()` now attaches the full payment_item breakdown (slab + period @ amount) to the line item, matching what `create_term_order()` already did for online checkout; offline payment submissions and admin-recorded transactions now show term/cycle/tenure/monthly fee breakdowns on the linked WC order and PDF receipts/invoices
+
 ## [3.14.7] - 2026-04-14
 
 ### Fixed

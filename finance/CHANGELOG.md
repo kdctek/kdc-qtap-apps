@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.14.10] - 2026-04-14
+
+### Added
+- **WC order number appended to admin-recorded transaction notes** — when an admin records a payment with "Generate WooCommerce Order" checked, the resulting order's number (e.g., `WC Order #12345`) is now appended to both the payment notes and the transaction notes for easy cross-reference from the user profile view
+
 ## [3.14.9] - 2026-04-14
 
 ### Added

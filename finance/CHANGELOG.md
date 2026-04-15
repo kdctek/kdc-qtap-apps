@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.14.9] - 2026-04-14
+
+### Added
+- **Offline/admin WC orders now populate standard gateway meta keys** — `paywith_method` = payment method title (from `kdc-qtap-finance-payment-method` form field), `pay_utr` and `transaction_id` = reference/UTR (from `kdc-qtap-finance-payment-reference` form field), falling back to `TXN-{id}` when empty; enables WCPDF receipts and downstream consumers to read offline payment info via the same keys online gateways use
+
+### Fixed
+- **Admin-recorded transactions missing `payment_method_title`** — `ajax_record_payment()` now passes the resolved method label to `Transaction::create()`, so transaction rows store the human-readable title (e.g., "Bank Transfer") not just the slug (`bank_transfer`)
+
+### Changed
+- **WCPDF `pdf_receipt_payment_details()` simplified** — now prefers order meta (`paywith_method`, `pay_utr`, `transaction_id`) over transaction data since all flows populate them consistently
+
 ## [3.14.8] - 2026-04-14
 
 ### Added

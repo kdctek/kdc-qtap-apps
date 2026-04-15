@@ -3,7 +3,7 @@
   "updated_at": "2026-04-15T00:00:00Z",
   "plugins": {
     "kdc-qtap": {
-      "version": "2.6.10",
+      "version": "2.7.0",
       "name": "qTap App",
       "slug": "kdc-qtap",
       "requires_php": "7.4",

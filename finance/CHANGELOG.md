@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.4] - 2026-04-14
+
+### Added
+- **Payee Name field** on Record Payment modal — optional input; when entered, updates `billing_first_name` on both the user and the new WC order; when empty, falls back to existing user `billing_first_name` meta, then to `first_name + last_name`
+- **Internal menu** on the Staff Console — Overview, Receipts, POS (→ `/pos/`), Report (→ `/report/`); Receipts is a new full-width tab with paginated fee-order list + search
+- **User Fee Product selector** on the Institute settings tab — exposes the v3.15.1 user-level WC product (`kdc_qtap_finance_wc_user_product_id`, SKU `QTAP-FEE-USER`) alongside the existing Grade product selector; both dropdowns now show SKU in brackets
+
+### Changed
+- **Staff Console fully fluid** — removed card wrapper (background, border, shadow, padding); block now matches its alignment width without an inner container box
+- **WC product settings save handler** iterates both product ID fields with the same validate/delete logic
+
 ## [3.15.3] - 2026-04-14
 
 ### Changed

@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.7] - 2026-04-14
+
+### Added
+- **AJAX filter + pagination** on the Receipts tab — new `kdc-qtap-finance-staff-receipts-ajax.js` intercepts status checkbox toggles, filter form submit, and pagination clicks; fetches the current URL, swaps in the receipts section, and syncs `pushState` (Back/Forward works via `popstate`); fades the section during load and scrolls the updated table into view
+- **Recent Fee Orders — Receipt # clickable to PDF** (parity with Receipts tab) when WCPDF is available; external-link Lucide indicator
+
+### Changed
+- **Recent Fee Orders eye icon** now opens the wp-admin order edit screen in a new tab (via `$order->get_edit_order_url()`, HPOS-aware) instead of the customer view-order page; visible only to users with `edit_shop_orders` / `manage_woocommerce`
+- **Receipts eye icon** same change — wp-admin edit in new tab, capability-gated
+
 ## [3.15.6] - 2026-04-14
 
 ### Changed

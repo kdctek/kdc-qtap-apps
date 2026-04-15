@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.11] - 2026-04-14
+
+### Fixed
+- **Duplicate academic year** in WC order line item titles — `build_item_name()` now strips any `[YYYY-YYYY]` bracket from the fee category before the template appends the year at the end; affects all new orders created via checkout, offline form, admin record payment, staff console, and direct payment link (underlying Payment records unchanged)
+
+### Changed
+- **User profile WC Orders section** now loads **all** orders for the user (not only fee-payment orders); fee-payment orders get a small blue **FEE** badge next to the order # so staff can still distinguish at a glance
+
 ## [3.15.10] - 2026-04-14
 
 ### Added

@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.14.7] - 2026-04-14
+
+### Fixed
+- **Admin record payment wasn't creating WC order** — `create_fee_order()` was being called AFTER the payment's `amount_paid` was already bumped, so the helper's balance-due check rejected the amount (`amount_exceeds_balance`) and the WP_Error was silently dropped; now the WC order is created first (before the payment update) so the balance check passes
+
 ## [3.14.6] - 2026-04-14
 
 ### Added

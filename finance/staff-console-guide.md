@@ -1,6 +1,6 @@
 # Staff Console — Training Guide
 
-**For:** Accounts Clerk &nbsp;|&nbsp; **School:** Tridha School &nbsp;|&nbsp; **Last Updated:** April 2026
+**For:** Accounts Clerk &nbsp;|&nbsp; **Last Updated:** April 2026
 
 This guide will teach you how to use the Staff Console step by step. No computer knowledge is needed — just follow the instructions and pictures.
 
@@ -27,7 +27,7 @@ This guide will teach you how to use the Staff Console step by step. No computer
 
 ## 1. What is the Staff Console?
 
-The Staff Console is a website page where you manage student fees for Tridha School. Think of it as your digital fee register.
+The Staff Console is a website page where you manage student fees for your school. Think of it as your digital fee register.
 
 **With the Staff Console, you can:**
 
@@ -41,7 +41,7 @@ The Staff Console is a website page where you manage student fees for Tridha Sch
 
 <!-- IMAGE PLACEHOLDER
 ![What is the Staff Console](images/01-what-is-staff-console.png)
-**AI Prompt:** "Clean flat illustration of a school accounts clerk sitting at a desk with a laptop showing a dashboard with student fee cards, payment buttons, and bar charts. Warm professional colors, simple minimal style, no text on screen, light background."
+**AI Prompt:** "Clean flat illustration of a school accounts clerk sitting at a desk with a laptop showing a dashboard with student fee cards, payment buttons, and bar charts. Warm professional colors, simple minimal style, no text on screen, light background. GUARDRAIL: No real names, phone numbers, emails, or any personally identifiable information. All text on screen must be blurred or use obviously placeholder data."
 **Summary:** An accounts clerk at their desk using the Staff Console on a laptop.
 -->
 
@@ -55,11 +55,7 @@ Open **Chrome**, **Safari**, or any browser on your phone or computer.
 
 ### Step 2: Go to the Staff Console page
 
-In the address bar at the top, type:
-
-```
-tridha.edu.in/staff
-```
+In the address bar at the top, type the Staff Console URL provided by your school (e.g., `yourschool.edu.in/staff`).
 
 Then press **Enter**.
 
@@ -67,7 +63,7 @@ Then press **Enter**.
 
 <!-- IMAGE PLACEHOLDER
 ![Opening the URL](images/02-open-url.png)
-**AI Prompt:** "Close-up screenshot mockup of a mobile phone browser address bar showing the URL 'tridha.edu.in/staff' being typed. Clean minimal design, light theme, no other UI distractions."
+**AI Prompt:** "Close-up screenshot mockup of a mobile phone browser address bar showing a generic URL 'yourschool.edu.in/staff' being typed. Clean minimal design, light theme, no other UI distractions. IMPORTANT: Do not include any real school name, domain, or personally identifiable information. Use only placeholder/generic text."
 **Summary:** How the browser address bar looks when you type the Staff Console URL.
 -->
 
@@ -86,7 +82,7 @@ The page shows:
 
 <!-- IMAGE PLACEHOLDER
 ![Login Page](images/03-login-page.png)
-**AI Prompt:** "UI mockup of a clean mobile login page titled 'Staff Console' with a subtitle 'Please log in to access the staff console.' Below is a phone number input field and a green 'Login with WhatsApp' button. White background, modern rounded design, no brand logos."
+**AI Prompt:** "UI mockup of a clean mobile login page titled 'Staff Console' with a subtitle 'Please log in to access the staff console.' Below is a phone number input field showing placeholder dots (not a real number) and a green 'Login with WhatsApp' button. White background, modern rounded design, no brand logos. GUARDRAIL: No real phone numbers, names, or PII. Use placeholder dots or 'XXXX' for any number fields."
 **Summary:** The login page you see when you first open the Staff Console.
 -->
 
@@ -105,7 +101,7 @@ The page shows:
 
 <!-- IMAGE PLACEHOLDER
 ![WhatsApp OTP Flow](images/03-whatsapp-otp-flow.png)
-**AI Prompt:** "Step-by-step horizontal flow diagram showing 4 stages: (1) A phone with a number input field, (2) A WhatsApp chat showing a 6-digit OTP message, (3) A phone screen with OTP entry boxes, (4) A green checkmark with 'Logged in' text. Connected by arrows, flat design, light background."
+**AI Prompt:** "Step-by-step horizontal flow diagram showing 4 stages: (1) A phone with a number input field showing placeholder dots, (2) A WhatsApp chat showing a 6-digit OTP message with blurred chat header, (3) A phone screen with OTP entry boxes, (4) A green checkmark with 'Logged in' text. Connected by arrows, flat design, light background. GUARDRAIL: No real phone numbers or contact names visible. Blur or redact any area that could show PII. Use 'XXXXXX' for OTP digits."
 **Summary:** The 4 stages of the WhatsApp OTP login process from entering your number to being logged in.
 -->
 
@@ -116,7 +112,7 @@ The page shows:
 | OTP didn't arrive | Wait 30 seconds, then tap **"Send OTP"** again |
 | OTP expired | Tap **"Send OTP"** again to get a new code |
 | Wrong number entered | Go back and re-enter the correct number |
-| "No permission" message | Contact the school administrator to get staff access |
+| "No permission" message | Contact your administrator to get staff access |
 | Stay logged in? | Yes! You stay logged in until you log out or clear browser data |
 
 <!-- IMAGE PLACEHOLDER
@@ -133,7 +129,7 @@ After logging in, you land on the **Overview** tab. This is your home screen.
 
 <!-- IMAGE PLACEHOLDER
 ![Dashboard Overview](images/04-dashboard-overview.png)
-**AI Prompt:** "UI mockup of a staff dashboard showing: a top navigation bar with 4 tabs (Overview highlighted, Receipts, Report, POS), an academic year dropdown set to '2025-2026', four stat cards in a row showing numbers for 'Enrolled Students', 'Today's Collections', 'Pending Verifications', and 'Overdue Fees'. Below is a search bar with 'Find' and 'Create New' buttons. Clean modern design, white card backgrounds, subtle shadows."
+**AI Prompt:** "UI mockup of a staff dashboard showing: a top navigation bar with 4 tabs (Overview highlighted, Receipts, Report, POS), an academic year dropdown set to '2025-2026', four stat cards in a row showing numbers for 'Enrolled Students', 'Today's Collections', 'Pending Verifications', and 'Overdue Fees'. Below is a search bar with 'Find' and 'Create New' buttons. Clean modern design, white card backgrounds, subtle shadows. GUARDRAIL: Use only generic placeholder numbers in cards. No real student names, school names, or PII anywhere on the mockup."
 **Summary:** The full Overview dashboard — the first thing you see after logging in.
 -->
 
@@ -214,7 +210,7 @@ Below the year selector, you will see **4 cards** showing important numbers at a
 
 <!-- IMAGE PLACEHOLDER
 ![Statistics Cards](images/04-stats-cards.png)
-**AI Prompt:** "Four horizontal stat cards in a row: (1) 'Enrolled Students' with a people icon and number '245', (2) 'Today's Collections' with a coins icon showing 'Rs 45,000' and '12 transactions', (3) 'Pending Verifications' with a clock icon showing '3', (4) 'Overdue Fees' with a warning icon showing '18' and 'Rs 2,35,000'. Each card has a white background, subtle shadow, and colored accent icon. Modern minimal dashboard design."
+**AI Prompt:** "Four horizontal stat cards in a row: (1) 'Enrolled Students' with a people icon and a sample number, (2) 'Today's Collections' with a coins icon showing a sample amount and transaction count, (3) 'Pending Verifications' with a clock icon showing a sample number, (4) 'Overdue Fees' with a warning icon showing a sample count and amount. Each card has a white background, subtle shadow, and colored accent icon. Modern minimal dashboard design. GUARDRAIL: Use only obviously fictitious round numbers. No real data, school names, or PII."
 **Summary:** The 4 stats cards give you a quick overview of the school's fee status at a glance.
 -->
 
@@ -244,7 +240,7 @@ At the bottom of the Overview page, you may see a table listing the **most recen
 
 ## 5. Adding a New Student
 
-When a new student joins Tridha School, follow these two steps: **create the account**, then **add enrollment**.
+When a new student joins your school, follow these two steps: **create the account**, then **add enrollment**.
 
 ---
 
@@ -266,7 +262,7 @@ When a new student joins Tridha School, follow these two steps: **create the acc
 
 <!-- IMAGE PLACEHOLDER
 ![Create New User Form](images/05-create-user-form.png)
-**AI Prompt:** "UI mockup of a 'Create New User' form card with three input fields stacked vertically: 'Full Name' (with a red asterisk, filled with 'Rajesh Kumar'), 'Email' (filled with 'rajesh@gmail.com'), 'Mobile' (filled with '+919876543210'). Below the fields, a small helper text says 'At least one of email or mobile is required.' At the bottom, a blue 'Create User' button. White card with subtle border, clean design."
+**AI Prompt:** "UI mockup of a 'Create New User' form card with three input fields stacked vertically: 'Full Name' (with a red asterisk, filled with 'Sample Student'), 'Email' (filled with 'sample@example.com'), 'Mobile' (filled with '+91XXXXXXXXXX'). Below the fields, a small helper text says 'At least one of email or mobile is required.' At the bottom, a blue 'Create User' button. White card with subtle border, clean design. GUARDRAIL: Use only obviously fake placeholder data. No real names, emails, or phone numbers. All PII fields must use generic placeholders like 'Sample Student', 'sample@example.com', '+91XXXXXXXXXX'."
 **Summary:** The Create New User form — fill in the name and at least one contact method, then click Create User.
 -->
 
@@ -341,7 +337,7 @@ To find a student who is already in the system:
 
 <!-- IMAGE PLACEHOLDER
 ![Search Results](images/06-search-results.png)
-**AI Prompt:** "UI mockup of search results panel below a search bar. The search bar shows 'Raj' typed in. Below are 3 result rows: (1) 'Rajesh Kumar — rajesh@gmail.com — ID: 142', (2) 'Rajani Sharma — rajani.s@email.com — ID: 87', (3) 'Raj Patel — +919876543210 — ID: 203'. Each row has a clickable link style. Clean list design with subtle dividers."
+**AI Prompt:** "UI mockup of search results panel below a search bar. The search bar shows a partial name typed in. Below are 3 result rows with generic placeholder names, blurred/redacted email addresses, and sample ID numbers. Each row has a clickable link style. Clean list design with subtle dividers. GUARDRAIL: All names must be obviously fictional (e.g., 'Student A', 'Student B'). All emails and phone numbers must be blurred, redacted, or use placeholders like 'xxx@example.com'. No real PII."
 **Summary:** Search results showing matching students. Click a name to open their profile.
 -->
 
@@ -472,7 +468,7 @@ Select how the parent paid:
 
 <!-- IMAGE PLACEHOLDER
 ![Record Payment Form](images/07-record-payment-form.png)
-**AI Prompt:** "UI mockup of a 'Record Payment' modal/popup form. At the top, a summary section shows: 'Student: Rajesh Kumar | Academic Year: 2025-2026 | Grade: Grade 5 | Fee Slab: Tuition Fee | Balance Due: Rs 25,000 (in red)'. Below are form fields stacked vertically: 'Amount' input (showing '5000'), 'Payment Date' date picker (showing '16 Apr 2026'), 'Payment Mode' dropdown (showing 'UPI'), 'UTR / Transaction ID' input (showing '412345678901'), 'Payee Name' input (empty with placeholder 'Leave blank to use existing billing name'), 'Receipt / Proof' file upload area, 'Notes' textarea (empty). A checked checkbox 'Generate WooCommerce Order'. Two buttons at bottom: grey 'Cancel' and blue 'Save Payment'. Clean modal design with backdrop."
+**AI Prompt:** "UI mockup of a 'Record Payment' modal/popup form. At the top, a summary section shows: 'Student: [Sample Name] | Academic Year: 2025-2026 | Grade: Grade 5 | Fee Slab: Tuition Fee | Balance Due: Rs XX,XXX (in red)'. Below are form fields stacked vertically: 'Amount' input (showing a sample number), 'Payment Date' date picker, 'Payment Mode' dropdown (showing 'UPI'), 'UTR / Transaction ID' input (showing 'XXXXXXXXXXXX'), 'Payee Name' input (empty with placeholder 'Leave blank to use existing billing name'), 'Receipt / Proof' file upload area, 'Notes' textarea (empty). A checked checkbox 'Generate WooCommerce Order'. Two buttons at bottom: grey 'Cancel' and blue 'Save Payment'. Clean modal design with backdrop. GUARDRAIL: All student names must be generic placeholders like '[Sample Name]'. All transaction IDs, amounts, and dates must use placeholder values. No real PII. Blur any area that could appear to contain real personal data."
 **Summary:** The Record Payment form — fill in amount, date, payment mode, and any reference numbers before clicking Save.
 -->
 
@@ -596,7 +592,7 @@ Click the **"Receipts"** tab in the top menu.
 
 <!-- IMAGE PLACEHOLDER
 ![Receipts Tab](images/09-receipts-tab.png)
-**AI Prompt:** "UI mockup of a Receipts page with: a top section containing a search input (placeholder 'Search order # or customer...'), a row of status filter checkboxes ('Completed' checked, 'Processing' checked, 'Pending' unchecked, 'Cancelled' unchecked), and 'Apply' and 'Reset' buttons. Below is a table with columns: Order # | Customer | Date | Amount | Status | Action. Three rows of sample data. Pagination numbers at the bottom. Clean design."
+**AI Prompt:** "UI mockup of a Receipts page with: a top section containing a search input (placeholder 'Search order # or customer...'), a row of status filter checkboxes ('Completed' checked, 'Processing' checked, 'Pending' unchecked, 'Cancelled' unchecked), and 'Apply' and 'Reset' buttons. Below is a table with columns: Order # | Customer | Date | Amount | Status | Action. Three rows of sample data with generic placeholder names. Pagination numbers at the bottom. Clean design. GUARDRAIL: All customer names must be obviously fictional placeholders (e.g., 'Student A', 'Parent B'). No real names, emails, phone numbers, or PII in any table cell. Blur or redact any field that could contain real data."
 **Summary:** The Receipts tab — search and filter payment receipts.
 -->
 
@@ -659,7 +655,7 @@ Click the **"Report"** tab in the top menu.
 
 <!-- IMAGE PLACEHOLDER
 ![Reports Tab Overview](images/10-reports-overview.png)
-**AI Prompt:** "UI mockup of a Report page with: top section showing 'Academic Year: 2025-2026' dropdown and 'Reporting Breakup: Term-wise / Month-wise' radio buttons. Below are four toggle checkboxes in a row: 'Only Dues', 'Show Custom Fees', 'Show Division', 'Show User ID'. A blue 'Download Excel' button with download icon is on the right. Below all controls is a large data table with student names, grades, fee columns, and colored status badges. Clean design."
+**AI Prompt:** "UI mockup of a Report page with: top section showing 'Academic Year: 2025-2026' dropdown and 'Reporting Breakup: Term-wise / Month-wise' radio buttons. Below are four toggle checkboxes in a row: 'Only Dues', 'Show Custom Fees', 'Show Division', 'Show User ID'. A blue 'Download Excel' button with download icon is on the right. Below all controls is a large data table with generic placeholder student names, grades, fee columns, and colored status badges. Clean design. GUARDRAIL: All student names in the table must be obviously fictional (e.g., 'Student 1', 'Student 2'). No real names, emails, or PII. Blur or use placeholders for any data that could be mistaken for real personal information."
 **Summary:** The Reports tab — set your year, choose breakup type, apply filters, and download Excel.
 -->
 
@@ -702,7 +698,7 @@ Toggle these checkboxes to customize what the report shows:
 
 <!-- IMAGE PLACEHOLDER
 ![Only Dues Filter](images/10-filter-only-dues.png)
-**AI Prompt:** "Side-by-side comparison: Left panel titled 'Only Dues: OFF' shows a table with 5 student rows, 2 marked 'Paid' in green and 3 with red balances. Right panel titled 'Only Dues: ON' shows the same table with only the 3 students who have red balances. A toggle checkbox is highlighted. Clean comparison layout."
+**AI Prompt:** "Side-by-side comparison: Left panel titled 'Only Dues: OFF' shows a table with 5 student rows using generic placeholder names, 2 marked 'Paid' in green and 3 with red balances. Right panel titled 'Only Dues: ON' shows the same table with only the 3 students who have red balances. A toggle checkbox is highlighted. Clean comparison layout. GUARDRAIL: All student names must be fictional placeholders. No real PII."
 **Summary:** "Only Dues" filter — when ON, hides fully paid students so you can focus on those with pending fees.
 -->
 
@@ -749,7 +745,7 @@ The report table shows **one row per student** with these columns:
 
 <!-- IMAGE PLACEHOLDER
 ![Report Table](images/10-report-table.png)
-**AI Prompt:** "UI mockup of a data table with columns: Student Name | Grade | Division | Tuition Fee | Transport Fee | Total Due | Total Paid | Balance | Status. Five rows of sample student data with varying statuses — some green 'Paid' badges, some yellow 'Partial' badges, some red 'Overdue' badges. Column headers have small sort arrows. Clean table design with alternating row colors."
+**AI Prompt:** "UI mockup of a data table with columns: Student Name | Grade | Division | Tuition Fee | Transport Fee | Total Due | Total Paid | Balance | Status. Five rows with generic placeholder student names (e.g., 'Student 1', 'Student 2') and varying statuses — some green 'Paid' badges, some yellow 'Partial' badges, some red 'Overdue' badges. Column headers have small sort arrows. Clean table design with alternating row colors. GUARDRAIL: All names must be fictional placeholders. No real student names, parent names, or any PII. Use generic labels like 'Student 1', 'Student 2' etc."
 **Summary:** The report table — each row is one student. Click column headers to sort. Status badges show payment status at a glance.
 -->
 
@@ -953,41 +949,43 @@ If you are stuck or something is not working:
 
 Below is a consolidated list of all image placeholders in this guide with their AI generation prompts. Use these with any AI image generation tool (Midjourney, DALL-E, etc.) to create the visuals.
 
+> **PII GUARDRAIL (applies to ALL images):** Never include real names, phone numbers, email addresses, school names, or any personally identifiable information. All personal data fields must use obviously fictional placeholders (e.g., 'Student A', 'sample@example.com', '+91XXXXXXXXXX') or be blurred/redacted. If using actual screenshots, blur all PII before publishing.
+
 | # | Filename | AI Prompt | Summary |
 |:--|:---------|:----------|:--------|
-| 01 | `01-what-is-staff-console.png` | Clean flat illustration of a school accounts clerk sitting at a desk with a laptop showing a dashboard with student fee cards, payment buttons, and bar charts. Warm professional colors, simple minimal style, no text on screen, light background. | Accounts clerk using the Staff Console |
-| 02 | `02-open-url.png` | Close-up screenshot mockup of a mobile phone browser address bar showing the URL 'tridha.edu.in/staff' being typed. Clean minimal design, light theme. | Browser address bar with Staff Console URL |
-| 03a | `03-login-page.png` | UI mockup of a clean mobile login page titled 'Staff Console' with subtitle 'Please log in to access the staff console.' Phone number input field and green 'Login with WhatsApp' button. White background, modern rounded design. | The Staff Console login page |
-| 03b | `03-whatsapp-otp-flow.png` | Step-by-step horizontal flow diagram: (1) Phone with number input, (2) WhatsApp chat with 6-digit OTP, (3) OTP entry boxes, (4) Green checkmark 'Logged in'. Connected by arrows, flat design. | WhatsApp OTP login flow — 4 stages |
-| 03c | `03-permission-error.png` | UI mockup of error card with lock icon and message 'You do not have permission to access the staff console.' Centered card on light gray background. | Permission error screen |
-| 04a | `04-dashboard-overview.png` | Staff dashboard mockup: top nav with 4 tabs, academic year dropdown '2025-2026', four stat cards (Enrolled Students, Today's Collections, Pending Verifications, Overdue Fees), search bar with Find and Create New buttons. Clean modern design. | Full Overview dashboard |
-| 04b | `04-navigation-tabs.png` | Horizontal tab bar: Overview (active, dashboard icon), Receipts (document icon), Report (chart icon), POS (cart icon). Active tab has orange underline. | Navigation tabs close-up |
-| 04c | `04-academic-year-selector.png` | Dropdown select labeled 'Academic Year' with '2025-2026' selected. Calendar icon, hint showing other years. | Academic year dropdown |
-| 04d | `04-stats-cards.png` | Four horizontal stat cards: Enrolled Students (245), Today's Collections (Rs 45,000), Pending Verifications (3), Overdue Fees (18, Rs 2,35,000). White cards, colored icons. | The 4 statistics cards |
-| 04e | `04-find-create-panel.png` | Search input 'Search by name, mobile, or email...' with blue 'Find' button and green 'Create New' button. | Search and create panel |
-| 05a | `05-create-user-form.png` | Create New User form: Full Name (Rajesh Kumar), Email (rajesh@gmail.com), Mobile (+919876543210). Blue 'Create User' button. White card. | Create New User form |
-| 05b | `05-add-enrollment-form.png` | Enrollment form: Academic Year dropdown, Grade dropdown, Division dropdown, Fee Slabs checkboxes, RTE/Exempt checkbox. Blue 'Add Enrollment' button. | Add Enrollment form |
+| 01 | `01-what-is-staff-console.png` | Clean flat illustration of a school accounts clerk at a desk with a laptop showing a dashboard. Warm professional colors, simple minimal style, no readable text on screen, light background. | Accounts clerk using the Staff Console |
+| 02 | `02-open-url.png` | Close-up of a mobile phone browser address bar showing a generic URL 'yourschool.edu.in/staff'. Clean minimal design, light theme. No real school name. | Browser address bar with Staff Console URL |
+| 03a | `03-login-page.png` | UI mockup of a login page titled 'Staff Console'. Phone number input with placeholder dots (no real number). Green 'Login with WhatsApp' button. White background, no brand logos. | The Staff Console login page |
+| 03b | `03-whatsapp-otp-flow.png` | Horizontal flow diagram: (1) Phone with placeholder number input, (2) WhatsApp chat with blurred header and OTP code as 'XXXXXX', (3) OTP entry boxes, (4) Green checkmark 'Logged in'. Flat design. | WhatsApp OTP login flow — 4 stages |
+| 03c | `03-permission-error.png` | Error card with lock icon and message 'You do not have permission to access the staff console.' Centered on light gray background. | Permission error screen |
+| 04a | `04-dashboard-overview.png` | Staff dashboard: top nav with 4 tabs, academic year dropdown, four stat cards with sample numbers, search bar with Find and Create New buttons. No real data or school names. | Full Overview dashboard |
+| 04b | `04-navigation-tabs.png` | Horizontal tab bar: Overview (active), Receipts, Report, POS. Active tab has orange underline. | Navigation tabs close-up |
+| 04c | `04-academic-year-selector.png` | Dropdown labeled 'Academic Year' with '2025-2026' selected. Calendar icon. | Academic year dropdown |
+| 04d | `04-stats-cards.png` | Four stat cards with sample round numbers, colored icons. No real data. | The 4 statistics cards |
+| 04e | `04-find-create-panel.png` | Search input with placeholder text, blue 'Find' button, green 'Create New' button. | Search and create panel |
+| 05a | `05-create-user-form.png` | Create New User form with placeholder data: 'Sample Student', 'sample@example.com', '+91XXXXXXXXXX'. Blue 'Create User' button. | Create New User form |
+| 05b | `05-add-enrollment-form.png` | Enrollment form: Academic Year, Grade, Division dropdowns, Fee Slabs checkboxes, RTE/Exempt checkbox. Blue 'Add Enrollment' button. | Add Enrollment form |
 | 05c | `05-rte-badge.png` | Two green pill badges: 'RTE' and 'Exempt'. White text on green background. | RTE and Exempt badges |
-| 06 | `06-search-results.png` | Search results panel below search bar showing 'Raj' typed. Three result rows with names, emails, and IDs. Clickable link style. | Student search results |
-| 07a | `07-payment-table.png` | Fee payment table inside enrollment card '2025-2026 Grade 5-A'. Columns: Fee Slab, Amount Due, Paid, Balance, Due Date, Status, Actions. Three rows with Record Payment buttons. Summary row at bottom. | Payment table with Record Payment button |
-| 07b | `07-record-payment-form.png` | Record Payment modal: summary section (Student, Year, Grade, Fee Slab, Balance Due in red), form fields (Amount, Date, Payment Mode, UTR, Payee Name, Receipt upload, Notes), Generate WooCommerce Order checkbox. Cancel and Save Payment buttons. | Record Payment form |
-| 07c | `07-payment-success.png` | Green success banner 'Payment recorded successfully!' with updated payment table row showing new partial payment status. | Payment success confirmation |
-| 08a | `08-enrollment-cards.png` | Two enrollment cards: 2025-2026 (expanded, yellow 'Pending' badge) and 2024-2025 (collapsed, green 'Paid' badge). Accordion style. | Enrollment cards — expanded and collapsed |
-| 08b | `08-summary-row.png` | Table footer row: Total Due Rs 35,000, Total Paid Rs 9,000 (green), Total Balance Rs 26,000 (red bold). | Payment table summary row |
-| 08c | `08-color-guide.png` | Three color bands: GREEN (Paid/RTE/Exempt — No action), YELLOW (Pending/Partial — Payment expected), RED (Overdue — Follow up needed). Infographic style. | Color coding reference |
-| 09 | `09-receipts-tab.png` | Receipts page: search input, status filter checkboxes, Apply/Reset buttons, receipt table with Order #, Customer, Date, Amount, Status, Action columns. | Receipts tab overview |
-| 10a | `10-reports-overview.png` | Report page: Academic Year dropdown, Term-wise/Month-wise radio buttons, filter checkboxes, Download Excel button, data table. | Reports tab overview |
+| 06 | `06-search-results.png` | Search results with generic placeholder names ('Student A', 'Student B', 'Student C'), blurred emails, sample IDs. | Student search results |
+| 07a | `07-payment-table.png` | Fee payment table inside enrollment card. Fee Slab, Amount Due, Paid, Balance, Due Date, Status, Actions columns. Placeholder amounts. Record Payment buttons. Summary row. | Payment table with Record Payment button |
+| 07b | `07-record-payment-form.png` | Record Payment modal: summary with '[Sample Name]', placeholder amounts. Form fields for Amount, Date, Payment Mode, UTR as 'XXXXXXXXXXXX'. Cancel and Save Payment buttons. | Record Payment form |
+| 07c | `07-payment-success.png` | Green success banner 'Payment recorded successfully!' with updated payment row showing sample amounts. | Payment success confirmation |
+| 08a | `08-enrollment-cards.png` | Two enrollment cards: 2025-2026 (expanded, 'Pending' badge) and 2024-2025 (collapsed, 'Paid' badge). Accordion style. | Enrollment cards — expanded and collapsed |
+| 08b | `08-summary-row.png` | Table footer: Total Due, Total Paid (green), Total Balance (red bold). Sample amounts only. | Payment table summary row |
+| 08c | `08-color-guide.png` | Three color bands: GREEN (Paid/RTE/Exempt), YELLOW (Pending/Partial), RED (Overdue). Infographic style. | Color coding reference |
+| 09 | `09-receipts-tab.png` | Receipts page: search input, status filter checkboxes, receipt table with placeholder customer names. No real PII. | Receipts tab overview |
+| 10a | `10-reports-overview.png` | Report page: Academic Year dropdown, breakup radio buttons, filter checkboxes, Download Excel button, data table with placeholder names. | Reports tab overview |
 | 10b | `10-breakup-options.png` | Two radio buttons: 'Term-wise' selected, 'Month-wise' unselected. | Reporting breakup options |
-| 10c | `10-filter-only-dues.png` | Side-by-side comparison: OFF shows all students, ON shows only those with balances. | Only Dues filter comparison |
-| 10d | `10-report-table.png` | Data table with student names, grades, fee columns, colored status badges. Sort arrows on headers. | Report data table |
+| 10c | `10-filter-only-dues.png` | Side-by-side comparison: OFF shows all students (placeholder names), ON shows only those with balances. | Only Dues filter comparison |
+| 10d | `10-report-table.png` | Data table with placeholder student names ('Student 1', 'Student 2'), grades, fee columns, colored status badges. Sort arrows. | Report data table |
 | 10e | `10-download-excel.png` | Blue 'Download Excel' button with download icon. | Download Excel button |
 | 11 | `11-quick-reference.png` | Printable quick-reference card with 7 numbered tasks and step breadcrumb trails. | Quick reference card |
-| 13 | `13-troubleshooting-flowchart.png` | Vertical troubleshooting flowchart: Can't log in? / Can't find student? / Payment not saving? Each with step-by-step resolution paths. | Troubleshooting flowchart |
+| 13 | `13-troubleshooting-flowchart.png` | Vertical troubleshooting flowchart with 3 branches: Can't log in? / Can't find student? / Payment not saving? Resolution paths with arrows. | Troubleshooting flowchart |
 
 ---
 
-> **Document Version:** 1.0 &nbsp;|&nbsp; **Last Updated:** April 2026 &nbsp;|&nbsp; **For:** Tridha School Accounts Clerk Staff
+> **Document Version:** 1.0 &nbsp;|&nbsp; **Last Updated:** April 2026 &nbsp;|&nbsp; **For:** Accounts Clerk Staff
 
 ---
 
-_This guide is maintained by the Tridha School IT team. If anything in this guide is outdated or incorrect, please report it to the administrator._
+_This guide is maintained by your school's IT team. If anything in this guide is outdated or incorrect, please report it to the administrator._

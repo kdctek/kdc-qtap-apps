@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.35] - 2026-04-16
+
+### Added
+- **Default to Completed status** — WC Orders admin page now loads with `?status=wc-completed` when no status filter is set, so staff see completed orders first
+- **Order ID link in Student column** — clickable `#order_number` prefix before payee name links to the order edit screen
+
 ## [3.15.34] - 2026-04-16
 
 ### Added

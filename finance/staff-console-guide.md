@@ -18,7 +18,7 @@ This guide will teach you how to use the Staff Console step by step. No computer
 8. [Understanding the Student Profile](#8-understanding-the-student-profile)
 9. [Receipts Tab](#9-receipts-tab)
 10. [Reports Tab](#10-reports-tab)
-11. [Quick Reference — Daily Tasks](#11-quick-reference--daily-tasks)
+11. [Quick Reference — Daily Tasks](#11-quick-reference-daily-tasks)
 12. [Frequently Asked Questions (FAQ)](#12-frequently-asked-questions-faq)
 13. [Troubleshooting](#13-troubleshooting)
 14. [Getting Help](#14-getting-help)

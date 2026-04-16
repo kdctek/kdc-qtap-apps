@@ -96,7 +96,7 @@ fetch(file).then(r=>{if(!r.ok)throw r;return r.text()}).then(md=>{
 const el=document.getElementById('content');
 el.innerHTML=marked.parse(md);
 el.querySelectorAll('h2').forEach(h=>{
-const id=h.textContent.replace(/[^\w.-]/g,'-').replace(/-+/g,'-').toLowerCase();
+const id=h.textContent.replace(/[^\w-]+/g,'-').replace(/^-+|-+$/g,'').toLowerCase();
 h.id=id;h.addEventListener('click',()=>{location.hash=id});
 });
 }).catch(()=>{document.getElementById('content').innerHTML='<p class="loading">No content available yet.</p>'});

@@ -53,6 +53,10 @@
         {
           "name": "WhatsApp Templates",
           "file": "whatsapp-templates.md"
+        },
+        {
+          "name": "Staff Guide",
+          "file": "staff-console-guide.md"
         }
       ]
     },

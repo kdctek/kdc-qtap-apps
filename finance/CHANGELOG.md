@@ -2,6 +2,34 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.34] - 2026-04-16
+
+### Added
+- **WC admin Orders table — Student column** — new column between Status and Order showing payee name in bold with student name, academic year, and grade/division as gray sub-text. Skips duplicating student name if same as payee.
+
+### Changed
+- **Status icon column width** — changed from 48px to 2.5em to match checkbox column width
+- **Refactored column render callbacks** — consolidated HPOS and legacy column rendering into a single dispatch method
+
+## [3.15.33] - 2026-04-16
+
+### Fixed
+- **WC admin Orders Receipt # column regenerated the PDF on each click** — replaced the `admin-ajax.php?action=generate_wpo_wcpdf` URL with the WC PDF public endpoint via `WPO_WCPDF()->endpoint->get_document_link( $order, 'receipt' )` (falls back to `'invoice'`). Clicking now opens the *existing* generated PDF rather than triggering a regeneration. When no document link is available (plugin inactive, no document generated), the receipt number is rendered as plain text — same graceful fallback as before.
+
+## [3.15.32] - 2026-04-16
+
+### Changed
+- **Record Payment — Payment Mode defaults to NEFT** — `<option>` loop now calls `selected( 'neft', $method_key )` so the NEFT option is pre-checked on modal open. Falls back to `— Select Mode —` only if NEFT is not in the configured payment methods list.
+- **Record Payment — field label** `Reference / Receipt #` → `UTR / Transaction ID`.
+
+### Fixed
+- **Edit Transaction modal didn't pre-select the saved payment method** — the edit link renders `data-payment-method="…"` but the JS was reading `$btn.data('payment-mode')` (legacy key). Updated both [kdc-qtap-finance-user-profile-payments.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-user-profile-payments.js) and [kdc-qtap-finance-user-profile.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-user-profile.js) to read `data-payment-method` with `data-payment-mode` as a safety fallback.
+
+## [3.15.31] - 2026-04-16
+
+### Fixed
+- **Report group-tab footer totals empty** — `footerCallback` was only updating the original `<tfoot>` inside the source table. With `scrollX: true`, DataTables clones the tfoot into `.dataTables_scrollFootInner` and shows that clone while hiding the original, so the computed totals never reached the screen. Now writes to **both** the original (`api.table().footer()`) and the cloned scrollFoot — totals now render in every group tab. Summary tab was unaffected (no scrollX cloning of tfoot there).
+
 ## [3.15.30] - 2026-04-16
 
 ### Added

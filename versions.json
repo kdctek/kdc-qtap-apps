@@ -36,7 +36,11 @@
       "updated_at": "2026-04-14T00:00:00Z"
     },
     "kdc-qtap-finance": {
+<<<<<<< Updated upstream
       "version": "3.15.44",
+=======
+      "version": "3.15.45",
+>>>>>>> Stashed changes
       "name": "qTap Finance",
       "slug": "kdc-qtap-finance",
       "requires_php": "7.4",

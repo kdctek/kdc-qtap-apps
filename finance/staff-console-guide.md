@@ -1,27 +1,25 @@
+---
+title: "Staff - Guide"
+description: "Step-by-step training guide for Accounts Clerks to use the qTap Finance Staff Console."
+layout: default
+nav_order: 1
+---
+
 # Staff Console — Training Guide
+{: .no_toc }
 
 **For:** Accounts Clerk &nbsp;|&nbsp; **Last Updated:** April 2026
+{: .text-grey-dk-000 }
 
 This guide will teach you how to use the Staff Console step by step. No computer knowledge is needed — just follow the instructions and pictures.
 
 ---
 
 ## Table of Contents
+{: .no_toc }
 
-1. [What is the Staff Console?](#1-what-is-the-staff-console)
-2. [Opening the Staff Console](#2-opening-the-staff-console)
-3. [Logging In with WhatsApp OTP](#3-logging-in-with-whatsapp-otp)
-4. [The Dashboard (Overview Tab)](#4-the-dashboard-overview-tab)
-5. [Adding a New Student](#5-adding-a-new-student)
-6. [Finding an Existing Student](#6-finding-an-existing-student)
-7. [Recording an Offline Payment](#7-recording-an-offline-payment)
-8. [Understanding the Student Profile](#8-understanding-the-student-profile)
-9. [Receipts Tab](#9-receipts-tab)
-10. [Reports Tab](#10-reports-tab)
-11. [Quick Reference — Daily Tasks](#11-quick-reference-daily-tasks)
-12. [Frequently Asked Questions (FAQ)](#12-frequently-asked-questions-faq)
-13. [Troubleshooting](#13-troubleshooting)
-14. [Getting Help](#14-getting-help)
+1. TOC
+{:toc}
 
 ---
 

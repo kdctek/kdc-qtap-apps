@@ -2,6 +2,84 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.15.44] - 2026-04-18
+
+### Added
+- **Annual vs Full Program view toggle on the Report tab** — next to the year dropdown. Annual view (default for single-year selections) slices multi-year enrollments (e.g. a `2025-2027` program) into just the selected year's portion, so a student in a multi-year program appears in every year of their span with only that year's installments. Full Program view preserves legacy exact-match behavior. Toggle auto-hides when a multi-year key is selected.
+- **Year-range helpers** in `kdc-qtap-finance-helper-functions.php` — `parse_year_range()`, `year_range_covers()`, `is_start_slice()`, `cycle_for_slice()`, `year_date_range()` (academic-year-aligned date window using the per-year configured start month).
+- **`KDC_qTap_Finance_Payment::get_by_user_year_annual()`** — filters installments by `period_start` date window instead of `academic_year` string equality, naturally slicing multi-year payments into the correct single-year bucket. Custom fees (NULL `period_start`) merged via exact year match.
+- **Excess Payments tab** in the Report page — lists students whose total received exceeds total collection for the selected year. Dedupes by user across groups (keeps the largest excess), sorts by excess descending, supports CSV export with footer totals.
+- **Clickable User ID** — the ID column in the Report tables now links to the WP user-edit screen in a new tab.
+- **Available-credit notice** on the Fees block — shows any parked credit the signed-in user has with a "will be applied automatically on your next payment" message. Hidden when staff view another user's fees via the switcher.
+- **Report — Credit column** — new `Credit` column appended to every row (per-user credit from `kdc_qtap_finance_credit` user meta). Aggregated per group in the Summary tab via `aggregateRows()`. Included in footer totals (`numericTypes` updated in `kdc-qtap-finance-report.js`).
+
+### Changed
+- **`KDC_qTap_Finance_Enrollment::get_all_by_year()` and `::get_all_by_criteria()`** accept a new `view_mode` arg (`'full_program'` default, `'annual'` union). In annual mode, they include multi-year enrollments whose parsed range covers the target year. Exact-match wins over span-match when a user has both. Return rows are decorated with `source_year` so callers can distinguish the two. All existing callers unchanged due to backward-compatible defaults.
+- **Report fee matrix summary** — `per_cycle` multiplier collapses to 1 in Annual view; full program view keeps `× duration` behavior unchanged.
+
+## [3.15.43] - 2026-04-16
+
+### Added
+- **`kdc_qtap_finance_net_amount_for_payment( $payment, &$credit_budget )`** helper in `kdc-qtap-finance-helper-functions.php` — returns `{ gross, credit_applied, net }` for a payment row. Running `$credit_budget` (passed by reference) lets multi-term carts share the same credit pool without double-application. No DB writes — pure projection.
+- **`KDC_qTap_Finance_Payment::trickle_excess_from_payment()`** — public wrapper around `trickle_excess_forward()` so callers that already created their own transaction row (offline verify) can still trigger the downstream trickle + credit path.
+- **`kdc_qtap_finance.php` — legacy overpayment migration** (`migrate_reclaim_legacy_overpayments_3_15_43()`) — scans all regular payments on upgrade, caps any `amount_paid > amount_due` at `amount_due`, moves the surplus into user credit, writes a `credit_backfill` transaction row per affected payment. Gated once by `kdc_qtap_finance_legacy_overpayment_backfill_done` option.
+
+### Changed
+- **Cart builders apply projected credit** — `ajax_create_fee_order()`, `ajax_create_multi_fee_order()`, and `build_term_cart()` in `trait-kdc-qtap-finance-wc-frontend-ajax.php` now call `kdc_qtap_finance_net_amount_for_payment()` with a shared running budget. Line-item amount is net of credit. Label gets "— ₹X applied from credit" suffix on lines where credit was applied. Fully-covered lines are skipped from the WC cart (finalised via `record_transaction()` at order completion).
+- **`process_completed_order()`** in `trait-kdc-qtap-finance-wc-status.php` — replaces manual `Payment_Transaction::create()` + `Payment::update()` with a single `Payment::record_transaction()` call. This engages auto-credit consumption, overflow trickle to the next pending regular term, and final-excess parking as user credit for online payments. Uses the line-item subtotal (which already reflects any projected credit) as the transaction amount.
+- **`Payment_Transaction::verify()`** now also engages trickle + credit: before committing the amount it consumes available credit for the remaining balance, caps `amount_paid` at `amount_due`, and calls `trickle_excess_from_payment()` with any overflow. Matches the behaviour of online checkout and admin Record Payment.
+- **`Payment::record_transaction()` signature** extended with an optional `$extras` array — `payment_method_title`, `payment_date`, `transaction_date` — so callers can preserve the display title and the actual payment date on the transaction row without losing the trickle/credit behaviour.
+
+### Fixed
+- **WC order completion silently bypassed trickle + credit** — online payments never applied parked credit nor trickled overpayment to the next term. Now routed through the canonical `record_transaction()` path.
+- **Cart amount didn't reflect user credit** — students with parked credit still saw the full term amount in the WooCommerce cart even though credit was available. Now deducted upfront.
+
+## [3.15.42] - 2026-04-16
+
+### Changed
+- **Fees block restricts year dropdown to enrolled years** — `render_block()` now reads `KDC_qTap_Finance_Enrollment::get_all( $user_id )` and intersects the institute's `academic_years` with the user's enrolled keys. Only the intersection is passed to the dropdown (and to `academicYears` in the JS localisation).
+- If the current default year isn't in the user's enrolled set, the block picks the user's enrollment with the latest end-year (same heuristic as `kdc_qtap_finance_get_latest_enrollment`).
+- Staff with `kdc_qtap_finance_can_view_other_users_fees()` retain the **full** year list — they drive the user selector and need to view any user's historical data.
+
+### Added
+- **"No active enrollments" notice** — when `get_all()` is empty, `render_block()` short-circuits and returns a friendly card with the admin-email mailto link labelled "Contact Admin". Avoids showing an empty year dropdown.
+
+## [3.15.41] - 2026-04-16
+
+### Changed
+- **Receipts badge + filter icons/colors aligned** — FEE badge now uses `coins` icon + green (`#00632a`/`#e7f5ea`); POS badge uses `shopping-cart` icon + purple (`#7b2cbf`/`#f3e8ff`). Both match the Source filter chips exactly.
+
+## [3.15.40] - 2026-04-16
+
+### Changed
+- Removed the **Re-run backfill** button + JS handler from the Receipts tab header. The AJAX endpoint `kdc_qtap_finance_backfill_order_enrollment` remains for programmatic calls.
+
+## [3.15.39] - 2026-04-16
+
+### Changed
+- **FEE source filter icon** — replaced `receipt` (which renders a `$` line through the icon) with `coins` (currency-neutral). Per icon policy: never any icon that renders a currency symbol.
+- **Receipts filter panel redesigned** — replaced the always-expanded two-row checkbox panel with a native `<details>/<summary>` collapsible. Collapsed state shows a compact single-line summary: *"Status: Completed, Processing · Source: FEE, POS, Other"*. Click the chevron to expand and edit checkboxes. Zero JS for the toggle (native HTML). New CSS in `.kdc-qtap-finance-receipts-filters` with triangle rotation, separator, and consistent spacing.
+
+## [3.15.38] - 2026-04-16
+
+### Changed
+- **`kdc_qtap_finance_lucide()` now delegates to parent** — calls `kdc_qtap_lucide()` (kdc-qtap v2.7.3+) instead of maintaining its own 26-icon SVG map. The duplicate icon paths array has been removed from the Finance helper file. All existing call sites (`kdc_qtap_finance_lucide('receipt', ...)` etc.) continue to work unchanged via the thin wrapper. Falls back to empty string if parent is too old (pre-2.7.3).
+
+## [3.15.37] - 2026-04-16
+
+### Added
+- **Receipts tab — Source filter** (FEE / POS / Other) — second filter row below Status in a unified panel with `border-top` separator. Each source has a Lucide icon (receipt/green, shopping-cart/purple, package/grey). All three pre-selected on first load; unchecking auto-fires AJAX reload (opacity overlay while loading). Post-query filtering applies OR within sources, AND with the Status filter.
+- **`KDC_qTap_Finance_Block_Editor::detect_pos_order( $order )`** static helper — extracted the inline `stripos` + `_woocommerce_pos_uuid` + meta-scan POS detection into a reusable method. Used by both the source filter and the per-row badge render.
+
+### Changed
+- Status + Source checkbox AJAX handlers now carry **both** filter sets in the URL params so toggling one doesn't drop the other.
+- Reset button clears `source[]` in addition to `status[]` and `search`.
+
+## [3.15.36] - 2026-04-16
+
+### Changed
+- **WC admin Status column CSS** — matched parent plugin's `kdc_qtap_order_by` column spec: `width: 2.2em !important; max-width: 2.2em !important; min-width: 2.2em !important; padding: 4px !important; text-align: center !important;`. Both icon columns now render at identical narrow width, consistent with the checkbox column.
+
 ## [3.15.35] - 2026-04-16
 
 ### Added

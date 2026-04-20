@@ -3,7 +3,7 @@
   "updated_at": "2026-04-19T00:00:00Z",
   "plugins": {
     "kdc-qtap": {
-      "version": "2.7.4",
+      "version": "2.7.5",
       "name": "qTap App",
       "slug": "kdc-qtap",
       "requires_php": "7.4",
@@ -36,7 +36,7 @@
       "updated_at": "2026-04-14T00:00:00Z"
     },
     "kdc-qtap-finance": {
-      "version": "3.16.3",
+      "version": "3.16.4",
       "name": "qTap Finance",
       "slug": "kdc-qtap-finance",
       "requires_php": "7.4",

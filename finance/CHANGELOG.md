@@ -2,6 +2,28 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.4] - 2026-04-20
+
+### Fixed
+- **Transaction delete now reverses parked credit and cascades trickle children.** Previously when `record_transaction()` overflowed a ₹1,31,300 payment onto a term with only ₹1,30,800 due, the extra ₹500 got parked in `kdc_qtap_finance_credit` user meta — but deleting the source transaction via the Payment History inline button only reversed `amount_paid` and left the ₹500 credit stranded. Similarly, if a source transaction spawned a "Carry Forward" trickle child on the next term, that child became orphaned on delete of the parent. Both now unwind correctly in a single delete.
+
+### Added
+- **Database schema v2.2.0** — two new columns on the transactions table (migration auto-runs on plugin load):
+  - `parent_transaction_id BIGINT UNSIGNED NULL` + index — points from a trickle child (or auto-credit child) back to the source transaction that spawned it.
+  - `credit_parked DECIMAL(14,2) NOT NULL DEFAULT 0` — records how much of *this* transaction's amount ultimately landed in the user's credit meta (via `kdc_qtap_finance_add_user_credit()`). Enables exact reversal on delete.
+- **`KDC_qTap_Finance_Payment_Transaction::create()` / `::update()`** now accept the two new fields.
+- **`KDC_qTap_Finance_Payment::trickle_excess_forward()`** accepts an optional `$source_transaction_id` — stamps `credit_parked` on the source when the chain ends in user credit, and sets `parent_transaction_id` on downstream trickle rows so they cascade on delete.
+- **`KDC_qTap_Finance_Payment::trickle_excess_from_payment()`** (public wrapper used by `Payment_Transaction::verify()` etc.) gets a matching optional `$source_transaction_id` parameter for callers that want the same lineage tracking on post-hoc trickle.
+- **`KDC_qTap_Finance_Payment::record_transaction()`** now also stamps `parent_transaction_id` on the auto-applied-credit child row so a delete of the source cascades the child too. (Auto-credit *consumption* reversal — adding the consumed credit back to user meta — is a documented follow-up.)
+
+### Changed
+- **`KDC_qTap_Finance_Payment_Transaction::delete()`** reverses in a defined order: (1) recursively delete children (trickle + auto-credit rows found via `parent_transaction_id`), each rolling back its own `amount_paid`; (2) refund any `credit_parked` back to the user's credit meta via `consume_user_credit()` (clamped at zero if the user has since spent some); (3) delete this row + reverse `amount_paid` on its payment.
+
+### Files changed
+- [class-kdc-qtap-finance-database.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-database.php) — `DB_VERSION` bumped to 2.2.0; migration 2.2.0 block adds both columns + index on upgrade; CREATE TABLE SQL includes them for fresh installs.
+- [class-kdc-qtap-finance-payment-transaction.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-payment-transaction.php) — `create()` / `update()` accept `parent_transaction_id` + `credit_parked`; `delete()` rewritten with three-step cascade.
+- [class-kdc-qtap-finance-payment.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-payment.php) — `record_transaction()` threads `parent_transaction_id` to the auto-credit child row and passes the source transaction id into trickle; `trickle_excess_forward()` + `trickle_excess_from_payment()` accept the source id and stamp lineage / parked credit.
+
 ## [3.16.3] - 2026-04-20
 
 ### Changed

@@ -2,6 +2,25 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.5] - 2026-04-20
+
+### Fixed
+- **Jobs could be double-processed by concurrent workers.** `Job_Processor::get_pending_jobs()` grabs jobs in status `pending` OR `processing`; if WP-Cron and an admin page-load both fired `kdc_qtap_cron_process_jobs` within the same second, or if a stuck batch didn't advance `processed_items` before cron retried, two workers picked up the same job and ran `array_slice` on the same offset. The child plugin's per-row dedupe can't help — it runs inside each worker and the competing INSERT hasn't committed yet. Result on the tridha.edu.in import: the finance Transactions importer created duplicate transaction rows and left stray parked credit on at least one student's profile.
+
+### Added
+- **`locked_at` column** on the jobs table (migration runs via dbDelta on plugin load — no manual action needed). DB version bumped to 1.1.0.
+- **`KDC_qTap_Job::acquire_lock( $id, $stale_seconds = 300 )`** — atomic, UPDATE-based. A single statement `UPDATE … WHERE id = ? AND (locked_at IS NULL OR locked_at < stale_cutoff)` serves as the lock acquire primitive; the number of rows affected is the source of truth. No read-then-write race. Stale locks (process crashed mid-batch) auto-expire after 5 minutes so a later cron tick can pick the job back up.
+- **`KDC_qTap_Job::release_lock( $id )`** — sets `locked_at = NULL`. Safe to call whether or not the caller holds it.
+
+### Changed
+- **`Job_Processor::process_jobs()`** now calls `acquire_lock()` before each job and `release_lock()` after. If lock acquisition fails (another worker has it), the job is skipped — that worker will finish it.
+- **`ajax_process_job()`** (the "Process Now" button handler in the job-detail page) also acquires the lock; if another worker is active it returns a friendly "please wait a moment" error instead of double-processing.
+
+### Files changed
+- [class-kdc-qtap-job.php](includes/class-kdc-qtap-job.php) — `DB_VERSION` bumped to 1.1.0; `create_table()` SQL includes `locked_at` + index; new `acquire_lock()` / `release_lock()` methods.
+- [class-kdc-qtap-job-processor.php](includes/class-kdc-qtap-job-processor.php) — `process_jobs()` wraps each job in acquire/release, with release in the exception path too.
+- [trait-kdc-qtap-admin-jobs.php](includes/trait-kdc-qtap-admin-jobs.php) — `ajax_process_job()` mirrors the lock wrapping.
+
 ## [2.7.4] - 2026-04-20
 
 ### Fixed

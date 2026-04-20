@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.11] - 2026-04-20
+
+### Fixed
+- **WCPDF receipt "Payment Date" row showed today instead of the actual payment date.** Both the admin Record Payment modal and the CSV Transactions importer create the WC order and then immediately `set_status( 'completed' )`. WC's status transition auto-stamps `date_paid` to the current timestamp when it's empty — which is the value WCPDF uses for the Payment Date row on the receipt. So a payment the admin recorded as "made on 2026-04-11" rendered on the PDF as "Payment Date: 20-Apr-2026" (today). Fix: both flows now call `$wc_order->set_date_paid( strtotime( $payment_date . ' 00:00:00' ) )` **before** `set_status( 'completed' )`, pre-empting WC's auto-stamp. Historical orders keep their existing `date_paid` (no backfill) — the next PDF regeneration for a future-recorded payment will reflect the correct date.
+- **"Paid With" row on the WCPDF receipt was redundant when equal to Payment Method.** Our `pdf_receipt_payment_details()` hook always rendered a "Paid With" row, even when the value matched WC's native Payment Method row (e.g. both "Bank Transfer"). The row now skips rendering when the two values compare case-insensitively equal, and still prints when they genuinely differ (e.g. Payment Method "Online Payments" / Paid With "UPIAPP").
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-user-meta-payments.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-payments.php) — `ajax_record_payment()` stamps `date_paid` from the submitted payment_date before completing the order.
+- [includes/traits/trait-kdc-qtap-finance-import-csv-processors.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-import-csv-processors.php) — `import_transactions_csv()` stamps `date_paid` from each row's parsed payment_date before completing the order.
+- [includes/traits/trait-kdc-qtap-finance-wc-helpers.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-helpers.php) — `pdf_receipt_payment_details()` adds a case-insensitive dedupe check against `$order->get_payment_method_title()` before printing the Paid With row.
+
 ## [3.16.10] - 2026-04-20
 
 ### Fixed

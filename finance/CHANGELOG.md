@@ -2,6 +2,30 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.13] - 2026-04-20
+
+### Fixed
+- **Receipt line-item breakup now reflects the real per-period contribution of the payment event, not the scheduled amount.** Before this release `create_fee_order()` built the line-item `breakup_items` meta from `Payment_Item.amount` (the schedule) — so a ₹15,000 payment against a ₹10,000/month schedule rendered on the WCPDF receipt as *May-2026 ₹10,000 · Jun-2026 ₹10,000 · Jul-2026 ₹10,000 · …* (all 12 months at their scheduled amount). And when `record_transaction()` trickled excess into the next term's payment, that spill was invisible on the receipt — the WC order had no line item for the downstream term.
+
+### Added
+- **`KDC_qTap_Finance_Payment::snapshot_user_year_item_paid( $user_id, $year )`** — returns a keyed `[payment_item_id => amount_paid]` map of every Payment_Item belonging to the user+year.
+- **`KDC_qTap_Finance_WooCommerce::apply_allocation_breakup( $order, $snapshot, $source )`** — diffs the current Payment_Item.amount_paid values against a pre-event snapshot, groups the non-zero deltas by their parent Payment row, rewrites each order line item's public `breakup_items` meta from the deltas, and adds a zero-priced informational line item on the order for any trickle target Payment that isn't already on the order. Writes an audit trail: `_kdc_qtap_finance_breakup_original` (first-run snapshot of the pre-rewrite line-item state), `_kdc_qtap_finance_breakup_source` (`event` or `backfill`), `_kdc_qtap_finance_breakup_applied_at`. Idempotent.
+- **Forward-path wiring in all 4 payment-event flows** — admin Record Payment, CSV Transactions importer, gateway checkout completion, and offline payment verification all now snapshot before / apply after the payment event so new orders render the correct breakup.
+- **Backfill migration: `migrate_backfill_allocation_breakup_3_16_13()`** — reconstructs historical per-order allocation by replaying every transaction for each (user, academic_year) pair chronologically. For each transaction it simulates the waterfall distribution (matching `Payment::allocate_payment_to_items()` priority: per_tenure → per_cycle → per_term → per_month, then period_start, then sort_order), records per-order contribution per item, then calls `apply_allocation_breakup()` with a synthetic pre-snapshot (`live - contribution`). Never writes to Payment_Item.amount_paid — the live values stay intact; only the WC orders' breakup metas get rewritten. Skips orders whose breakup_source is already `event` so a fresh forward-path rewrite isn't clobbered by a slightly-less-precise reconstruction. Gated by `kdc_qtap_finance_backfill_allocation_breakup_3_16_13_done`. Wrapped in try/catch per the v3.16.7 lesson.
+
+### Out of scope
+- Refund handling — negative diffs are filtered out in this pass; refund breakup will ship as a follow-up.
+- A dedicated admin audit UI — the audit meta is present on every touched order, inspectable via wp_postmeta / wc_orders_meta or the order edit screen. A visual before/after comparison screen is a follow-up.
+
+### Files changed
+- [class-kdc-qtap-finance-payment.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-payment.php) — new `snapshot_user_year_item_paid()` static helper.
+- [includes/traits/trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) — new `apply_allocation_breakup()` method on `KDC_qTap_Finance_WooCommerce`.
+- [includes/traits/trait-kdc-qtap-finance-user-meta-payments.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-payments.php) — `ajax_record_payment()` snapshot + apply.
+- [includes/traits/trait-kdc-qtap-finance-import-csv-processors.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-import-csv-processors.php) — `import_transactions_csv()` snapshot + apply.
+- [includes/traits/trait-kdc-qtap-finance-wc-status.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-status.php) — `process_completed_order()` snapshot + apply.
+- [includes/class-kdc-qtap-finance-payment-transaction.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-payment-transaction.php) — `verify()` snapshot + apply for the offline-verify flow.
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — new `migrate_backfill_allocation_breakup_3_16_13()` method + version-gated migration block.
+
 ## [3.16.12] - 2026-04-20
 
 ### Added

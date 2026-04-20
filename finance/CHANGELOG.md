@@ -2,6 +2,19 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.6] - 2026-04-20
+
+### Fixed
+- **Grade-level custom fees now materialise as Payment rows and populate the Report tab's Custom Fees columns.** Before this release the Report's Custom Fees Collection / Received / Balance columns showed dashes for every student even when a custom fee was configured at the grade level in the Fee Matrix. Root cause: `KDC_qTap_Finance_Fee_Matrix::get_applicable_slabs()` iterated only top-level matrix entries, but grade-level custom slabs live nested under the special `_custom_slabs` key — so the enrollment auto-assignment path never emitted the `_custom_<index>` slugs, which meant the enrollment's `fee_slabs` never included them, which meant the Payment rows were never created, which meant the Report had nothing to aggregate.
+- **Fix**: `get_applicable_slabs()` now descends into `_custom_slabs` and returns the per-index synthetic slug (`_custom_<N>` or the slab's `slug` field if set) whenever the grade row is enabled with a positive amount.
+
+### Added
+- **One-shot backfill migration** for existing enrollments saved before the fix. Walks every user with `kdc_qtap_finance_enrollments` user meta, for each academic year compares the enrollment's `fee_slabs` to the current fee matrix's grade-level custom slabs, adds any missing `_custom_*` slugs to `fee_slabs`, and creates Payment rows via the existing `create_custom_slab_payment()` helper (idempotent — short-circuits if a row already exists). Touches only enrollment meta and creates new payments; does **not** delete anything, does **not** modify paid/partial rows. Emits a `kdc_qtap_debug_log` summary at the end. Gated by `kdc_qtap_finance_backfill_custom_fees_3_16_6_done` option so it runs exactly once.
+
+### Files changed
+- [class-kdc-qtap-finance-fee-matrix.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-fee-matrix.php) — `get_applicable_slabs()` descends into `_custom_slabs`.
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — new `migrate_backfill_grade_custom_fees_3_16_6()` method + version-gated migration block.
+
 ## [3.16.5] - 2026-04-20
 
 ### Added

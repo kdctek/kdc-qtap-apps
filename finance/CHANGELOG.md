@@ -2,6 +2,24 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.15] - 2026-04-21
+
+### Removed
+- **Notification Preview section** on the user profile (the "🔔 Notification Preview" header + "Preview Notifications" button + the associated modal). The underlying notification-preview JS module is left in place so the AJAX endpoint remains callable, but the UI trigger no longer ships.
+
+### Changed
+- **WooCommerce Orders table on the user profile now matches the Staff Console Receipts tab styling.** Previously a plain 6-column list (Order / Date / Amount / Status / Receipt # / View). Now:
+  - **Order** column: `#order_number` + inline **FEE** and/or **POS** badges (Lucide icons + coloured pills), with the order date as a muted sub-line underneath.
+  - **Payment** column: payment method (`paywith_method` meta with fallback to `payment_method_title`) with UTR / transaction reference as a monospace sub-line.
+  - **Amount** column: unchanged (`wc_price()`).
+  - **Receipt #** column: WCPDF receipt number rendered as an external-tab link via the `get_wcpdf_receipt_url()` helper (v3.16.10) with a Lucide `external-link` glyph.
+  - **Status** column: compact status icon via `kdc_qtap_finance_render_order_status()` (matches Receipts tab).
+  - **Actions** column: View (customer-facing view-order URL) + Edit (wp-admin order editor — gated by `edit_shop_orders` / `manage_woocommerce` capability). Both use Lucide icons.
+- Since the render function (`render_user_wc_orders_section()`) is called by both the wp-admin user profile screen AND the frontend Staff Console block, this change updates both surfaces at once.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php) — dropped the Notification Preview section header + trigger button + modal; rewrote `render_user_wc_orders_section()` table to match the Receipts tab pattern.
+
 ## [3.16.14] - 2026-04-21
 
 ### Changed

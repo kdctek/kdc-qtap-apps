@@ -2,6 +2,25 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.16] - 2026-04-21
+
+### Fixed
+- **Three WCPDF-critical receipt metas now get populated regardless of how the order originated.** Before this release the gateway-checkout path (`process_completed_order()`) recorded transactions but never stamped `paywith_method`, `pay_utr`, or `date_paid` on the order. So a real online gateway / POS-created order rendered on the WCPDF receipt with an empty "Paid With" row, no "UTR / Ref" row, and "Payment Date" set to the status-transition timestamp instead of the transaction's payment_date.
+- Admin Record Payment + CSV import were already explicit about these metas. Now every creation path flows through a single helper, so future surfaces (POS gateways, new payment methods) get correct receipts by default.
+
+### Added
+- **New helper: `KDC_qTap_Finance_WooCommerce::sync_receipt_metas_from_transaction( $order, $transaction )`** in [trait-kdc-qtap-finance-wc-helpers.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-helpers.php). Writes `date_paid` from `transaction.payment_date` (only when day-precision differs), `paywith_method` from `transaction.payment_method_title` (only when missing), and `pay_utr` from a first-non-empty waterfall of `transaction.reference` → `transaction.receipt_file` → existing order `transaction_id` meta → `TXN-{id}` fallback (only when missing). Keeps `transaction_id` order meta in sync with `pay_utr`. Returns a per-field map of what changed so callers can audit. Saves the order exactly once.
+- **Forward-path wiring**:
+  - [trait-kdc-qtap-finance-wc-status.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-status.php) — `process_completed_order()` calls the helper after recording transactions, using the order's latest linked transaction. Covers WC gateway checkouts and POS completions that flow through `woocommerce_order_status_completed`.
+  - [class-kdc-qtap-finance-payment-transaction.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-payment-transaction.php) — `verify()` calls the helper on the linked on-hold order after verification. Offline payment verification now produces the same receipt shape as other paths.
+- **Broader backfill migration: `migrate_backfill_receipt_metas_3_16_16()`**. Supersedes the narrower v3.16.12 date_paid backfill (which only covered `_kdc_qtap_finance_admin_recorded = yes` orders). Walks every `_kdc_qtap_finance_is_fee_payment = yes` order, resolves its linked transaction (prefers `_kdc_qtap_finance_transaction_id` meta, falls back to reverse lookup by `wc_order_id`), and calls the helper. Gated by `kdc_qtap_finance_backfill_receipt_metas_3_16_16_done`. Wrapped in try/catch. Emits a debug-log summary (`scanned`, `date_set`, `method_set`, `utr_set`, `no_tx_found`).
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-wc-helpers.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-helpers.php) — new `sync_receipt_metas_from_transaction()` static helper.
+- [includes/traits/trait-kdc-qtap-finance-wc-status.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-status.php) — `process_completed_order()` wires in the helper.
+- [includes/class-kdc-qtap-finance-payment-transaction.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-payment-transaction.php) — `verify()` wires in the helper.
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — new `migrate_backfill_receipt_metas_3_16_16()` method + version-gated migration block.
+
 ## [3.16.15] - 2026-04-21
 
 ### Removed

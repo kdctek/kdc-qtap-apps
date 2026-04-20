@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.5] - 2026-04-20
+
+### Added
+- **Credits audit tab at `Finance > Credits`.** Lists every user with a positive `kdc_qtap_finance_credit` balance via a single indexed usermeta scan, sorted by credit desc. Columns: user id, student name + login, email, credit (right-aligned mono), actions. Summary card at the top shows total-users and total-outstanding. Each row has a reason-required "Zero Out" button and a "View" deep-link to the user profile in a new tab.
+- **Audit log on zero-out.** Every "Zero Out" action appends an entry to `kdc_qtap_finance_credit_adjustments` user meta (JSON array) capturing: prior balance, new balance (0), delta, reason, admin id + login, and MySQL timestamp. Action also emits a `kdc_qtap_debug_log()` line for correlation with import logs.
+- **`ajax_zero_user_credit` handler** (action `kdc_qtap_finance_zero_user_credit`, nonce `kdc_qtap_finance_nonce`) — validates capability, user existence, and non-empty reason before mutating meta.
+
+### Files changed
+- New [trait-kdc-qtap-finance-admin-tab-credits.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-credits.php).
+- [class-kdc-qtap-finance-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-admin.php) — require + `use` trait, register tab in `get_tabs()` between Verify Payments and Reminder Queue, wire `case 'credits'` in render switch, register AJAX handler.
+
 ## [3.16.4] - 2026-04-20
 
 ### Fixed

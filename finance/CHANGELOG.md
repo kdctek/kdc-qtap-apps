@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.14] - 2026-04-21
+
+### Changed
+- **Staff Console find-user search is now live.** Typing 3+ characters triggers the search automatically after a 300 ms debounce — no need to click Find or press Enter. The Find button still works as an explicit submit and retains its single-match auto-redirect shortcut; the live path always renders the match list so the admin isn't yanked to a user's profile mid-typing if a single match happens to surface. A short input (< 3 chars) clears any stale result panel. Out-of-order API responses are discarded via a monotonic sequence counter so a slow earlier search can't overwrite a faster later one.
+
+### Files changed
+- [blocks/staff-console/kdc-qtap-finance-staff-console-frontend.js](kdc-qtap-finance/blocks/staff-console/kdc-qtap-finance-staff-console-frontend.js) — refactored the Find button handler into a shared `runSearch(query, { autoRedirect })` and added a debounced `input` handler on the search field.
+
 ## [3.16.13] - 2026-04-20
 
 ### Fixed

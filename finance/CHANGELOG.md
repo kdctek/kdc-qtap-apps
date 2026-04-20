@@ -2,6 +2,27 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.10] - 2026-04-20
+
+### Fixed
+- **Staff Receipts tab: full-name search returned zero results.** `wc_get_orders()` passes the `s` parameter to WC's order search, which treats `_billing_first_name` and `_billing_last_name` as independent columns — so a query like "John Smith" never matches (neither column alone contains the whole string). The Receipts tab search now splits the query on whitespace, runs `wc_get_orders` per token with `return => 'ids'`, intersects the resulting order-ID sets, and re-queries with `include`. "John Smith", "Smith John", partials like "Joh Smi" all work. Single-token queries fall through to the original fast path.
+- **Staff Console user-search had the same root issue.** "John Smith" only matched if the user's `display_name` happened to be "John Smith" verbatim; `first_name` / `last_name` meta LIKE misses were silent. Both the REST endpoint (`/qtap/staff-search`) and the legacy AJAX handler (`kdc_qtap_finance_search_users`) now do multi-token AND intersection across `display_name`, `user_login`, `user_email`, `first_name`, `last_name`, `CONCAT_WS(' ', first, last)`, `CONCAT_WS(' ', last, first)`, `phone`, `mobile`. Every token must match at least one field.
+
+### Changed
+- **Search result cards show Year · Grade · Division** under the user name / email. Pulled from the user's current academic year enrollment via `KDC_qTap_Finance_Enrollment::get_all()` and `kdc_qtap_finance_get_current_academic_year()`. Falls back to the most-recent year with data when the user isn't enrolled in the current year. Empty string when the user has no enrollment at all. JS renderer displays a muted meta line when any of the three fields are present.
+- **Staff Console menu stays visible when drilled into a user.** Previously hidden while viewing a student's profile, forcing staff to click "← Change user" just to switch to Receipts / Reports. The menu now renders regardless of `$user` state.
+- **Transaction records + user-profile WC Orders table: receipt number renders as an external-tab PDF link** when the WC order has a generated WCPDF document. Staff can click the receipt number from the Payment History transaction row (or the "Receipt #" column in the WooCommerce Orders card) to open the PDF in a new tab without leaving the profile.
+
+### Added
+- **`KDC_qTap_Finance_WooCommerce::get_wcpdf_receipt_url( $order_or_id )`** — centralised helper for the `WPO_WCPDF()->endpoint->get_document_link()` lookup. Tries `receipt` type first, falls back to `invoice`. Returns empty string when WCPDF isn't installed, the endpoint method is missing, or no document has been generated yet. Never triggers PDF generation. Used by `class-kdc-qtap-finance-wc-orders-admin.php` (admin orders column), `trait-kdc-qtap-finance-user-meta-rendering.php` (transaction rows + WC Orders card), and available for future call sites (e.g. the Staff Console receipts tab).
+
+### Files changed
+- [includes/class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php) — Receipts-tab token-intersection search (`render_staff_console_receipts`); multi-token AJAX user-search (`ajax_search_users`); enrolled year/grade/division in the result card payload (`format_user_for_response`); staff menu rendered unconditionally in `render_staff_console_block`.
+- [includes/class-kdc-qtap-finance-rest-api.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-rest-api.php) — `staff_search_users()` rewritten as a single indexed usermeta query with per-token AND intersection + new private `enrich_user_for_staff_search()` that adds year/grade/division.
+- [blocks/staff-console/kdc-qtap-finance-staff-console-frontend.js](kdc-qtap-finance/blocks/staff-console/kdc-qtap-finance-staff-console-frontend.js) — `renderMatchList()` now displays a meta line with Year · Grade · Division beneath the name/email when the server returns those fields.
+- [includes/traits/trait-kdc-qtap-finance-wc-helpers.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-helpers.php) — new `get_wcpdf_receipt_url()` helper.
+- [includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php) — transaction row + WC Orders card receipt number wrapped in a new-tab PDF link when available.
+
 ## [3.16.9] - 2026-04-20
 
 ### Fixed

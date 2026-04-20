@@ -2,6 +2,34 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.17] - 2026-04-21
+
+### Fixed
+- **WCPDF receipt showed wrong Payment Date / Paid With / UTR on POS and meta-only orders.** The `pdf_receipt_payment_details` hook used to bail early when `_kdc_qtap_finance_is_fee_payment` wasn't set or no linked transaction was found — so any order where staff stamped `payment_date` / `paywith_method` / `pay_utr` metas directly (POS gateways, manual fixes, third-party integrations) rendered with the WC status-transition timestamp for Payment Date, the raw gateway label ("Pay With") as Payment Method, and no UTR row at all. Reworked the hook as **meta-first**:
+  - Reads `payment_date`, `paywith_method`, `pay_utr` order metas directly — no fee-order gate, no transaction lookup.
+  - Syncs `date_paid` from `payment_date` meta at render time (day-precision compare) so WCPDF's native Payment Date row reads the right date.
+  - Skips the UTR row entirely when no `pay_utr` / `transaction_id` meta is set (previously synthesised a `TXN-N` placeholder from a required transaction lookup).
+
+### Changed
+- **Collapsed the duplicate `_kdc_qtap_finance_enrollment_*` order meta set into the canonical `_kdc_qtap_finance_*` set.** The plugin used to dual-write both (`_kdc_qtap_finance_student_name` AND `_kdc_qtap_finance_enrollment_student`, etc.) as a backwards-compat hedge. Any time one got updated via a newer flow and the other didn't, the two keys drifted — a user screenshot showed `academic_year=2026-2027` alongside `enrollment_year=2026-2028` on the same order.
+- **Stopped the dual-write** in `ensure_enrollment_metas_on_order()` — only the canonical keys get written going forward.
+- **Dropped the legacy fallback** in `pdf_invoice_enrollment_details()` — reads canonical keys only.
+- **New one-shot migration** `migrate_collapse_enrollment_metas_3_16_17()` — walks every order with any `_kdc_qtap_finance_enrollment_*` meta, per pair: if the canonical key is empty and the legacy key has a value → promote legacy → canonical; if both are set and differ → keep canonical (newer flow wrote it) and log the drift for audit; then delete the legacy meta. Idempotent. Gated by `kdc_qtap_finance_collapse_enrollment_metas_3_16_17_done`. Emits a debug-log summary including a sample of drift events.
+
+### Added
+- **"qTap: Student Assignment" metabox** on the WC order edit screen (HPOS + legacy CPT via dual hook registration). Sidebar metabox shows the order's current student / year / grade / division, with an inline edit form:
+  - Student search field (reuses the `/kdc/v1/qtap/staff-search` REST endpoint — multi-token AND match, shows name + email + year · grade · division).
+  - Enrollment-year dropdown populated after user pick via a new `kdc_qtap_finance_order_user_enrollments` AJAX handler.
+  - Save action writes to `_kdc_qtap_finance_{student_name, academic_year, grade, division}` (canonical set only — legacy keys collapsed) via a new `kdc_qtap_finance_order_assign_student` AJAX handler, and adds an audit order note: *"qTap Finance: student assignment changed by {admin}. Was: {old student} ({old year+grade}). Now: {new student} ({new year+grade})."*
+  - Capability-gated on `edit_shop_orders` / `manage_woocommerce`.
+  - Nonce-verified per order id (`kdc_qtap_finance_order_assign_student_{order_id}`).
+  - Metabox help-text clarifies the scope: order-level display meta only — does NOT re-point the linked Payment / Transaction rows (staff delete + re-record for a full re-link).
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-wc-helpers.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-helpers.php) — `pdf_receipt_payment_details()` reworked as meta-first; `pdf_invoice_enrollment_details()` drops legacy fallback; `ensure_enrollment_metas_on_order()` drops the dual-write.
+- [includes/class-kdc-qtap-finance-wc-orders-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-wc-orders-admin.php) — new metabox (`register_student_metabox`, `render_student_metabox`, `render_student_metabox_js`, `ajax_order_user_enrollments`, `ajax_order_assign_student`).
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — new `migrate_collapse_enrollment_metas_3_16_17()` method + version-gated migration block.
+
 ## [3.16.16] - 2026-04-21
 
 ### Fixed

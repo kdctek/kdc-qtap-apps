@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.9] - 2026-04-20
+
+### Fixed
+- **Staff Console block couldn't save any form.** The shared user-profile JS (payments, refunds, enrollments, user-fees, notifications, associations) all call `$.post(ajaxurl, …)`. `ajaxurl` is a global WordPress auto-defines **only on admin pages** via `wp-admin/js/common.js` — it's `undefined` on the frontend. The Staff Console block renders the profile UI on the frontend, so every AJAX write was firing against `undefined` and silently failing. Staff saw form submits that looked successful client-side but never persisted.
+
+### Changed
+- **`enqueue_profile_assets_for_user()`** (shared between admin user-edit and the frontend Staff Console) now adds `ajaxUrl => admin_url('admin-ajax.php')` to the localized `kdcQtapFinanceUserProfile` object, and calls `wp_add_inline_script( …, 'before' )` to prime `window.ajaxurl` before the common/feature JS runs. The existing `$.post(ajaxurl, …)` call sites need no changes; both admin and frontend contexts resolve to the same endpoint.
+
+### Files changed
+- [class-kdc-qtap-finance-user-meta.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-user-meta.php) — `enqueue_profile_assets_for_user()` adds `ajaxUrl` to localized data and `window.ajaxurl` polyfill via `wp_add_inline_script()`.
+
 ## [3.16.8] - 2026-04-20
 
 ### Fixed

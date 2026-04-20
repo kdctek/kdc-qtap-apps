@@ -2,6 +2,19 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.12] - 2026-04-20
+
+### Added
+- **One-shot migration: backfill WC `date_paid` on historical fee orders** (`migrate_backfill_receipt_date_paid_3_16_12()`). Walks every WC order flagged `_kdc_qtap_finance_admin_recorded = yes`, finds its linked finance transaction (via the explicit `_kdc_qtap_finance_transaction_id` order meta, falling back to reverse lookup on `wc_order_id`), compares the order's `date_paid` day-precision to the transaction's `payment_date`, and updates + saves when they differ. Pairs with the v3.16.11 forward-path fix so existing receipts generated before the fix (which showed today as the Payment Date) regenerate with the correct date on next render. Idempotent: already-matching rows skip silently. Gated by `kdc_qtap_finance_backfill_receipt_date_paid_3_16_12_done`. Wrapped in try/catch with debug log on failure.
+- **"Full Tenure" line item title** for fee orders that cover a user's entire regular academic-year payment set.
+  - New public helper **`KDC_qTap_Finance_WooCommerce::apply_full_tenure_retitle( $order )`** — groups the order's line items by `(user_id, academic_year)` via their `_kdc_qtap_finance_payment_id` meta, compares the covered Payment ids against all regular (non-custom, non-user-fee, non-bracket, non-inactive) Payment rows for that user+year, and renames the line items to `"{Fees} - Full Tenure - {grade} [{year}]"` when every regular payment is represented. No-op when partial / mixed. Returns the number of items renamed.
+  - Called from both `create_fee_order()` and `create_multi_fee_order()` after `$order->save()` so new full-tenure payments render cleanly.
+- **One-shot migration: backfill Full Tenure titles on historical fee orders** (`migrate_backfill_full_tenure_titles_3_16_12()`). Iterates all `_kdc_qtap_finance_is_fee_payment = yes` orders and calls the helper. Idempotent. Gated by `kdc_qtap_finance_backfill_full_tenure_titles_3_16_12_done`. Wrapped in try/catch.
+
+### Files changed
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — two new migration blocks + two new `migrate_backfill_*_3_16_12()` methods.
+- [includes/traits/trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) — new `apply_full_tenure_retitle()` helper + wire-up in `create_fee_order()` and `create_multi_fee_order()`.
+
 ## [3.16.11] - 2026-04-20
 
 ### Fixed

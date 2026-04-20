@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.3] - 2026-04-20
+
+### Changed
+- **Transactions CSV import: auto-append `WC Order #<number>` to transaction notes when a WC order is generated.** Mirrors the existing behaviour of `ajax_record_payment()` — the order number (honours any prefix/sequential plugin, not just the raw post ID) is joined onto the user-provided `notes` with ` | ` so audit trails look identical whether a payment was recorded via the Record Payment modal or a bulk CSV import. Transactions imported with `wc_order=no` (or `false` / `0`) are unaffected. Historical rows imported before this version are *not* backfilled.
+
+### Files changed
+- [trait-kdc-qtap-finance-import-csv-processors.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-import-csv-processors.php) — `import_transactions_csv()` now appends the WC Order note bit between order creation and the `record_transaction()` call.
+
 ## [3.16.2] - 2026-04-19
 
 ### Added

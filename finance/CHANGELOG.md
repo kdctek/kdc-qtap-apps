@@ -2,6 +2,15 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.7] - 2026-04-20
+
+### Fixed (hotfix for 3.16.6)
+- **Critical error on upgrade to 3.16.6.** The new `migrate_backfill_grade_custom_fees_3_16_6()` migration instantiated the enrollment helper via `new KDC_qTap_Finance_Enrollment()`, but that class is a singleton with a `private __construct()` — PHP threw `Cannot access private KDC_qTap_Finance_Enrollment::__construct()` during `maybe_upgrade()`. Because `maybe_upgrade()` runs inside `init_components()` early in the admin bootstrap, the fatal blocked every admin page load. And because the migration had no try/catch and `update_option('…_done', …)` is only called after success, the fatal re-fired on every retry — the site was stuck until downgraded.
+- Fix: switched to `KDC_qTap_Finance_Enrollment::get_instance()`, wrapped the migration call in a `try { … } catch ( Throwable $e ) { debug_log; }` so a future partial failure can't brick the admin, and bumped the "done" option key to `kdc_qtap_finance_backfill_custom_fees_3_16_7_done` so sites that already upgraded to 3.16.6 pick up the fix and re-run the backfill automatically.
+
+### Files changed
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — `migrate_backfill_grade_custom_fees_3_16_6()` uses `get_instance()` instead of `new`; migration invocation wrapped in try/catch; version-gate and done-option renamed to `3_16_7`.
+
 ## [3.16.6] - 2026-04-20
 
 ### Fixed

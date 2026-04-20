@@ -2,6 +2,47 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.14.0] - 2026-04-16
+
+### Removed
+- **WC Admin Orders enhancements moved to parent plugin kdc-qtap v2.7.0**: "By" column, Transaction ID column, Created Via filter, bulk Copy Transaction IDs. These features are not mobile-specific and now ship with the parent plugin so every WC-enabled site benefits from them
+- Stripped ~540 lines (17 methods + hook registrations) from `class-kdc-qtap-mobile-woocommerce-integration.php`
+
+### Migration Notes
+- **Requires kdc-qtap v2.7.0+** for the moved features to be available. Upgrade the parent plugin BEFORE upgrading mobile to avoid a transient gap in the Orders UI
+- Parent uses new column keys (`kdc_qtap_order_by`, `kdc_qtap_order_txn_id`) and filter param (`qtap_order_source`) — no collision with older mobile versions
+
+## [2.13.11] - 2026-04-16
+
+### Added
+- **Transaction ID column** in WC admin Orders table (HPOS + legacy) with click-to-copy. Single click copies txn ID; double-click copies `Order #N | Transaction: TXN`; Enter/Space on focus also copies; toast confirmation
+- **Created Via filter dropdown** above the orders list: All / Checkout / Admin / WCPOS / WhatsApp / REST API. Filters orders via `meta_query` matching `_created_via` and related WhatsApp markers (both meta key variants plus WA gateway meta)
+- **Bulk action: Copy Transaction IDs** — copies selected orders' txn IDs (one per line, `Order #N | TXN`) to clipboard
+
+## [2.13.10] - 2026-04-16
+
+### Changed
+- "By" column WhatsApp detection: REST-API orders with custom `created_via` meta_data entry valued "whatsapp" / "wa-bot" now show the WhatsApp SVG (green), falling back to REST API icon (grey) otherwise
+- Iterates `$order->get_meta_data()` directly to reliably catch custom meta entries that collide with built-in field names
+
+## [2.13.9] - 2026-04-16
+
+### Changed
+- WC Orders column renamed from "Via" to "By"
+- Rewrote detection logic with first-match-wins priority: WCPOS → WhatsApp → Admin → Checkout → REST API
+- Distinct icons per source: Checkout (cart, blue), Admin (admin-users, gray), WCPOS (store, purple), WhatsApp (inline SVG logo, green)
+- Empty `created_via` now correctly detected as Admin (matches WC's default behavior for wp-admin orders)
+- WhatsApp uses an inline WhatsApp SVG logo (dashicons has no WhatsApp icon)
+
+## [2.13.8] - 2026-04-16
+
+### Added
+- **"Via" column in WC admin Orders table** (HPOS + legacy CPT) — narrow column (2.2em, ~checkbox width) inserted right after the checkbox; renders a dashicon keyed off `$order->get_created_via()` with the raw value as a tooltip:
+  - **POS** (purple cart): canonical detection via `_woocommerce_pos_uuid` meta + `created_via` stripos for `pos` + meta-key regex scan for `(^|_)(wc)?pos(_|$)` / `cashier` (covers wcpos and other POS plugin variants)
+  - **WhatsApp** (green chat icon): `created_via` stripos for `whatsapp` / `wa-bot` + `_whatsapp_order` / `_kdc_qtap_whatsapp_order` / `_wa_order_id` meta
+  - **Checkout / store-api** (blue cart), **Admin** (users icon), **REST** (rest icon), **Unknown** (dash)
+- Width clamped via `admin_head` inline CSS scoped to the orders screen only via `get_current_screen()` — uses `!important` to win over any other plugin's column width rules.
+
 ## [2.13.7] - 2026-04-14
 
 ### Changed

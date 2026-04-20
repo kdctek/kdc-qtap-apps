@@ -2,6 +2,119 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.2] - 2026-04-19
+
+### Added
+- **Transactions CSV import: optional `payee_name` column.** Name of the person who made the payment. When supplied, the importer updates the user's `billing_first_name` user meta before the WC order is created and also sets `billing_first_name` on the order itself — mirroring the behaviour of the admin Record Payment modal so WCPDF receipts and the orders table consistently reflect the payer.
+- **Transactions CSV import: optional `receipt_url` column.** External URL pointing to a receipt image / PDF. The importer downloads the file via `wp_safe_remote_get()` (HTTPS, 20 s timeout, 5 redirects), enforces the same validation as the Record Payment upload path (JPG / PNG / GIF / WebP / PDF, ≤ 2 MB), saves it into the plugin receipts folder using the canonical `receipt-<payment_id>-<user_id>-<hash>.<ext>` filename, and patches the resulting filename onto the freshly-created transaction row via `receipt_file`. From there the existing `/receipt/<id>` rewrite + fees endpoint serves it exactly like receipts uploaded through the UI.
+- **Alias-based auto-mapping** for the two new columns — `payee_name` matches `payee / paid_by / payer / payer_name`; `receipt_url` matches `receipt / receipt_image / source_url / image_url`.
+- **Non-fatal receipt failures.** A URL that returns non-2xx, empty body, oversize content, or an unsupported MIME type logs a row-level warning and the transaction is still recorded. This avoids losing legitimate payment data when a staff member supplies a broken receipt link.
+
+### Files changed
+- [trait-kdc-qtap-finance-import-csv-targets.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-import-csv-targets.php) — two new optional fields in `get_transactions_import_fields()`.
+- [trait-kdc-qtap-finance-import-csv-processors.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-import-csv-processors.php) — new private `download_receipt_from_url()` helper; `import_transactions_csv()` parses payee_name / receipt_url, updates user meta, applies billing name to WC order, and patches `receipt_file` alongside `reference` on the transaction row.
+
+## [3.16.1] - 2026-04-18
+
+### Fixed
+- **Transactions CSV import now reports "Updated" in job stats.** The v3.16.0 importer increments `success` (imported) and `skipped` (duplicates) but never `updated`, so the parent plugin's Jobs > Import stats summary showed `0 Updated` even when every row successfully bumped a Payment row's `amount_paid` via `record_transaction()`. The importer now emits `updated++` alongside `success++` on each successful row — so a 100-row CSV that processes cleanly shows `100 imported, 100 updated` (reflecting 100 new transaction records + 100 Payment rows affected).
+
+### Files changed
+- [trait-kdc-qtap-finance-import-csv-processors.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-import-csv-processors.php) — `import_transactions_csv()` initialises `'updated' => 0` and increments after each successful `record_transaction()`.
+
+## [3.16.0] - 2026-04-19
+
+### Changed (breaking for legacy CSV format)
+- **Fee Transactions CSV import rewritten around the trickle engine.** The old importer expected one CSV row per term/slab split and used raw `$wpdb->insert` + `UPDATE payments SET amount_paid = amount_paid + X` statements — bypassing `Payment::record_transaction()` entirely (so: no cap at `amount_due`, no overflow trickle, no credit consumption, no payment-item waterfall allocation, no audit styling). New format: **one CSV row per real payment event**. Routes every row through `Payment::record_transaction()` so a single ₹2,00,000 RTGS entry automatically pays term 1, carries the excess into term 2 as a `Carry Forward` row, and honours all the downstream audit/display rules.
+
+### Added
+- **`kdc_qtap_finance_parse_flexible_date()`** helper — accepts `YYYY-MM-DD`, `DD-MM-YYYY`, `MM-DD-YYYY` with `-`, `/`, `.`, or space separators; disambiguates via site-wide option `kdc_qtap_finance_date_order_preference` (`dmy` default / `mdy`); strtotime fallback handles named-month variants (e.g. `21-Jul-2025`). Returns canonical `Y-m-d` or `null`.
+- **Flexible user resolution** in the Transactions importer — any one of `user_id`, `user_login`, or `user_email` (first non-empty wins). Rows missing all three are rejected with "No valid user identifier".
+- **Auto-anchor** — when `slab` is empty, the importer picks the earliest pending regular payment for `user + year` (excludes `_custom_*`, `[…]`, `_user_fee_*` slabs; orders by `due_date ASC, id ASC`). Optional `start_slab` / `slab` columns override when staff want to target a specific term or custom bucket.
+- **`wc_order` column** (default `true`) — accepts truthy (`1`, `true`, `yes`, `y`, `t`) / falsy (`0`, `false`, `no`, `n`, `f`). When `true`, the importer creates a completed WC order before `record_transaction()` runs (same ordering as admin Record Payment). When `false`, only the transaction + trickle runs — for historical back-fills.
+- **Alias-based reference column** — row honours `reference`, `utr`, or `transaction_id` (first non-empty); stored on the freshly-created transaction row via a follow-up `KDC_qTap_Finance_Payment_Transaction::update()`.
+- **Dedupe on re-import** — when the `skip_duplicates` option is on, a transaction matching `(user_id + payment_date + amount + reference)` across all payments is skipped with *"Duplicate already imported"*. Lets staff safely re-run the same CSV.
+- **Stricter validation** — invalid `payment_method` (not in `get_all_payment_methods()`), unparseable `payment_date`, amount ≤ 0, empty year all reject with per-row error logs that pinpoint row number + cause.
+
+### Files changed
+- [kdc-qtap-finance-helper-functions.php](kdc-qtap-finance/includes/kdc-qtap-finance-helper-functions.php) — new `kdc_qtap_finance_parse_flexible_date()`.
+- [trait-kdc-qtap-finance-import-csv-processors.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-import-csv-processors.php) — `import_transactions_csv()` fully rewritten; raw DB inserts + manual `amount_paid` bumping removed; routes through `Payment::record_transaction()`.
+- [trait-kdc-qtap-finance-import-csv-targets.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-import-csv-targets.php) — `get_transactions_import_fields()` updated with the new 11-field schema (user_id/login/email, year, amount, date, method, method_title, reference, slab, wc_order, notes); description clarified that allocation is automatic via trickle.
+
+### Migration notes
+No database migration needed — the schema didn't change. Existing sample CSVs with the old per-term-slab format will no longer import cleanly; regenerate them using the per-event format. Staff can re-import historical CSVs with the new format and the trickle flow will produce correct term-by-term allocation plus `Carry Forward` audit rows.
+
+## [3.15.53] - 2026-04-19
+
+### Changed
+- **Record Payment success alert gated on carry-forward.** Previously any successful save triggered the native `alert()` with the server's breakdown — noisy for regular/partial payments where the message was just *"Payment recorded — ₹X applied to this term."* Now `ajax_record_payment()` returns a `has_carry_forward` boolean in the success payload; JS only alerts when that flag is `true`. Plain saves stay silent (the page reload is signal enough).
+
+## [3.15.52] - 2026-04-19
+
+### Fixed
+- **Live overflow notice never appeared** in the Record Payment modal — the JS in v3.15.51 targeted `#kdc-qtap-finance-payment-overflow-notice` but that DIV was never added to the modal template. Added it right below the Amount input with a yellow-outlined warning style so the admin sees: *"₹X will settle this term. ₹Y will be carried forward to the next pending term (or parked as credit if none)."* as soon as they type an amount above the term's balance.
+
+## [3.15.51] - 2026-04-19
+
+### Changed
+- **Trickle transactions now use method `credit`, not the source method.** Previously the downstream (carry-forward) row inherited the source payment's method (e.g. RTGS) — that was accounting-incorrect because term 2 wasn't actually paid by RTGS, it was settled by overflow. `trickle_excess_forward()` now calls `record_transaction()` with `$payment_method = 'credit'` and a synthesised `payment_method_title` *"Carry Forward (from RTGS)"* so the display remains readable while the underlying method key is correct.
+- **Carry-forward rows visually flagged** in the user-profile Payment History: amount coloured grey + italic, prefixed with `↪` arrow, with tooltip *"Internal allocation from a prior payment — not a new receipt"*. Signals clearly that summing the column would double-count: the actual money came in on the source row.
+
+### Added
+- **Pre-submit overflow preview** — typing above the term's balance in the Record Payment modal shows a live note below the field: *"₹X will settle this term. ₹Y will be carried forward to the next pending term (or parked as credit if none)."* Uses the `data-term-balance` attribute stashed when the Record Payment button is clicked.
+- **Post-submit split alert** — on success the admin sees a native alert with the server's breakdown (e.g. *"Payment recorded — ₹3,36,050 applied to this term, ₹38,950 carried forward to the next term."*) before `safeReload()` refreshes the profile.
+
+## [3.15.50] - 2026-04-19
+
+### Changed
+- **Trickle + auto-credit transactions now inherit the source payment's date.** Previously the recursive trickle transactions and the credit-auto-apply sub-transaction both used `current_time( 'mysql' )`, which caused the "next term" row to appear dated on admin action day (e.g. 2026-04-19) instead of the actual payment date (e.g. 2025-07-21). `Payment::record_transaction()` now threads `payment_date` / `transaction_date` into the credit sub-transaction via `$extras`, and `trickle_excess_forward()` already propagates `$extras` recursively so every downstream trickle row reflects the real date the user paid.
+- **Overpayment migration (`migrate_overpayment_trickle_3_15_49`)** now looks up each overpaid source payment's most recent transaction and passes its `payment_date` as `$extras` to `trickle_excess_from_payment()`. Re-runnable via a new `kdc_qtap_finance_overpayment_trickle_dated_done` gate so existing reconciled rows get their dates corrected on upgrade.
+
+### Added
+- **`Credit` payment method in Record Payment dropdown.** New built-in method added to `KDC_qTap_Finance_Database::get_all_payment_methods()`. When admin selects `Credit`, `ajax_record_payment()` validates the user has enough parked credit (`kdc_qtap_finance_get_user_credit`), consumes it via `kdc_qtap_finance_consume_user_credit()` **before** calling `record_transaction()`. Because the payment method is `'credit'`, the `record_transaction()` auto-credit branch is skipped — preventing double-consumption. The split message on success reports exactly what happened.
+
+## [3.15.49] - 2026-04-19
+
+### Fixed
+- **Admin Record Payment bypassed trickle + credit** — `ajax_record_payment()` in `trait-kdc-qtap-finance-user-meta-payments.php` was manually incrementing `amount_paid` and writing its own transaction row. An admin entering ₹2,00,000 on a term with ₹1,61,050 remaining balance left the row at `amount_paid = 3,75,000 > amount_due = 3,36,050` and never propagated the ₹38,950 surplus. Now routes through `Payment::record_transaction()` — caps the row, auto-consumes available credit, and trickles any overflow to the next pending regular term (falls back to user credit only if no pending rows remain). The immediate transaction row is still patched with `receipt_file`, `reference`, `transaction_type`, `recorded_by` (fields `record_transaction()` doesn't accept directly).
+- **Success message now explains the split** — the admin sees e.g. *"Payment recorded — ₹3,36,050 applied to this term, ₹38,950 carried forward to the next term."* Computed by comparing pre- and post-call user credit balance against the amount that exceeded the term's remaining due.
+
+### Added
+- **`migrate_overpayment_trickle_3_15_49()`** — one-time upgrade task that scans every regular payment with `amount_paid > amount_due`, caps it at the due amount (flips status to `paid`), and calls `Payment::trickle_excess_from_payment()` to push the surplus into the next pending term (or park as credit if nothing pending). Gated once by option `kdc_qtap_finance_overpayment_trickle_done`. Handles rows created by pre-3.15.49 admin Record Payment where the gate in `migrate_reclaim_legacy_overpayments_3_15_43` had already been set before those rows became overpaid.
+
+## [3.15.48] - 2026-04-19
+
+### Fixed
+- **Legacy-overpayment credit never trickled forward** — the v3.15.43 backfill capped overpaid term rows and parked the surplus as user credit, but never moved the credit into the next pending term. That left a term-1 row showing `amount_paid > amount_due` on-screen and a term-2 row underpaid, and any receipt generated from the original transaction still attributed the full amount to term 1.
+- New one-time migration `migrate_trickle_user_credits_3_15_48()` walks every user with `kdc_qtap_finance_credit > 0`, finds their pending regular payments in due-date order, consumes credit against each until exhausted, updates `amount_paid`/`status`, and writes a `credit` transaction row on each recipient term with the note *"Legacy credit trickled forward from prior overpayment"*. Gated once by option `kdc_qtap_finance_credit_trickle_done`.
+
+## [3.15.47] - 2026-04-19
+
+### Removed
+- **Excess column** from Report — since v3.15.28, `record_transaction()` guarantees `amount_paid ≤ amount_due` via trickle + credit, so Excess is always 0. Credit column now replaces it end-to-end. Dropped:
+  - `excess` column entry in `report_build_columns()`
+  - `$row['excess']` in `report_build_user_row()` and the Summary `aggregateRows`
+  - `row.excess` computation in `adjustTotals` and the Summary aggregator
+  - `kdc-col-excess` / `kdc-amount-excess` CSS rules + `createdRow` red-highlight branch
+  - `'excess'` from `numericTypes` footer-sum set and the render-type switch
+  - `excess` i18n string in `class-kdc-qtap-finance-admin.php`
+
+### Fixed
+- **Credit column alignment** — added `td.kdc-col-credit` to the right-align + monospace rule set so values line up with other amount columns. Applied green colour (`#00632a`) to distinguish from red Balance.
+
+## [3.15.46] - 2026-04-19
+
+### Fixed
+- **Report Credit column** now renders through `amountRender` so values appear with the configured currency symbol (₹) and Indian-lakh formatting, matching every other numeric column. Previously showed raw numbers.
+
+### Removed
+- **Excess Payments tab** — dropped the dedicated tab, the `#kdc-report-pane-excess` + `#kdc-report-dt-excess` markup, the `renderExcessPayments()` renderer, its call from `render()`, and the `excessPayments` / `excessDesc` / `noExcess` i18n strings in `class-kdc-qtap-finance-admin.php`. Excess values are still present per-row in the main Report (last column before Credit); staff who need an excess-only view can filter/sort that column.
+
+## [3.15.45] - 2026-04-18
+
+### Changed
+- Maintenance patch — re-publishes v3.15.44 Credit visibility changes (Fees-block notice + Report Credit column) as a clean stable tag.
+
 ## [3.15.44] - 2026-04-18
 
 ### Added

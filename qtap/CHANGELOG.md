@@ -2,6 +2,29 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.4] - 2026-04-20
+
+### Fixed
+- **Jobs "Updated" counter leaked to the top of the page as an admin notice.** The stats-square markup used `class="counter-value updated"`. The raw word `updated` is a legacy WordPress admin-notice class (alongside `.notice` / `.error`) — `wp-admin/js/common.js` auto-relocates any such element up to just after `.wp-header-end`, yanking the counter out of its card. Renamed to `.is-updated` (PHP + CSS) so the number renders inside the Updated square next to Imported / Skipped / Errors.
+- **Job timestamps shifted by the site's timezone offset.** `created_at` / `completed_at` are stored via `current_time('mysql')` which returns site-local time. The template was running `wp_date( $fmt, strtotime( $date ) )` — but `strtotime()` interprets a timezone-less string in PHP's default TZ (UTC under WordPress), so the epoch was off by the site offset, and `wp_date()` then added the offset again. Result on an IST site: 07:52 displayed as 13:22. Switched display calls to `mysql2date()` and elapsed-time math to `(int) mysql2date( 'U', $job->created_at )`.
+
+### Changed
+- **All Jobs screen date/time formatting now honours the site settings.** Replaced hard-coded `'M j, Y g:i:s a'` / `'g:i:s a'` with `get_option( 'date_format' )` and `get_option( 'time_format' )` in the jobs list, job detail header (Started / Completed), timing info (Estimated completion / Next auto-process), and the AJAX status response.
+
+### Files changed
+- [trait-kdc-qtap-admin-jobs.php](includes/trait-kdc-qtap-admin-jobs.php) — CSS + markup class rename; `strtotime → mysql2date` for 2 display sites (job detail + list), 2 math sites (job detail + AJAX endpoint); all 7 formatter calls now read `get_option('date_format') / get_option('time_format')`.
+
+## [2.7.3] - 2026-04-16
+
+### Added
+- **`kdc_qtap_lucide( $name, $attrs )` helper** in [kdc-qtap-frontend-helpers.php](includes/kdc-qtap-frontend-helpers.php) — central Lucide icon renderer for the entire qTap ecosystem. Returns inline SVG with `currentColor` stroke. 26 icons built-in (graduation-cap, coins, clock, receipt, shopping-cart, eye, etc.). Child plugins should call `kdc_qtap_lucide()` instead of maintaining their own icon maps.
+- **`kdc_qtap_lucide_icons` filter** — child plugins can append additional icons without patching the parent: `add_filter( 'kdc_qtap_lucide_icons', fn($icons) => array_merge($icons, ['my-icon' => '<path .../>']) )`.
+
+## [2.7.2] - 2026-04-16
+
+### Changed
+- **WC admin Orders — Transaction ID column** renders as an external link to the Zaakpay status-lookup webhook (`https://flow.ed.vu/webhook/zaakpay/?oid={order_id}&tnxid={transaction_id}`) when the order's payment method is `zpay` (or contains `zaakpay`). All other orders keep the existing click-to-copy behaviour. New `.kdc-qtap-order-txn-zpay` class on the anchor for optional targeting.
+
 ## [2.7.1] - 2026-04-16
 
 ### Changed

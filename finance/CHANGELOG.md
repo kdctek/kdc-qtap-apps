@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.8] - 2026-04-20
+
+### Fixed
+- **RTE enrollments didn't show the RTE badge, RTE metadata, or RTE state in the edit dialog.** `KDC_qTap_Finance_Enrollment::save()` writes the RTE flag under the `exempt` key, but three spots in the enrollment-card render (`trait-kdc-qtap-finance-user-meta-rendering.php`) and two in the enrollment-edit dialog (`trait-kdc-qtap-finance-user-meta-enrollments.php`) were still reading only the legacy `is_rte` key. Result: a student saved as RTE rendered with no RTE badge in the header, `RTE: —` in the metadata row, and the edit button's `data-rte="0"` — so reopening the dialog cleared the checkbox. Visible symptom on the screenshot: RTE-exempt payments showed `Exempt (RTE)` status correctly (that path reads the payment row directly), while the enrollment card reported RTE as empty.
+- Fix: every reader now accepts either key via `! empty( $enrollment['exempt'] ) || ! empty( $enrollment['is_rte'] )`, matching the same fallback pattern already used by the rest of the codebase (save path, export, block editor, REST, CSV import, admin enrollments tab). Legacy data on `is_rte` keeps working; new data on `exempt` now renders correctly.
+
+### Files changed
+- [trait-kdc-qtap-finance-user-meta-rendering.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php) — RTE badge (line 693), edit button `data-rte` (line 713), RTE metadata cell (line 747) all now read both keys via a single `$is_rte_enrollment` local at card render time.
+- [trait-kdc-qtap-finance-user-meta-enrollments.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-enrollments.php) — two read sites (preserve-on-save fallback at line 59, edit-dialog initial state at line 183) now fall back to either key.
+
 ## [3.16.7] - 2026-04-20
 
 ### Fixed (hotfix for 3.16.6)

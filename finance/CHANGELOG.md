@@ -2,6 +2,18 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.21] - 2026-04-21
+
+### Added
+- **New bulk action: "qTap: Regenerate WCPDF receipt (purge cache)"** on the WC Orders list (HPOS + legacy CPT). For each selected order:
+  - Calls `wcpdf_get_document( 'receipt', $order, true )` (falls back to `invoice` if the receipt doc type isn't configured) so a WCPDF document number is guaranteed to be assigned.
+  - Iterates the WCPDF-Pro file-cache meta keys (`_wcpdf_receipt_file`, `_wcpdf_invoice_file`), removes any on-disk PDF the path points at, and deletes the meta. Next email / next receipt view re-renders from current order data — picks up any breakup recompute, date_paid fix, payee change, etc. that happened since the cached file was generated.
+  - Emits an admin notice with regenerated / purged / skipped counts.
+  - No-op with a warning notice if WCPDF isn't active.
+
+### Files changed
+- [includes/class-kdc-qtap-finance-wc-orders-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-wc-orders-admin.php) — `register_bulk_recompute_action()` exposes the new action; `handle_bulk_recompute_action()` gains the regenerate branch; `bulk_recompute_notice()` renders the new notice variant.
+
 ## [3.16.20] - 2026-04-21
 
 ### Added

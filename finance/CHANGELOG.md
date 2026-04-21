@@ -2,6 +2,22 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.22] - 2026-04-21
+
+### Fixed
+- **Stray breakup rows on the receipt (sub-total didn't match line total).** `apply_allocation_breakup()`'s strip-before-write pass only removed public line-item meta whose KEY matched a new row's slab label. Any slab label the current rewrite no longer produces — e.g. a prior rewrite stamped a `Term Fee` row but this payment only contributed to `Tuition Fee` items — survived as a stale row with an outdated amount. The sub-total of the breakup rows then diverged from the order total (ticket: Fees 2nd Term showed `Term Fee ₹14,990 + Tuition Fee ₹5,721 + Tuition Fee ₹14,279 = ₹34,990` on a ₹20,000 line). **Fix**: the strip is now format-aware. Any public meta whose VALUE contains the breakup-row pattern (` @ `, matching both `Month-Year @ ₹x` and `Period-to-Period @ ₹x`) is deleted before the new rows are written. Slab-label-matching is kept as a secondary guard for the currency-only shape. Neither pattern collides with the other public meta the plugin stamps on fee line items (student / year / grade / fee category — all plain strings).
+- **`payment_date` order meta wasn't being written by admin Record Payment or CSV Transactions import.** The WCPDF receipt hook was redesigned in v3.16.17 to be meta-first — reading `payment_date` directly as the canonical source for the Payment Date row and syncing `date_paid` from it. But the two internal flows that already had the payment_date in hand only called `set_date_paid()`, never wrote the meta. Result: the hook fell back to date_paid-only, and downstream consumers of the meta (the `wcpdf_*_file` cache check, the Student Assignment metabox, any custom reports) saw an empty value. **Fix**: both flows now stamp `update_meta_data('payment_date', $payment_date)` alongside `set_date_paid()`. The shared helper `sync_receipt_metas_from_transaction()` (used by gateway checkout completion + offline-verify) also writes the meta from the transaction's `payment_date` so every path populates it consistently.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) — `apply_allocation_breakup()` format-aware strip.
+- [includes/traits/trait-kdc-qtap-finance-wc-helpers.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-helpers.php) — `sync_receipt_metas_from_transaction()` also writes `payment_date` meta.
+- [includes/traits/trait-kdc-qtap-finance-user-meta-payments.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-payments.php) — admin Record Payment stamps `payment_date` meta.
+- [includes/traits/trait-kdc-qtap-finance-import-csv-processors.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-import-csv-processors.php) — CSV import stamps `payment_date` meta.
+
+### Post-upgrade cleanup
+- For orders that still carry stray breakup rows from before this release, hit **Recompute Breakup** on the Student Assignment metabox, or run the bulk action **qTap: Recompute receipt breakup** on the WC Orders list. The first rewrite with v3.16.22 code does a clean sweep.
+- For orders that should have `payment_date` meta set but don't, run the **Rebuild All** button on the Credits tab. That re-runs the v3.16.13 backfill which flows through `sync_receipt_metas_from_transaction()` and populates the meta from the linked transaction.
+
 ## [3.16.21] - 2026-04-21
 
 ### Added

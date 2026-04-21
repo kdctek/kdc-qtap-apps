@@ -2,6 +2,28 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.19] - 2026-04-21
+
+### Added
+- **Canonical `_kdc_qtap_finance_payee_name` order meta** populated by every order-creation flow, with the value mirrored into `billing_first_name` so the WCPDF receipt header and admin Orders UI render the real payer. Falls back to the student name when no payee was captured.
+- **New shared helper `KDC_qTap_Finance_WooCommerce::apply_payee_name_to_order( $order, $payee_name, $student_name_fallback )`** in [trait-kdc-qtap-finance-wc-helpers.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-helpers.php). Stamps the payee meta when a non-empty value is provided, resolves `billing_first_name` as `payee_name → student_name_fallback`, and never saves the order itself so the write batches with the caller's other changes.
+- **Wire-up in 5 flows**:
+  - Admin Record Payment (`ajax_record_payment`) — routes the modal's `payee_name` field through the helper.
+  - CSV Transactions import (`import_transactions_csv`) — the CSV `payee_name` column now stamps the meta too (previously only set `billing_first_name`).
+  - Gateway checkout completion (`process_completed_order`) — seeds the payee meta from the checkout's billing first name when the meta isn't already set, so online-paid orders carry a payee for later edit + receipt regeneration.
+  - Student Assignment metabox — new "Payee Name" input in the edit panel, shown in the read-only view too when it differs from the student name.
+  - Metabox AJAX handler (`ajax_order_assign_student`) — accepts a `payee_name` param and pipes it through the helper.
+- **Backfill migration `migrate_backfill_payee_name_3_16_19()`** — stamps `_kdc_qtap_finance_payee_name` on every `_kdc_qtap_finance_is_fee_payment = yes` order that doesn't already have it, seeding from the order's existing `billing_first_name`. Idempotent, gated by `kdc_qtap_finance_backfill_payee_name_3_16_19_done`, wrapped in try/catch per the v3.16.7 lesson.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-wc-helpers.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-helpers.php) — new `apply_payee_name_to_order()` helper.
+- [includes/traits/trait-kdc-qtap-finance-user-meta-payments.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-payments.php) — `ajax_record_payment()` replaces its inline billing-first-name set with the helper.
+- [includes/traits/trait-kdc-qtap-finance-import-csv-processors.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-import-csv-processors.php) — CSV import routes through the helper.
+- [includes/traits/trait-kdc-qtap-finance-wc-status.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-status.php) — `process_completed_order()` seeds the meta from billing_first_name when missing.
+- [includes/traits/trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) — doc comments on `create_fee_order()` / `create_multi_fee_order()` clarify the billing-first-name / payee relationship.
+- [includes/class-kdc-qtap-finance-wc-orders-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-wc-orders-admin.php) — metabox renders + persists `payee_name`.
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — new `migrate_backfill_payee_name_3_16_19()` method + version-gated migration block.
+
 ## [3.16.18] - 2026-04-21
 
 ### Added

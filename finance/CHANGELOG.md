@@ -2,6 +2,15 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.18] - 2026-04-21
+
+### Added
+- **"Custom" enrollment option** on the WC Order admin Student Assignment metabox. After picking a student, the Enrollment Year dropdown now always has a final entry "Custom (this order only)". Selecting it reveals three inputs — Custom Year (required), Custom Grade, Custom Division — that persist as the order's canonical `_kdc_qtap_finance_{academic_year, grade, division}` meta for that order only. The values are **not** written back to the user's enrollment records, so a one-off POS sale or a manually-mapped gateway order can carry year/grade/division context on its WCPDF receipt without affecting finance data.
+- The audit order note tags custom-path assignments with `[custom / order-only]` so the order history makes the distinction visible.
+
+### Files changed
+- [includes/class-kdc-qtap-finance-wc-orders-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-wc-orders-admin.php) — metabox HTML adds a conditional custom-fields panel; inline JS appends a `__custom__` sentinel option, toggles the panel on change, and sends `custom` + `custom_grade` + `custom_division` in the save payload when active; `ajax_order_assign_student()` handles the `custom` branch (requires year, skips enrollment lookup, uses the typed grade/division directly) and tags the audit note.
+
 ## [3.16.17] - 2026-04-21
 
 ### Fixed

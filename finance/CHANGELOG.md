@@ -2,6 +2,27 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.20] - 2026-04-21
+
+### Added
+- **On-demand "recompute receipt breakup" action across three surfaces**, all wired through a shared per-order helper so the behaviour is identical everywhere:
+  - **Per-order**: new **"Recompute Breakup"** button on the WC Order edit screen's *qTap: Student Assignment* metabox. Confirms, AJAX-calls the recompute, shows success (`N line item(s) rewritten`) or error inline, and adds an audit order note documenting who hit the button and how many items were touched.
+  - **Group**: new **"qTap: Recompute receipt breakup"** bulk action on the WC Orders list (HPOS + legacy CPT). Select orders → apply → admin notice reports touched / skipped counts.
+  - **Global**: new **"Rebuild All"** button on *Finance > Credits* tab. Re-runs the v3.16.13 waterfall migration across every fee order (after clearing its done-flag so it executes again), writes results back to the audit meta with source `backfill`.
+- **New shared helper `KDC_qTap_Finance_WooCommerce::recompute_order_allocation_breakup( $order, $source = 'manual' )`** in [trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php). Factored out of the v3.16.13 migration's inline simulation so all three entry points reuse it verbatim. Unlike the migration it does NOT skip orders whose `breakup_source` is already `event` — by the time the admin hits a recompute button they've decided the current breakup is wrong, so we override. The source tag passed in (`manual` / `bulk` / `rebuild-all` / `backfill`) is written to the audit meta.
+- **New AJAX handlers** in [class-kdc-qtap-finance-wc-orders-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-wc-orders-admin.php):
+  - `kdc_qtap_finance_order_recompute_breakup` — single-order (metabox button). Capability: `edit_shop_orders` / `manage_woocommerce`. Nonce: order-scoped. Adds an order note.
+  - `kdc_qtap_finance_rebuild_all_breakups` — global (Credits tab button). Capability: `manage_options`. Nonce: `kdc_qtap_finance_rebuild_all_breakups`. Resets the v3.16.13 done-flag and re-invokes the migration.
+- **New bulk-action plumbing** — `register_bulk_recompute_action()` + `handle_bulk_recompute_action()` + `bulk_recompute_notice()` cover both HPOS (`bulk_actions-woocommerce_page_wc-orders`, `handle_bulk_actions-woocommerce_page_wc-orders`) and legacy CPT (`bulk_actions-edit-shop_order`, `handle_bulk_actions-edit-shop_order`).
+
+### Use cases
+Admins now have a UI for the three scenarios that used to need DB edits: (a) manual transaction edits / deletions on a specific order, (b) reconciling a group of orders after an import cleanup, (c) plugin-wide sanity rebuild after any upstream data change.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) — new `recompute_order_allocation_breakup()` helper.
+- [includes/class-kdc-qtap-finance-wc-orders-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-wc-orders-admin.php) — metabox button + JS, two new AJAX handlers, bulk action registration + handler + notice, new i18n strings.
+- [includes/traits/trait-kdc-qtap-finance-admin-tab-credits.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-credits.php) — new "Rebuild All" summary card + JS handler.
+
 ## [3.16.19] - 2026-04-21
 
 ### Added

@@ -2,6 +2,29 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.47] - 2026-04-22
+
+### Fixed
+- **Report tab DataTables "Total" footer row was blank for every numeric column.** The column-builder at [kdc-qtap-finance-report.js:743-752](kdc-qtap-finance/assets/js/kdc-qtap-finance-report.js#L743) created `dtColumns` entries with `title` / `data` / `className` / optional `render` — but never propagated the server-side `col.type` ("collection" / "received" / "balance" / etc.) onto the DT column object. The `footerCallback` at [kdc-qtap-finance-report.js:813-850](kdc-qtap-finance/assets/js/kdc-qtap-finance-report.js#L813) then checked `numericTypes[ col.type ]` — which was always `undefined` because the property didn't exist — so every numeric cell fell through to the empty-string branch. **Fix**: column type now carries through via a custom `_kdcType` key (DT's own `type` option is reserved for sort-type hints — setting it to domain labels like "collection" confuses the sort algorithm). Footer reads `col._kdcType` and sums correctly. Both the original `tfoot` row and the `.dataTables_scrollFootInner` clone get written.
+
+### Added
+- **New setting "Auto-apply User Credit"** on the Finance → Institute settings tab. Toggles whether `KDC_qTap_Finance_Payment::record_transaction()` auto-consumes the user's parked `kdc_qtap_finance_credit` balance against the remaining amount on a regular-fee Payment. Default **ON** — preserves v3.15.48+ behaviour so existing sites don't observe a silent change. When OFF, credit stays parked until an admin explicitly applies it via a `Payment Method = Credit` transaction. Custom / user-fee / bracket-prefixed slabs are never auto-consumed regardless of this setting.
+- **Setting sanitizer** + default at [trait-kdc-qtap-finance-admin-settings.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-settings.php) — `auto_apply_credit` stored on the main `kdc_qtap_finance_settings` option.
+- **Settings UI** at [trait-kdc-qtap-finance-admin-tab-institute.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-institute.php) — checkbox + descriptive help text explaining the three regular-slab fee-type targets (`per_month` / `per_term` / `per_tenure`) and that non-regular slabs are excluded.
+
+### Changed
+- **Regular-fee trickle boundary enforced.** `trickle_excess_forward()` at [class-kdc-qtap-finance-payment.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-payment.php) now inspects the source Payment's `slab`. If the source is non-regular (starts with `_custom_` / `_user_fee_` / `[`), any excess is parked as user credit immediately — no attempt to cascade into the next pending regular-fee payment. This closes a boundary leak where an educational-trip overpayment could auto-apply to next term's tuition via the existing `find_next_pending_regular()` lookup. Regular → regular cascading is unchanged.
+- **Auto-credit consumption inside `record_transaction()` gated on the new `auto_apply_credit` setting.** The existing `$is_regular && 'credit' !== $payment_method` guards remain; the new setting adds a third guard. Skipped auto-consumption paths don't write a `credit_parked` stamp because no credit was consumed.
+
+### Deferred
+- **Term Split checkbox on the Report tab** — pending clarification. The Reports tab already exposes a "Reporting Breakup: Term-wise / Month-wise" dropdown; confirm what the Term Split checkbox should do on top of that selector before I add anything.
+
+### Files changed
+- [assets/js/kdc-qtap-finance-report.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-report.js) — column-builder stamps `_kdcType`; footer callback reads it instead of the phantom `col.type`.
+- [includes/traits/trait-kdc-qtap-finance-admin-settings.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-settings.php) — sanitize `auto_apply_credit` with default-ON.
+- [includes/traits/trait-kdc-qtap-finance-admin-tab-institute.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-institute.php) — new checkbox UI.
+- [includes/class-kdc-qtap-finance-payment.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-payment.php) — `record_transaction()` reads setting and gates auto-credit; `trickle_excess_forward()` parks non-regular excess as credit instead of cascading.
+
 ## [3.16.46] - 2026-04-22
 
 ### Fixed

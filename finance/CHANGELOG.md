@@ -2,6 +2,26 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.45] - 2026-04-22
+
+### Fixed
+- **Receipt "UTR / Ref" row showed our synthetic `TXN-N` placeholder instead of the real gateway transaction id** (e.g., Zaakpay `ZP64fddc3b0e291`). The PDF renderer's previous logic at [trait-kdc-qtap-finance-wc-helpers.php::pdf_receipt_payment_details()](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-helpers.php) was:
+  ```
+  utr = pay_utr
+  if utr is empty → fall back to transaction_id
+  ```
+  If `sync_receipt_metas_from_transaction()` had to write the `TXN-N` synthetic fallback to `pay_utr` (because no transaction.reference / receipt_file was known at record-payment time), that synthetic preempted the real `transaction_id` the WC payment gateway later stamped — a real reference is always more useful on a receipt than an internal `TXN-N` string. **Fix**: the renderer now resolves the UTR via a three-step preference:
+  1. If `transaction_id` is a valid non-synthetic gateway reference (non-empty, not `na`, not prefixed `TXN-`) AND `pay_utr` is either empty or a `TXN-N` synthetic → use `transaction_id`.
+  2. Otherwise use `pay_utr` when set (this preserves manually-entered UTRs / offline references that ARE real).
+  3. Fall back to `transaction_id` in any remaining case.
+  4. Skip the row entirely when nothing usable is available.
+
+### Confirmed (no code change needed)
+- **`sync_receipt_metas_from_transaction()` already guards incoming gateway data** at [trait-kdc-qtap-finance-wc-helpers.php:475,494](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-helpers.php#L475). `pay_utr` is only written when the existing value is empty or literally `'na'`; `transaction_id` is only written when the existing value is empty. Real gateway stamps (WC's native `$order->set_transaction_id()` at payment completion, Zaakpay's `ZP…`, etc.) are never overwritten by the plugin's sync.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-wc-helpers.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-helpers.php) — `pdf_receipt_payment_details()` UTR/Ref resolution rewritten for the three-step preference.
+
 ## [3.16.44] - 2026-04-22
 
 ### Added

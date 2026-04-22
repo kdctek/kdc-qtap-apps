@@ -2,6 +2,373 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.43] - 2026-04-22
+
+### Fixed
+- **`recompute_order_allocation_breakup()` silently skipped multi-fee orders.** The function resolved `$user_id` + `$year` ONLY via the first line item's singular `_kdc_qtap_finance_payment_id` meta (at [trait-kdc-qtap-finance-wc-orders.php:1431](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php#L1431)). Multi-fee items (created by `create_multi_fee_order()`) only carry the plural `_kdc_qtap_finance_payment_ids` JSON array — the singular lookup returned 0, the `if ( ! $user_id || '' === $year ) return 0` gate fired, and the breakup rows never got rewritten. Observable symptom on v3.16.42's new "Rebuild Payment Items from Enrollment (force)" bulk action: admin notice reported `recomputed 1 WC order(s)` but the line-item `breakup_items` meta stayed stale, because `recompute_order_allocation_breakup` early-exited before calling `apply_allocation_breakup`. Same class of bug I fixed in `apply_allocation_breakup` itself at v3.16.34 — the sibling recompute path needed the same treatment.
+- **Fix**: lookup now tries three sources in order:
+  1. Item-level `_kdc_qtap_finance_user_id` + `_kdc_qtap_finance_academic_year` metas (stamped by every order creator — most reliable).
+  2. Singular `_kdc_qtap_finance_payment_id` → `Payment::get()` → user_id / academic_year.
+  3. Plural `_kdc_qtap_finance_payment_ids` JSON (with `maybe_unserialize` fallback for legacy serialised arrays) → first resolvable Payment → user_id / academic_year.
+  First successful source wins. Recompute now fires correctly on multi-fee orders, and the rebuild action's breakup rewrite step lands properly.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) — `recompute_order_allocation_breakup()` now reads item-level metas first, with singular + plural Payment-id lookups as fallback.
+
+## [3.16.42] - 2026-04-22
+
+### Added
+- **Bulk action "qTap: Rebuild Payment Items from Enrollment (force)"** on the WC Orders list (HPOS + legacy). Addresses cases where the installment generator stored wrong per-period amounts on Payment_Item rows — e.g. a ±X% tuition discount that should apply to all 6 monthly tuition items only landed on some, so the receipt shows Jun at ₹17,060 but Jul–Nov at ₹3,412. The overall Payment total can still be correct by coincidence while the per-period breakup is misleading.
+
+  This action resolves each selected order's linked Payment(s) — reading both the singular `_kdc_qtap_finance_payment_id` and the plural `_kdc_qtap_finance_payment_ids` JSON meta — and routes each Payment through the new `KDC_qTap_Finance_Enrollment::rebuild_payment_items_for_payment()` helper, which:
+  1. Reads the current enrollment state (`grade`, `fee_slabs`, `adjustments`).
+  2. Calls `KDC_qTap_Finance_Installment_Generator::generate_term_payments()` and `apply_adjustments_to_term_data()` to produce fresh per-period items with adjustments applied uniformly.
+  3. Matches the Payment's `term_key` (or falls back to `period_start`) to the correct billing period in the regenerated schedule.
+  4. **Deletes every existing Payment_Item** on the Payment (ignoring the `covered_items` paid-item guard the auto-sync uses).
+  5. Inserts fresh Payment_Items from the regenerated schedule.
+  6. Recomputes `Payment.amount_due` from the new items, caps `Payment.amount_paid` to the new due, and parks any overpayment excess on the user's credit balance via `kdc_qtap_finance_add_user_credit()`.
+  7. Re-runs `Payment::allocate_payment_to_items()` to redistribute `amount_paid` across the fresh items via the waterfall.
+  8. Triggers `recompute_order_allocation_breakup()` on every linked WC order so the receipt re-renders with the corrected per-period amounts.
+
+  Skips Payments whose `slab` starts with `_user_fee_` (manually-created user fees aren't managed by the fee matrix and shouldn't be regenerated). De-dupes Payment IDs when multiple selected orders share a Payment. Capability gate: `manage_options` OR `manage_woocommerce`. Admin notice reports `{N} Payment(s) rebuilt with {M} fresh items; recomputed {K} WC order(s). Overpayment credited: ₹X. ({E} failed.)`.
+
+### Added (helper)
+- **`KDC_qTap_Finance_Enrollment::rebuild_payment_items_for_payment( $payment_id )`** — static helper encapsulating the force-regen flow above. Returns `{ success, new_items, new_due, excess_credited, orders_recomputed }` or a `WP_Error` on failure (not-found, no enrollment, no matching billing period, user-fee payment). Intended for explicit admin invocation only — NOT wired to any automatic trigger — since unconditionally rewriting paid items is an accounting-sensitive operation.
+
+### Files changed
+- [includes/class-kdc-qtap-finance-enrollment.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-enrollment.php) — new `rebuild_payment_items_for_payment()` static helper at the end of the class.
+- [includes/class-kdc-qtap-finance-wc-orders-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-wc-orders-admin.php) — new `'kdc_qtap_finance_rebuild_payment_items'` bulk action + handler + admin notice.
+
+## [3.16.41] - 2026-04-22
+
+### Fixed
+- **Edit Enrollment modal ticked every available fee slab by default, ignoring the saved enrollment's actual selection.** Root cause: `ajax_get_available_slabs()` at [trait-kdc-qtap-finance-user-meta-enrollments.php:123](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-enrollments.php#L123) renders every checkbox with the `checked` attribute — intended as the default for NEW enrollments where admin typically wants all slabs enabled. The edit-path JS handler only `prop('checked', true)`'d matching slab slugs without ever un-checking the rest, so all stayed ticked. **Fix**: both edit-path JS call sites in [kdc-qtap-finance-user-profile-enrollments.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-user-profile-enrollments.js) now reset every checkbox to unchecked via `prop('checked', false)` before re-ticking the subset matching the saved enrollment. New-enrollment flow unchanged (still relies on the server's all-checked default).
+
+### Changed
+- **Staff Console Reports search scope expanded.** The previous implementation only ran the search string through WC's native `s` param (billing name, order number). Staff who searched by a customer's user_login, email, explicit first / last name, the order's payee name meta, UTR, or a WCPDF receipt number often got empty results. New helper `KDC_qTap_Finance_Block_Editor::search_orders_by_token()` now unions matching order IDs from three sources per token:
+  1. **WC native `s`** (unchanged scope)
+  2. **Customer user lookup** — `user_login` / `user_email` / `user_nicename` / `display_name` via `get_users( 'search_columns' )` + `first_name` / `last_name` user_meta via `meta_query`, then filters orders by matching `customer_id`
+  3. **Order-meta LIKE** across `_kdc_qtap_finance_payee_name`, `_kdc_qtap_finance_student_name`, `pay_utr`, `paywith_method`, `transaction_id`, `_wcpdf_receipt_number`, `_wcpdf_invoice_number`
+  Multi-token semantics preserved — each whitespace-separated token must match somewhere on the order, tokens INTERSECT across sub-queries (so "John Smith" still requires both words to hit on the same order, possibly from different fields).
+
+### Files changed
+- [assets/js/kdc-qtap-finance-user-profile-enrollments.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-user-profile-enrollments.js) — uncheck-all-first pattern added to both edit-enrollment slab-loading paths.
+- [includes/class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php) — new `search_orders_by_token()` helper + refactored search branch in the orders-list render.
+
+### Deferred
+- **Item breakup reflecting enrollment adjustments** — the code path at [class-kdc-qtap-finance-enrollment.php:517-518](kdc-qtap-finance/includes/class-kdc-qtap-finance-enrollment.php#L517-L518) already applies the enrollment's `adjustments` array to `$term['items'][]` amounts BEFORE Payment_Item creation via `apply_adjustments_to_term_data()`, so per-period `amount` values should already reflect discount / surcharge. If a specific receipt is showing unadjusted values, paste the receipt screenshot + the linked Payment row's `amount`, `amount_due`, `amount_paid` + the enrollment's `adjustments` array so I can trace the discrepancy — not enough signal yet to know whether this is a scheduling-time bug, a breakup-display bug, or an order that predates the adjustment being added.
+
+## [3.16.40] - 2026-04-22
+
+### Changed
+- **Receipts tab: "Include POS / non-fee orders" checkbox ticked by default.** The initial load now includes every completed order in the date range (fee + POS + other non-fee) instead of restricting to fee-payment orders only. Admins can uncheck to restrict to fee-only when they need the narrower scope. Server query narrows the `wc_get_orders` call with `meta_key=_kdc_qtap_finance_is_fee_payment` only when the toggle is off — unchanged from v3.16.29.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php) — `<input type="checkbox" id="kdc-receipts-include-non-fee">` now ships with the `checked` attribute.
+
+## [3.16.39] - 2026-04-22
+
+### Fixed
+- **Per-tenure enrollments weren't getting the Full Tenure title.** `apply_full_tenure_retitle()`'s coverage gate required the order's line items to reference EVERY regular Payment row for user+year. For an enrollment configured as `payment_cycle = per_tenure` with multiple fee slabs — e.g., PTA + Term Fee + Tuition Fee — the fee matrix could produce separate Payment rows per slab, and a single order legitimately linked to one Payment couldn't pass the gate (even though that one Payment aggregated items covering the whole year). **Fix**: gate is now skipped entirely when the enrollment's `payment_cycle` is `per_tenure`. A per-tenure enrollment is semantically "Full Tenure" regardless of fee-matrix structure — the coverage check was an artefact of the per-term / per-month design path. For per_term / per_month / per_cycle enrollments the gate still applies as before (the order must cover every regular Payment to promote to Full Tenure).
+
+### Added
+- **Bulk action "qTap: Apply Full Tenure title"** on the WC Orders list (HPOS + legacy). Forces `apply_full_tenure_retitle()` on every selected order. Intended as a manual override for orders the automatic gate skipped — including cases the gate *correctly* skipped by its per-term logic but staff want to rename anyway. Uses the same idempotent retitle path; orders whose name is already "Fees - Full Tenure - …" no-op the save. Admin notice reports `{N} line items retitled across {M} orders scanned`.
+
+### Post-upgrade cleanup
+- **Re-run of the sweep migration** under `kdc_qtap_finance_rebuild_item_names_3_16_39_done` so the per-tenure fix back-applies to existing orders on first admin page load after upgrade.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) — `apply_full_tenure_retitle()` now probes the enrollment's `payment_cycle` before the coverage gate and skips the gate for `per_tenure`.
+- [includes/class-kdc-qtap-finance-wc-orders-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-wc-orders-admin.php) — new `'kdc_qtap_finance_full_tenure_retitle'` bulk action + handler + admin notice.
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — new v3.16.39-gated re-run of `migrate_rebuild_order_item_names_3_16_33()`.
+
+## [3.16.38] - 2026-04-22
+
+### Added
+- **Bulk action "qTap: Strip 'Fees -' prefix from line-item titles"** on the WC Orders list (HPOS + legacy). The v3.16.33 / v3.16.37 automatic non-regular-slab detection relies on the Payment row's `slab` column starting with one of the known prefixes (`_custom_`, `_user_fee_`, `[`). On this codebase, at least one more slab family — `_grade_fees` (used for grade-wise fees like Europe Trip installments) — exists and was slipping through. Rather than keep expanding the prefix allowlist, this release ships a direct manual tool:
+  - Select any set of orders on the WC Orders list.
+  - Pick **"qTap: Strip 'Fees -' prefix from line-item titles"** from the bulk actions dropdown.
+  - The handler runs a `preg_replace` against every line item's name, stripping the configured `kdc_qtap_finance_label('fee', true)` prefix (e.g., "Fees - ") if present. No slab detection, no regular-vs-non-regular branching — if the title starts with the label, it's stripped.
+  - Idempotent: the regex matches only the literal prefix, so re-running on already-stripped titles is a no-op save (WC item `set_name` on same value doesn't write).
+  - Capability: `edit_shop_orders` or `manage_woocommerce`. Admin notice after the action reports `{N} line items stripped across {M} orders. {K} skipped.`
+
+### Files changed
+- [includes/class-kdc-qtap-finance-wc-orders-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-wc-orders-admin.php) — new `'kdc_qtap_finance_strip_fees_prefix'` bulk action registration + handler branch + admin notice (reuses the existing bulk-action infrastructure from v3.16.20 / v3.16.21).
+
+## [3.16.37] - 2026-04-22
+
+### Fixed
+- **Receipts tab date filter was silently no-op.** The `wc_get_orders` `date_created` argument was being constructed as `'>=2026-04-01T00:00:00...<=2026-04-15T23:59:59'` in both `ajax_receipts_data` and `ajax_receipts_download_zip`. WooCommerce's `OrdersTableQuery::process_date_arg` accepts:
+  - a comparison string like `'>2018-01-01'`, OR
+  - a range string like `'A...B'` (no operators inside),
+
+  but **not** the combined `'>=A...<=B'` form I shipped — the malformed predicate failed to parse, the date constraint got dropped, and every matching order was returned regardless of the user's date range. The Receipts table showed orders outside the selected window, and the "Download PDFs (ZIP)" export bundled every fee order on the site instead of just the filtered slice. **Fix**: switched to UNIX-timestamp range form (`$from_ts . '...' . $to_ts`) which WC parses correctly. Both endpoints now honour the date inputs.
+- **"Fees -" prefix sweep skipped multi-fee-order line items.** v3.16.33's `migrate_rebuild_order_item_names_3_16_33` resolved the line item's slab via:
+  1. `_kdc_qtap_finance_slab` meta (not stamped by `create_multi_fee_order`), OR
+  2. the singular `_kdc_qtap_finance_payment_id` → Payment.slab.
+
+  Multi-fee orders only carry the plural `_kdc_qtap_finance_payment_ids` JSON array — both lookups failed, the slab was empty, the migration's `if ( '' === $slab ) continue;` short-circuit kicked in, and the "Fees -" prefix never got stripped. Same root-cause class as the v3.16.34 retitle fix (multi-fee items use a different meta shape than create_fee_order items). **Fix**: the slab lookup now reads both `_payment_id` (singular) and `_payment_ids` (plural JSON, with `maybe_unserialize` fallback for legacy serialised arrays), unions the candidates, and resolves the slab from the first matching Payment row. Re-runs the migration under a new `kdc_qtap_finance_rebuild_item_names_3_16_37_done` flag so historical multi-fee orders for non-regular slabs (Trip installments, custom-slab orders, user-fee charges) get corrected on first load after upgrade.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php) — `date_created` query arg now uses the `'A...B'` timestamp range form (both `ajax_receipts_data` + `ajax_receipts_download_zip`).
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — `migrate_rebuild_order_item_names_3_16_33` slab lookup now reads both singular + plural payment-id metas, with `json_decode` → `maybe_unserialize` defensive decoding. New v3.16.37-gated re-run of the sweep.
+
+## [3.16.36] - 2026-04-22
+
+### Added — Edit Transaction form parity with Record Payment
+The Edit Transaction modal only captured amount / date / method / notes. Staff who needed to correct a payee name, a missing UTR, or attach a receipt they'd forgotten at submission time had to either delete + re-record (losing history) or edit the WC order by hand. Three new fields close the gap:
+
+- **Reference / UTR** text input — pre-filled from the transaction's `reference` column via the new `data-reference` attr on the Edit button. Saved back to `transactions.reference`.
+- **Payee Name** text input — pre-filled from the linked WC order's `_kdc_qtap_finance_payee_name` meta (falling back to `billing_first_name`). On save, routed through the existing `KDC_qTap_Finance_WooCommerce::apply_payee_name_to_order()` helper so the payee meta + `billing_first_name` mirror-write match Record Payment's semantics exactly.
+- **UTR / Reference Upload** file input — accepts JPG/PNG/GIF/WebP/PDF up to 2MB. Reuses the same `handle_receipt_upload()` helper Record Payment uses. The form detects whether the transaction already has a receipt attached:
+  - **Has receipt** → shows a "View current upload" link (opens in new tab via `Payment_Transaction::get_receipt_url()`) above the file input; choosing a new file replaces it, leaving the field empty keeps the existing file.
+  - **No receipt** → the file input stands alone with upload-only UX.
+  The Edit button carries the receipt URL via a new `data-receipt-url` attr so the JS can toggle the "View current" block without an extra AJAX fetch.
+- **Post-save WC order sync**: when the transaction is linked to a WC order, the handler calls `sync_receipt_metas_from_transaction()` after the update so the order's `payment_date` / `paywith_method` / `pay_utr` metas pick up the edit — the WCPDF receipt re-renders with current values on next view.
+
+### Changed — "Receipt" label renamed to "UTR / Reference Upload" globally
+Single consistent label across every surface staff upload proof on:
+- Record Payment modal ([trait-kdc-qtap-finance-user-meta-rendering.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php))
+- Edit Transaction modal (newly added, same label)
+- Fees block frontend (the `receiptUpload` i18n key in [class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php))
+The helper text under each upload input also says "Upload proof image or PDF (max 2MB)" instead of "Upload receipt image or PDF".
+
+### Tech details
+- **Edit Transaction now submits via FormData** (JS) so the file upload lands on the server. Previously used `$.post()` which can't carry files.
+- **AJAX handler** (`ajax_update_transaction`) now:
+  - Accepts `reference`, `payee_name`, and `$_FILES['receipt_file']`.
+  - Builds the `$wpdb->update()` payload dynamically so an empty `receipt_file` doesn't clobber the existing column value (same pattern as Record Payment's transaction patch).
+  - Validates method + file constraints identically to Record Payment.
+  - Wraps `apply_payee_name_to_order()` + `sync_receipt_metas_from_transaction()` behind `class_exists` / `method_exists` guards so older plugin versions of the linked order helper still fail gracefully.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php) — Edit Transaction form markup (new fields + View-current link), Record Payment label rename, Edit button data attrs (`data-reference`, `data-payee`, `data-receipt-url`).
+- [assets/js/kdc-qtap-finance-user-profile-payments.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-user-profile-payments.js) — Edit Transaction open handler populates new fields and toggles the View-current link; Save handler uses FormData + includes file input.
+- [includes/traits/trait-kdc-qtap-finance-user-meta-payments.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-payments.php) — `ajax_update_transaction` accepts + persists reference / payee_name / receipt_file and post-syncs the linked WC order.
+- [includes/class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php) — Fees block `receiptUpload` label renamed.
+
+## [3.16.35] - 2026-04-22
+
+### Added
+- **"Download PDFs (ZIP)" button on Finance → Receipts.** Bulk-exports freshly-regenerated WCPDF receipts for the current date range as a single ZIP archive. Each receipt's cached WCPDF-Pro file is purged first (`_wcpdf_receipt_file` / `_wcpdf_invoice_file` meta deletes + on-disk unlink) and the document is re-rendered from current order data via `wcpdf_get_document( 'receipt', $order, true )` (falls back to `invoice` document type if `receipt` isn't configured). The PDF binary is read via `$doc->get_pdf()` and added to a server-side `ZipArchive` (temp-file backed to bound memory). Response is streamed back with `Content-Type: application/zip` + `Content-Disposition: attachment; filename="receipts_{from}_to_{to}.zip"` — the browser triggers the download via a JS blob-to-anchor pattern.
+  - **Capped at 100 orders per request** to stay inside the typical 30-60s PHP execution window. If the date range matches more than the cap, the request returns a JSON error naming the match count and asks the admin to narrow the range.
+  - **Same filter state as the rest of the tab** — respects the current `from` / `to` date inputs and the "Include POS / non-fee" checkbox.
+  - **Filename de-dup guard** — if two orders produce the same WCPDF filename (rare but possible after renumbering), subsequent collisions get a `_2` / `_3` suffix so no entry gets overwritten inside the ZIP.
+  - **Response headers carry the audit counts** — `X-KDC-Receipts-Added` and `X-KDC-Receipts-Skipped` — so the UI can show "{N} receipts in ZIP ({M} skipped)" after the download triggers.
+  - **Graceful degradation**: clear error messages when WooCommerce, WCPDF, or PHP's `ZipArchive` extension is missing, when the date range is invalid, or when no orders match.
+- **New AJAX action `kdc_qtap_finance_receipts_download_zip`** — capability `manage_options` or `manage_woocommerce`, nonce `kdc_qtap_finance_nonce`.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php) — new `ajax_receipts_download_zip()` handler + "Download PDFs (ZIP)" button markup.
+- [assets/js/kdc-qtap-finance-receipts.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-receipts.js) — `downloadZip()` client uses `fetch` + blob to trigger the browser download, with loading state + post-download status message.
+- [includes/class-kdc-qtap-finance-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-admin.php) — register new AJAX hook + add i18n keys (`zip_building`, `zip_failed`, `zip_added_suffix`, `zip_skipped_suffix`).
+
+## [3.16.34] - 2026-04-22
+
+### Fixed
+- **Full Tenure retitle was silently skipping multi-fee-order line items even after v3.16.33's `payment_ids` plural read.** Investigation on order 6999 (Veer Bhupali, Nursery, 2026-2027): the Payment row data, line-item meta, and enrollment cycle all satisfied the coverage gate on paper, but the retitle never renamed the item. Root cause: v3.16.33 still anchored the group construction on `KDC_qTap_Finance_Payment::get( $pid )` — a single chain of lookups that could fail silently for reasons not fully pinned down (suspected combination of stale cache / unexpected meta serialisation on the specific customer's data). **Fix**: `apply_full_tenure_retitle()` now anchors directly from the item-level metas `_kdc_qtap_finance_user_id`, `_kdc_qtap_finance_academic_year`, and `_kdc_qtap_finance_grade` — values stamped on every line item by both `create_fee_order()` and `create_multi_fee_order()`. No Payment lookup is needed to learn the line item's user+year+grade. The Payment::get fallback is still in place for ancient orders that don't carry those item metas.
+- **Recompute Breakup button did nothing for multi-fee orders.** `apply_allocation_breakup()` at [trait-kdc-qtap-finance-wc-orders.php:1068](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php#L1068) indexed existing line items by the singular `_kdc_qtap_finance_payment_id` only. For multi-fee orders (items carry `_kdc_qtap_finance_payment_ids` plural), that index came back empty and the function hit its `return 0` early-exit at line 1085 — never reaching the retitle call I moved outside the `$touched > 0` gate in v3.16.31. **Fix**: the index now reads both the singular and the plural (JSON-decoded, with `maybe_unserialize` fallback) payment IDs. Multi-fee orders build a non-empty index, `apply_allocation_breakup()` proceeds to the retitle, and Recompute Breakup now promotes the header on the first click.
+- **Defensive decoding on the plural `payment_ids` meta.** Falls through `json_decode` → `maybe_unserialize` → skip, so whatever shape the meta value was stored in (JSON string, already-deserialised PHP array, or legacy serialised array), the retitle still picks up the IDs.
+
+### Added
+- **Debug-log diagnostics on retitle skips.** `apply_full_tenure_retitle()` now writes `kdc_qtap_debug_log` entries when it skips a group:
+  - `"Full Tenure retitle skipped — no regular payments for user+year"` with `order_id` / `user_id` / `year`.
+  - `"Full Tenure retitle skipped — coverage gate not met"` with the exact `regular_ids` + `covered` sets.
+  Future mismatches can be traced from the debug log without shipping a fresh diagnostic build.
+- **Safety net in `apply_allocation_breakup()`**: when the line-item → payment-id index is empty (all metas missing or unreadable), the function still calls `apply_full_tenure_retitle()` before returning 0. The retitle's own item-meta anchor can rename the item without needing the breakup rewrite, so the header gets corrected even in degenerate cases.
+
+### Post-upgrade cleanup
+- **Re-run of v3.16.33's sweep migration** (`migrate_rebuild_order_item_names_3_16_33`) under a new done-flag `kdc_qtap_finance_rebuild_item_names_3_16_34_done`. Orders that the v3.16.33 sweep silently skipped (order 6999 and any others with the same shape) are corrected on first load after upgrade — the fixed retitle now fires and rewrites the WC line-item header to "Fees - Full Tenure - {grade} [{year}]".
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) — `apply_full_tenure_retitle()` anchors from item metas directly + emits diagnostic log on skip. `apply_allocation_breakup()` reads both singular + plural `payment_id(s)` for line-item indexing and calls retitle even when the index is empty.
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — v3.16.34-gated re-run of the sweep migration.
+
+## [3.16.33] - 2026-04-22
+
+### Fixed
+- **Multi-fee-order line items weren't participating in the Full Tenure retitle.** `apply_full_tenure_retitle()` in [trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) only read the singular `_kdc_qtap_finance_payment_id` order-item meta. But orders built by `create_multi_fee_order()` stamp the plural `_kdc_qtap_finance_payment_ids` (JSON array of payment IDs — multiple Payment rows collapsed into one line item). Those items were skipped by the retitle grouping loop, so an order that genuinely covered the full year but was constructed via the multi-fee path kept its "1st Term [2026-2027]: Jun 2026 to May 2027" header forever. **Fix**: the grouping loop now reads both meta shapes — singular int + plural JSON array — decodes the array via `json_decode`, unions the IDs, and resolves user+year+grade from the first successfully-fetched Payment row. All IDs feed into the coverage check against `get_by_user_year()` so multi-payment items count toward the Full Tenure gate correctly.
+
+### Changed
+- **Retitle label honours the enrollment's `payment_cycle`.** `apply_full_tenure_retitle()` now loads `KDC_qTap_Finance_Enrollment::get( $user_id, $year )` and picks the label from a small cycle map:
+  - `per_tenure` → "Full Tenure"
+  - `per_cycle` → "Full Cycle" (matches `build_item_name()`'s create-time homogeneous-cycle branch)
+  - `per_term` / `per_month` → "Full Tenure" (a per-term/month schedule that covers everything is still the "full tenure")
+  - missing / unknown → falls back to "Full Tenure"
+  Previously always stamped "Full Tenure" regardless of the user's configured cycle.
+- **Non-regular fees no longer carry the "Fees -" prefix.** `build_item_name()` in [trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) now branches on whether the payment's `slab` is regular. Regular slabs (tuition, term fees, anything not prefixed `_custom_` / `_user_fee_` / `[`) keep the canonical `{Fees} - {category} - {grade} [{year}]` format. Non-regular slabs — educational trips, grade-wise custom slabs, user-fee ad-hoc charges — drop the "Fees" prefix entirely and render as `{category} - {grade} [{year}]`. Stands on its own: "Fees - Educational Trip - Nursery [2026-2027]" was misleading because the charge isn't a scheduled fee; it's a one-off item.
+
+### Post-upgrade cleanup
+- **One-time migration `migrate_rebuild_order_item_names_3_16_33()`** runs on first load after upgrade. For every order flagged `_kdc_qtap_finance_is_fee_payment=yes`:
+  1. Re-runs `apply_full_tenure_retitle()` with the new multi-fee-order payment_ids read + payment_cycle-aware label. Orders the v3.16.31 sweep silently skipped or mislabelled are corrected.
+  2. For each line item whose slab is non-regular (custom / user_fee / bracket-prefixed), strips the current "Fees -" prefix from the WC item name via a `preg_replace` targeting the configured `kdc_qtap_finance_label('fee', true)` value.
+  Version-gated on `kdc_qtap_finance_rebuild_item_names_3_16_33_done` + try/catch with debug-log audit counts (`orders_scanned`, `full_tenure_named`, `prefix_dropped`). Idempotent: retitle's coverage gate + "same name → no-op" saves, and the regex strip matches only a literal "Fees - " prefix so re-running doesn't chomp further.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) — `apply_full_tenure_retitle()` reads both `payment_id` + `payment_ids`, picks label from enrollment's `payment_cycle`. `build_item_name()` branches on regular-vs-non-regular slabs to drop the "Fees -" prefix on the non-regular side.
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — new `migrate_rebuild_order_item_names_3_16_33()` + version-gated runner.
+
+## [3.16.32] - 2026-04-22
+
+### Changed — Receipts tab
+- **Receipt # is now a clickable link** that opens the WCPDF receipt PDF in a new tab. Reuses the existing `KDC_qTap_Finance_WooCommerce::get_wcpdf_receipt_url()` helper — same endpoint the WC admin Orders table uses.
+- **Student name is now a clickable link** to the user's profile (`user-edit.php?user_id=…`) in a new tab. Stamped from `$order->get_customer_id()` at row build time.
+- **Grade and Division split into two separate columns.** Column titles pull from `kdc_qtap_finance_label('grade')` / `kdc_qtap_finance_label('division')` so the configured terminology surfaces. Single `grade_division` combined field retired from the row payload.
+- **Column order swapped** so Flags sit before Items. The Items summary is the longest column on the row — keeping it as the rightmost ensures neighbouring columns stay readable.
+
+### Fixed — Receipts tab
+- **CSV export buttons were silently no-op.** DataTables Buttons' `csvHtml5` extension wasn't triggering downloads on the DT 2.1.8 + Buttons 3.1.2 build bundled with this plugin. Replaced the two `csvHtml5` buttons and the XLSX button with a single unified `exportBook( dt, ext, scope )` path that uses SheetJS (already enqueued; same library the Report tab relies on). Writes CSV and XLSX via `XLSX.writeFile` which handles format auto-detection from the file extension. Filenames preserved: `receipts_YYYY-MM-DD_to_YYYY-MM-DD.csv` / `..._all.csv` / `.xlsx`.
+
+### Tech details
+- **Column renderers** now follow the canonical `(data, type, row)` DataTables signature so export-time (`type === 'export'` / `'filter'`) returns clean raw strings while `type === 'display'` returns the linked, escaped HTML.
+- **New row fields** on the AJAX payload: `receipt_url`, `student_url`, `grade`, `division`. Dropped: `grade_division` (concatenated form no longer needed).
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php) — split grade/division, add `receipt_url` + `student_url`, swap Flags/Items table header order.
+- [assets/js/kdc-qtap-finance-receipts.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-receipts.js) — column defs rewritten with `(v, type, row)` signature + Receipt/Student link renderers + split grade/division + Flags→Items reorder; `exportXlsx()` replaced with `exportBook()` handling both CSV + XLSX via SheetJS.
+- [includes/class-kdc-qtap-finance-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-admin.php) — i18n keys updated: `grade_division` replaced by `grade` + `division`.
+
+## [3.16.31] - 2026-04-22
+
+### Fixed
+- **Recompute Breakup wasn't refreshing the line-item header title.** v3.16.23 wired `apply_full_tenure_retitle()` into `apply_allocation_breakup()` so that trickle-adding a downstream-term line item would promote the header from "1st Term" to "Full Tenure". But the retitle call sat inside the `if ( $touched > 0 )` guard — so when the recompute ran and the breakup rows were already correct (nothing to rewrite, `$touched` stayed 0), the retitle was skipped too. Orders created before v3.16.12 shipped the retitle, or any order whose title drifted from its coverage, couldn't be corrected via the Recompute Breakup button. **Fix**: the retitle is now called unconditionally when `apply_allocation_breakup()` runs. `apply_full_tenure_retitle()` is already idempotent — it no-ops when the order doesn't cover every regular payment for the user+year, and re-saving the same name is a no-op write — so moving it out of the gate is safe for every caller (event-time create, migration backfill, manual recompute, bulk recompute, Rebuild All).
+
+### Post-upgrade cleanup
+- **One-time sweep: `migrate_sweep_full_tenure_retitle_3_16_31()`** runs on first load after upgrade. Loops every order flagged `_kdc_qtap_finance_is_fee_payment=yes` and calls `apply_full_tenure_retitle()` — so historical orders whose header drifted ("1st Term [2026-2027]: Jun 2026 to May 2027" on an order that actually covers the full year) are promoted to "Full Tenure" in bulk. Version-gated on `kdc_qtap_finance_sweep_full_tenure_retitle_3_16_31_done` + try/catch with debug-log audit counts (`orders_scanned`, `line_items_renamed`). Idempotent: retitle's coverage gate leaves non-full-tenure orders alone, re-saving the same name is a no-op write.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) — retitle moved outside the `$touched > 0` guard in `apply_allocation_breakup()`.
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — new `migrate_sweep_full_tenure_retitle_3_16_31()` + version-gated runner.
+
+## [3.16.30] - 2026-04-22
+
+### Added
+- **Shortfall info banner on the Record Payment modal.** Parallel to the existing yellow overflow warning (shown when staff enter more than the term balance — `₹X will settle this term, ₹Y carried forward`), a blue info banner now fires when the entered amount is LESS than the balance. Message names the exact shortfall, states it remains outstanding until collected, and explicitly reassures staff that the partial payment is valid to record (the term stays unpaid in the UI until the remainder is settled). Same DOM location as the overflow notice; three mutually-exclusive states managed by the live `input` handler:
+  - `entered > balance` → yellow overflow banner.
+  - `entered < balance && entered > 0` → new blue shortfall banner.
+  - `entered == balance` or empty → both hidden.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php) — new `#kdc-qtap-finance-payment-shortfall-notice` div alongside the existing overflow notice, styled as a WP-admin info card (blue `#2271b1` left-border, `#e7f3fb` fill).
+- [assets/js/kdc-qtap-finance-user-profile-payments.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-user-profile-payments.js) — modal-open reset clears both notices; `input` handler extended with the shortfall branch and keeps overflow/shortfall mutually exclusive.
+
+## [3.16.29] - 2026-04-22
+
+### Added
+- **New admin tab: Receipts** at Finance → Receipts. Admin-side equivalent of the staff-frontend receipts view with the extra columns finance/audit teams need.
+  - **Columns**: Receipt Number (WCPDF), Receipt Date (canonical `payment_date` meta → `date_paid` → `date_created`), Order Number (clickable → WC order edit), Order Date, Paid With (`paywith_method` meta → WC payment method title), Amount (order total), UTR / Transaction ID (`pay_utr` → `transaction_id` meta), Payee Name (`_kdc_qtap_finance_payee_name` → billing name), Student (`_kdc_qtap_finance_student_name` → customer full name), Year (`_kdc_qtap_finance_academic_year`), Grade / Division (canonical metas), short Items summary from line-item names, and Flags column with `Fee` / `POS` badges.
+  - **Filters**: server-side date range (default last 90 days to bound initial payload on large sites) + a checkbox to include POS / non-fee orders alongside fee-payment receipts. Date range triggers a fresh AJAX fetch; the checkbox re-fetches immediately.
+  - **Search**: client-side DataTables multi-column search — instant filtering across payee, student, UTR, grade/division, etc. without hitting the server.
+  - **Sort + pagination**: DataTables handles both client-side. Default sort is Receipt Date DESC; page sizes 25 / 50 / 100 / 250 / All.
+  - **Export**: three DataTables Buttons entries — CSV of the currently filtered view, CSV of all loaded rows (ignoring search filter), and XLSX via the bundled SheetJS library. File names auto-encode the date range (e.g. `receipts_2026-01-01_to_2026-04-22.csv`).
+- **POS order detection** reuses the existing `KDC_qTap_Finance_Block_Editor::detect_pos_order()` helper — checks `_woocommerce_pos_uuid`, `created_via` containing 'pos', and a regex sweep of meta keys for `pos` / `cashier`.
+- **New AJAX action**: `kdc_qtap_finance_receipts_data` (capability: `manage_options` or `manage_woocommerce`, nonce: `kdc_qtap_finance_nonce`). Returns `{ rows: [...], count: N }`. When the "include non-fee" toggle is off, the server narrows the `wc_get_orders()` query with `meta_key=_kdc_qtap_finance_is_fee_payment` for cheaper fetches on fee-heavy sites.
+
+### Files changed
+- New [includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php) — tab render + `ajax_receipts_data()` handler + `build_receipt_row()` helper.
+- New [assets/js/kdc-qtap-finance-receipts.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-receipts.js) — DataTables init, date-range reload, CSV/XLSX export buttons, XSS-safe column renderers.
+- New [assets/css/kdc-qtap-finance-receipts.css](kdc-qtap-finance/assets/css/kdc-qtap-finance-receipts.css) — tab toolbar + flag badge styles.
+- [includes/class-kdc-qtap-finance-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-admin.php) — require new trait + add `use`, register `'receipts'` tab (placed between Report and Enrollments), switch case, AJAX hook, and extend the existing DataTables-asset conditional to include the new tab with receipts-specific CSS / JS / `kdcQtapFinanceReceipts` localize.
+- [readme.txt](kdc-qtap-finance/readme.txt) + [CHANGELOG.md](kdc-qtap-finance/CHANGELOG.md) — document.
+
+## [3.16.28] - 2026-04-21
+
+### Fixed
+- **User_meta bloat — multi-year students tripped WooCommerce's 50-entry threshold warning ("Customer #253991744 has 52 meta_data entries (threshold: 50). This may indicate plugin meta bloat.").** Root cause: every enrollment save wrote two denormalised shadow rows (`kdc_qtap_finance_grade_{year}` + `kdc_qtap_finance_division_{year}`) on top of the canonical `kdc_qtap_finance_enrollments` JSON blob, purely so the admin users-list `meta_query` filter could do exact-match lookups. A 5-year student carried 10 extra rows for zero functional reason. Consolidated into a single `kdc_qtap_finance_enrollment_index` row per user with format `|YEAR:GRADE:DIVISION|YEAR:GRADE:DIVISION|` (leading + trailing pipes so `LIKE '%|YEAR:GRADE:DIVISION|%'` matches exactly, and year-only / year+grade filters collapse to shorter LIKE patterns against the same key). One row per user regardless of enrolled years. Row count now drops by `2 × (enrolled years - 1) - 1` per multi-year student on first load after upgrade.
+
+### Changed
+- **Admin users-list filter rewritten** at [trait-kdc-qtap-finance-user-meta-associations.php::handle_users_list_sorting()](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-associations.php) — three filter shapes (year-only / year+grade / year+grade+division) now collapse into a single `meta_query` LIKE clause against the `kdc_qtap_finance_enrollment_index` key. Filter precision, pagination, and UX identical. `WP_User_Query` still does all filtering at SQL level — no in-memory post-filter.
+- **Enrollment save / delete** at [class-kdc-qtap-finance-enrollment.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-enrollment.php) — replaced per-year `update_user_meta(grade_{year})` + `update_user_meta(division_{year})` with a single `KDC_qTap_Finance_Enrollment::write_enrollment_index()` call that rebuilds the full index. Delete path no longer needs per-year cleanup — the index rebuild naturally drops the deleted year's segment. Both paths also purge any lingering legacy shadow rows for the user (belt-and-suspenders — the migration already swept them, but manual DB edits could theoretically re-introduce them).
+- **Credit adjustments audit log** at [trait-kdc-qtap-finance-admin-tab-credits.php::ajax_zero_user_credit()](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-credits.php) — capped at the last 50 entries. A user zeroed 100 times previously accumulated 100 adjustment records in a single (unbounded) row; now oldest entries are pruned on append. Preserves audit breadth without unbounded byte growth.
+- **Legacy `is_rte` field stripped from enrollments JSON on save.** Code reads both `exempt` and `is_rte` (with `exempt` preferred) — so dropping `is_rte` on every save trims dead bytes without altering read behaviour. Existing untouched records continue to work via the reader's fallback until next save.
+
+### Added
+- `KDC_qTap_Finance_Enrollment::INDEX_META_KEY` class constant (`'kdc_qtap_finance_enrollment_index'`) — the single consolidated meta key name.
+- `KDC_qTap_Finance_Enrollment::build_enrollment_index( array $enrollments )` — pure function that builds the index string from a decoded enrollments map. Used by both the live write path and the migration.
+- `KDC_qTap_Finance_Enrollment::write_enrollment_index( int $user_id, array $enrollments )` — persists the index row (or deletes it if empty) and purges lingering legacy shadow rows for that user.
+
+### Post-upgrade cleanup
+- **One-time migration `migrate_consolidate_enrollment_index_3_16_28()`** runs on first load after upgrade. Iterates every user with a `kdc_qtap_finance_enrollments` meta row in batches of 500, writes the consolidated index row for each, then a single bulk `DELETE FROM {$wpdb->usermeta} WHERE meta_key LIKE 'kdc_qtap_finance_grade_%' OR meta_key LIKE 'kdc_qtap_finance_division_%'` wipes every legacy shadow row in one query. Followed by a `wp_cache_flush_group('user_meta')` (fallback to `wp_cache_flush()` on WP < 6.1) so cached reads pick up the new state. Version-gated on `kdc_qtap_finance_consolidate_enrollment_index_3_16_28_done` + try/catch-wrapped with debug-log audit counts (`users_scanned`, `index_rows_written`, `legacy_rows_deleted`). Idempotent — re-running rebuilds the same index from the same canonical JSON.
+
+### Risk / compatibility
+- **Single-reader audit**: the only code path that reads the flat `kdc_qtap_finance_grade_{year}` / `kdc_qtap_finance_division_{year}` keys is the admin users-list `meta_query` filter — rewritten in this release to use the new index. No REST, no AJAX, no sibling-plugin readers (parallel Explore agent confirmed across `kdc-qtap`, `kdc-qtap-mobile`, and all `kdc-qtap-*` plugins).
+- **No sibling-plugin bumps needed** — mobile / parent plugins neither read nor write the flat keys; their own user_meta writes are already single-row atomic.
+- **No data loss**: canonical `kdc_qtap_finance_enrollments` JSON is untouched. The deleted flat keys were shadow copies only; every value in them was derivable from the canonical JSON.
+- **Uninstall**: `uninstall.php`'s existing wildcard `meta_key LIKE 'kdc_qtap_finance_%'` already covers the new index key — no uninstall changes needed.
+
+### Files changed
+- [includes/class-kdc-qtap-finance-enrollment.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-enrollment.php) — new `INDEX_META_KEY` constant + `build_enrollment_index()` / `write_enrollment_index()` helpers; `save()` and `delete()` paths rewritten; `is_rte` stripped on save.
+- [includes/traits/trait-kdc-qtap-finance-user-meta-associations.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-associations.php) — `handle_users_list_sorting()` meta_query collapses to a single LIKE clause against the index key.
+- [includes/traits/trait-kdc-qtap-finance-admin-tab-credits.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-credits.php) — credit adjustments log truncated to last 50 entries.
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — new `migrate_consolidate_enrollment_index_3_16_28()` + version-gated runner.
+
+## [3.16.27] - 2026-04-21
+
+### Performance
+- **Record Payment form submission is noticeably faster.** The staff console and the admin Record Payment modal both submit through `ajax_record_payment()` in [trait-kdc-qtap-finance-user-meta-payments.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-payments.php). Two changes cut user-perceived latency:
+  1. **`Payment::record_transaction()` now returns the new transaction id** (int) on success, `false` on failure. Previously returned a bool. The handler's next step — patching `receipt_file` / `reference` / `recorded_by` onto the just-created transaction row — required a `Payment_Transaction::get_by_payment()` scan just to find the id of the row we'd literally just inserted. That scan is gone; the handler uses the returned id directly. All existing callers of `record_transaction()` check the result with boolean truthiness (`if ( $result )`), and a positive int is truthy, so the contract is preserved.
+  2. **Presentation-layer work moved to `shutdown`-after-flush.** Two steps weren't needed before the JSON response could be honest with the admin: `apply_allocation_breakup()` (rewrites the line-item breakup meta from the pre-event snapshot diff — only used when the receipt renders) and `link_order_to_payment()` (stamps a post_meta linking the WC order to the payment row). Both are now registered on the `shutdown` action at priority 5. The callback first calls `fastcgi_finish_request()` (when available — PHP-FPM) to flush the response bytes to the client, then runs the deferred work. Admin gets the success response as soon as the transaction + WC order + status are fully persisted; the rest finishes server-side moments later.
+
+### Safety
+- Deferred work is wrapped in try/catch; any failure is captured via `kdc_qtap_debug_log` with order_id + payment_id + error trace. The admin already saw the payment recorded successfully (because it WAS recorded — the deferred work is presentation-only), so the failure mode is "receipt breakup needs a manual Recompute" rather than "payment lost".
+- No callers of `record_transaction()` rely on the returned value being strictly `true` — all use `if ( $result )` / `if ( $ok )`. The five callsites (admin Record Payment, REST API, CSV import, WC status change, recursive trickle) all continue to work unchanged.
+
+### Files changed
+- [includes/class-kdc-qtap-finance-payment.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-payment.php) — `record_transaction()` now returns `(int) $transaction_id` on success.
+- [includes/traits/trait-kdc-qtap-finance-user-meta-payments.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-payments.php) — use the returned tx_id directly (skip `get_by_payment()` scan); move `apply_allocation_breakup()` + `link_order_to_payment()` to a shutdown callback that flushes the response first.
+
+## [3.16.26] - 2026-04-21
+
+### Changed
+- **Rebuild Receipt Metas action now also backfills Payee Name.** The Finance → Maintenance → "Rebuild Metas" AJAX handler (`kdc_qtap_finance_rebuild_receipt_metas`) runs both migrations back-to-back: `migrate_backfill_payment_date_3_16_23()` (payment_date / paywith_method / pay_utr from the earliest linked transaction) + `migrate_backfill_payee_name_3_16_19()` (seeds `_kdc_qtap_finance_payee_name` from the order's `billing_first_name` when the canonical meta is empty). Both migrations are idempotent — safe to rerun — and the handler resets both done-flags before invoking. Payee Name has no transaction-side source, so `billing_first_name` is the canonical seed (set at order creation from the Record Payment form and overridable via the Student Assignment metabox). Card copy + button label updated to reflect the four-meta scope.
+
+### Files changed
+- [includes/class-kdc-qtap-finance-wc-orders-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-wc-orders-admin.php) — `ajax_rebuild_receipt_metas()` chains the payee-name migration after payment-date.
+- [includes/traits/trait-kdc-qtap-finance-admin-tab-maintenance.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-maintenance.php) — card copy now lists all four metas (Payment Date / Paid With / UTR / Payee Name).
+
+## [3.16.25] - 2026-04-21
+
+### Added
+- **New "Maintenance" admin tab** at Finance → Maintenance. Dedicated home for sitewide data-rebuild actions. Hosts two cards:
+  - **Rebuild Breakups** — moved from the Credits tab. Re-runs the waterfall simulation across every fee order and rewrites per-period receipt breakup rows. Wraps the existing `migrate_backfill_allocation_breakup_3_16_13()` migration via the existing `kdc_qtap_finance_rebuild_all_breakups` AJAX action.
+  - **Rebuild Receipt Metas** — NEW. Re-syncs `payment_date` / `paywith_method` / `pay_utr` on every fee order from the earliest linked transaction. Wraps the v3.16.24 `migrate_backfill_payment_date_3_16_23()` via a new `kdc_qtap_finance_rebuild_receipt_metas` AJAX action (capability: `manage_options`, nonce: `kdc_qtap_finance_rebuild_receipt_metas`). Resets the `_3_16_24_done` flag and re-invokes. Inner `sync_receipt_metas_from_transaction()` is idempotent (per-field "only update if different") so reruns are safe and still correct stale values — same semantics as the v3.16.24 one-time migration, now on-demand.
+
+### Changed
+- **Credits tab renamed to "Adjustment"** in the admin nav. URL slug preserved (`?tab=credits`) so existing bookmarks keep working — only the display label changed.
+- **Rebuild All card removed from the Adjustment tab.** The tab is now purely a per-user credit reconciliation audit + Zero-Out workflow; sitewide rebuild tools live on the Maintenance tab. Keeps the Adjustment workflow focused and gives Maintenance room to grow without crowding the audit table.
+
+### Files changed
+- New [includes/traits/trait-kdc-qtap-finance-admin-tab-maintenance.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-maintenance.php) — two-card render + shared JS runner for both rebuild actions.
+- [includes/class-kdc-qtap-finance-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-admin.php) — require new trait, add `use`, register `'maintenance'` tab + switch case, rename Credits label.
+- [includes/class-kdc-qtap-finance-wc-orders-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-wc-orders-admin.php) — new `ajax_rebuild_receipt_metas` handler + hook registration.
+- [includes/traits/trait-kdc-qtap-finance-admin-tab-credits.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-credits.php) — remove Rebuild All card markup + JS.
+
+## [3.16.24] - 2026-04-21
+
+### Fixed
+- **v3.16.23's payment-date backfill skipped orders with a stale date meta — receipt still showed the wrong date after regeneration.** The migration's gate was `if ( $has_date && $has_method && $has_utr ) skip` — but "has" only meant "non-empty", not "correct". Orders whose `payment_date` had been stamped at order-creation or at status transition (i.e. to the admin's current date, not the transaction's real payment date) passed the check and were skipped entirely. For offline-verified orders in particular, the v3.16.17 PDF hook had synced `date_paid` from whatever `payment_date` meta happened to be at render time, so a stale meta rendered on every re-generation. The receipt showed, say, 20-Apr-2026 (order creation) when the transaction's real payment date was 06-Apr-2026. **Fix**: when an order has a linked transaction, the migration now ALWAYS routes it through `KDC_qTap_Finance_WooCommerce::sync_receipt_metas_from_transaction()` — the helper's per-field "only update if different" logic means re-runs are safe, and it corrects a stale `payment_date` by overwriting it with `$transaction->payment_date`. The fallback path (no linked transaction — stamp `payment_date` from `date_paid` / `date_created`) is unchanged. A new done-flag `kdc_qtap_finance_backfill_payment_date_3_16_24_done` lets the corrected migration re-touch orders the v3.16.23 pass had already flagged as done.
+
+### Files changed
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — migration helper: drop the short-circuit, route every order-with-transaction through `sync_receipt_metas_from_transaction()`. New v3.16.24 done-flag + version gate.
+- [readme.txt](kdc-qtap-finance/readme.txt) / [CHANGELOG.md](kdc-qtap-finance/CHANGELOG.md) — bump + document.
+
+## [3.16.23] - 2026-04-21
+
+### Fixed
+- **Receipt breakup rows were rendered in DB fetch order, not the admin-configured "Fee Item Sort Order".** The plugin already exposes two settings under Finance → Settings that drive the order of rows in Fees-block and payment views: `fee_sort_primary` (radio — fee type first vs slab position first) and `fee_type_order` (drag list — Per Tenure / Per Cycle / Per Term / Per Month). The receipt line-item `breakup_items` meta ignored both and just appended rows in the order `KDC_qTap_Finance_Payment_Item::get_by_payment()` returned them. **Fix**: all three breakup-producing paths — `create_fee_order()` (single-payment order), `create_multi_fee_order()` (multi-term order), and `apply_allocation_breakup()` (event-time + recompute rewrites) — now route their rows through a shared `sort_breakup_rows()` helper that reads the admin setting and sorts by fee-type priority → slab position → period (or slab position → fee-type priority → period when the primary is set to `slab`). Matches the live allocator's waterfall and the Fees-block row order, so receipts, schedule UI, and waterfall all stay in lock-step.
+- **"1st Term" header stuck on orders that recompute turned into Full Tenure coverage.** `apply_full_tenure_retitle()` runs at the end of `create_fee_order()` / `create_multi_fee_order()` and flips the line-item title to "Full Tenure" when the order's line items cover every regular payment for the user+year. But when `apply_allocation_breakup()` adds trickle informational line items during a recompute, the order's covered-payment-id set GROWS — so an order that was "1st Term …" on creation can end up covering the full tenure post-recompute. The retitle wasn't re-running in that flow, so the header stayed "1st Term …" while the breakup showed every period. **Fix**: `apply_allocation_breakup()` now calls `apply_full_tenure_retitle()` after its save. The call is idempotent — orders that don't cover the full tenure are left alone.
+
+### Post-upgrade cleanup
+- **Backfill of all three receipt metas on historical fee orders — `payment_date` + `paywith_method` + `pay_utr`.** v3.16.22 fixed the meta writes in admin Record Payment / CSV import / gateway paths, but orders CREATED before that release had missing or stale metas — their WCPDF receipts render with today's date, empty Paid With, and no UTR/Ref row. A one-time migration (`migrate_backfill_payment_date_3_16_23()`) now runs on first load after upgrade. For each fee order missing any of the three metas:
+  - **Primary path**: finds the earliest transaction linked to the order (via `Payment_Transaction::get_all_by_wc_order_id()`) and routes it through the existing `KDC_qTap_Finance_WooCommerce::sync_receipt_metas_from_transaction()` helper — the same function the live event-time flows use. That one call stamps all three metas from the canonical transaction fields (`payment_date`, `payment_method_title` → `paywith_method`, `reference` / `receipt_file` → `pay_utr`), and also keeps the legacy `transaction_id` order meta in sync with `pay_utr`.
+  - **Fallback path**: when no transaction is linked to the order, only `payment_date` can be reconstructed — stamps it from `date_paid` then `date_created`. `paywith_method` and `pay_utr` are left empty (there's no truth source without a transaction).
+  Run is version-gated on `kdc_qtap_finance_backfill_payment_date_3_16_23_done` + wrapped in try/catch so a single-order failure doesn't block the rest. Debug-log emits scan / sync / fallback / skip counts.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) — new `get_fee_sort_config()` + `sort_breakup_rows()` helpers; wired into `create_fee_order()` / `create_multi_fee_order()` / `apply_allocation_breakup()`; `apply_allocation_breakup()` calls `apply_full_tenure_retitle()` on success.
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — new `migrate_backfill_payment_date_3_16_23()` + version-gated runner.
+- [readme.txt](kdc-qtap-finance/readme.txt) / [CHANGELOG.md](kdc-qtap-finance/CHANGELOG.md) — bump + document.
+
 ## [3.16.22] - 2026-04-21
 
 ### Fixed

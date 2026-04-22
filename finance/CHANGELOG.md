@@ -2,6 +2,19 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.46] - 2026-04-22
+
+### Fixed
+- **"Error updating transaction." on every Edit Transaction save.** The v3.16.36 Edit Transaction enhancements added a Reference/UTR field and, as part of that, included a `reference` column in the direct `$wpdb->update()` payload against `kdc_qtap_finance_transactions`. But that column doesn't exist on the transactions table — the schema at [class-kdc-qtap-finance-database.php:308-333](kdc-qtap-finance/includes/class-kdc-qtap-finance-database.php#L308-L333) never defined one (columns are `payment_id / amount / credit_parked / payment_method / payment_method_title / payment_date / receipt_file / attachment_id / wc_order_id / parent_transaction_id / verification_status / verified_by / verified_at / transaction_date / notes / created_at / created_by`). MySQL rejected every update with `Unknown column 'reference' in 'field list'`, `$wpdb->update()` returned `false`, and every save surfaced the generic "Error updating transaction." error. **Fix**: the `reference` field is no longer included in the transactions-table update payload. Instead, when the admin enters a value, the handler writes it to the linked WC order's `pay_utr` meta — the same canonical store the PDF renderer reads (shared with Record Payment's flow). An empty form submit is a no-op on `pay_utr` so a real gateway `transaction_id` or prior UTR is never clobbered by saving a transaction without touching the Reference field.
+- **Edit Transaction button's `data-reference` attr read `$txn->reference`**, a phantom property on transaction rows (no column → always `null` → serialized as empty string). The modal's Reference/UTR field therefore always opened blank even for transactions that DID have a UTR on record. **Fix**: the attr now reads the linked WC order's `pay_utr` meta directly and skips synthetic `TXN-N` placeholders (internal fallbacks the admin would never want to re-submit as the reference). Real UTRs — whether entered manually during Record Payment, stamped by a payment gateway, or imported via CSV — populate the field correctly.
+
+### Tech notes
+- The Payee Name save at [trait-kdc-qtap-finance-user-meta-payments.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-payments.php) was refactored alongside the reference fix — both payee-name and pay_utr writes now share a single `$wc_order->save()` call instead of two redundant saves in the same handler.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-user-meta-payments.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-payments.php) — remove `reference` from the `$wpdb->update()` payload and route it into the WC order's `pay_utr` meta.
+- [includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php) — Edit button `data-reference` attr pulls from WC order `pay_utr` meta (skipping `TXN-N` synthetics) instead of phantom `$txn->reference` property.
+
 ## [3.16.45] - 2026-04-22
 
 ### Fixed

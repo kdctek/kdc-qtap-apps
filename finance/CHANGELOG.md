@@ -2,6 +2,31 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.44] - 2026-04-22
+
+### Added
+- **"Only Exempt" filter on the WP Users admin list.** Checkbox alongside the existing Year / Grade / Division filter controls. When ticked:
+  - paired with a year → restricts to users whose enrollment FOR THAT YEAR is marked exempt
+  - with no year selected → restricts to users with an exempt enrollment in ANY year
+  Label auto-adapts to the institute's configured `kdc_qtap_finance_label('exempt')` (labeled as "Exception" in the screenshot from the user who reported this — historically "RTE" — shows whatever the plugin setting says).
+- **New single-row meta `kdc_qtap_finance_exempt_index`** — mirrors the v3.16.28 `kdc_qtap_finance_enrollment_index` pattern. Format: `|YEAR|YEAR|` with leading + trailing pipes containing only the years where the user's enrollment is exempt (reads both canonical `exempt` key and legacy `is_rte` key for backward compat). Absent when no enrollments are exempt. Independent of the main index key so existing Year / Grade / Division filters are unchanged.
+- **New helpers on `KDC_qTap_Finance_Enrollment`**:
+  - `INDEX_META_KEY_EXEMPT` class constant (`'kdc_qtap_finance_exempt_index'`)
+  - `build_exempt_index( array $enrollments )` static — pure function returning the compact index string from a decoded enrollments map. Reads both `exempt` and legacy `is_rte`.
+  - `write_enrollment_index()` extended to write both the main index AND the exempt index in lockstep, deleting the exempt row when the user has no exempt enrollments.
+
+### Changed
+- **`handle_users_list_sorting()`** at [trait-kdc-qtap-finance-user-meta-associations.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-associations.php) now reads the `qtap_exempt` GET param. When set, adds a second `meta_query` clause targeting `kdc_qtap_finance_exempt_index` alongside the existing Year/Grade/Division clause. The two clauses combine via `AND` so all active filters must match.
+- **Year no longer auto-defaults to current** when ONLY the Exempt filter is active — enables the "any year exempt" matching described above. When Grade/Division filters are also active, the year fallback to current year is preserved.
+
+### Post-upgrade cleanup
+- **One-time migration `migrate_exempt_index_3_16_44()`** runs on first load after upgrade. Iterates every user with a `kdc_qtap_finance_enrollments` meta row in batches of 500, calls `write_enrollment_index()` on each (which now writes both indexes), then flushes the user_meta cache group. Version-gated on `kdc_qtap_finance_exempt_index_3_16_44_done` + try/catch-wrapped. Debug log reports users scanned + exempt users found.
+
+### Files changed
+- [includes/class-kdc-qtap-finance-enrollment.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-enrollment.php) — new `INDEX_META_KEY_EXEMPT` constant + `build_exempt_index()` helper; `write_enrollment_index()` writes both indexes in lockstep.
+- [includes/traits/trait-kdc-qtap-finance-user-meta-associations.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-associations.php) — `handle_users_list_sorting()` reads `qtap_exempt` + adds the second meta_query clause; `render_users_list_filters()` adds the "Only Exempt" checkbox.
+- [kdc-qtap-finance.php](kdc-qtap-finance/kdc-qtap-finance.php) — new `migrate_exempt_index_3_16_44()` + version-gated runner.
+
 ## [3.16.43] - 2026-04-22
 
 ### Fixed

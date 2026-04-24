@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.59] - 2026-04-24
+
+### Added
+- **Order Items modal now shows Order ID + Order Date, Receipt Number + Receipt Date, Payment Mode, and UTR / Transaction ID** in a dedicated summary panel at the top of the modal body. Previously the modal jumped straight from a thin customer/year/grade line into the line-item list — staff had to cross-reference the Receipts tab or the order edit screen to see how (and via which receipt) a payment landed. The panel renders as a 2-column grid (single column on narrow viewports) with caps labels over large values and muted sub-lines for the accompanying dates. Extended `ajax_staff_order_items()` in [class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php) to include `order_date`, `receipt_number`, `receipt_date`, `payment_method`, `utr`; receipt-date fallback chain (`payment_date` → `date_paid` → `date_created`) matches the Receipts tab + user-edit WC Orders table so the displayed date is consistent everywhere. UTR rendered in monospace with `word-break: break-all` so long reference strings don't overflow the cell.
+
 ## [3.16.58] - 2026-04-24
 
 ### Added

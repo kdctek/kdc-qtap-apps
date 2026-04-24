@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.55] - 2026-04-24
+
+### Fixed
+- **Date range on the Staff Receipts filter bar now renders inline on one row** (From / To side-by-side). v3.16.54 intended the single-row layout but block themes and WooCommerce form styles commonly ship a broad `input[type="date"] { width: 100%; }` rule that overrode our `width: 150px`, stretching the From date input to fill the content column and forcing the "To" label+input onto a new line. Two-part fix:
+  - The date input's width now uses `!important` + `flex: 0 0 auto` + `box-sizing: border-box` so theme/WC rules can't stretch it.
+  - From/To + their inputs are wrapped in a new `.kdc-qtap-rx-daterange` span with `flex-wrap: nowrap` — the group wraps as a single unit on narrow viewports instead of the inner items wrapping individually.
+
+### Files changed
+- [includes/class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php) — CSS fix for `.kdc-qtap-rx-date` width + new `.kdc-qtap-rx-daterange` nowrap sub-group; Date-row markup updated to wrap From/To inside the new span.
+
 ## [3.16.54] - 2026-04-24
 
 ### Fixed

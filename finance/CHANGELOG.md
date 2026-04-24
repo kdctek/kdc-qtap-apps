@@ -2,6 +2,15 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.48] - 2026-04-24
+
+### Added
+- **"Receipt Date" column on the WooCommerce Orders admin list**, positioned immediately after the existing "Receipt #" column. Displays the order's `payment_date` meta (the canonical receipt date the plugin writes when `KDC_qTap_Finance_Payment::record_transaction()` fires) formatted as `YYYY-MM-DD`. Falls back to WooCommerce's `date_paid` and then `date_created` when `payment_date` is absent — so legacy / pre-plugin orders still surface a meaningful date instead of a blank cell. Shows a muted em-dash only when none of the three are available.
+- Works on both storage backends: HPOS (`manage_woocommerce_page_wc-orders_custom_column` at [class-kdc-qtap-finance-wc-orders-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-wc-orders-admin.php)) and legacy post-type (`manage_shop_order_posts_custom_column`). Column width is fixed at 105px with `white-space: nowrap` to keep the table compact.
+
+### Files changed
+- [includes/class-kdc-qtap-finance-wc-orders-admin.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-wc-orders-admin.php) — new `COLUMN_RECEIPT_DATE_KEY` constant; `add_receipt_column()` now injects both Receipt # and Receipt Date columns in order; `render_column_legacy()` recognises the new key; `render_column()` dispatches to a new `render_receipt_date_cell()` helper; admin CSS gains a width rule for the new column.
+
 ## [3.16.47] - 2026-04-22
 
 ### Fixed

@@ -2,6 +2,26 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.50] - 2026-04-24
+
+### Added
+- **Receipts tab — "Zaakpay only" toggle.** Adds a checkbox in the toolbar that restricts the list (and the ZIP bundler) to orders marked with `_zaakpay_order=yes` meta — the flag the Zaakpay gateway plugin stamps at checkout completion. Identifies gateway-paid orders reliably even when staff have later overwritten `paywith_method` to something like "Online - Other" or a channel-specific label. Applied at the SQL layer via a `meta_query` AND-clause on the primary `payment_date`-range query; the legacy fallback query is skipped when Zaakpay-only is on (Zaakpay orders always carry `payment_date` so the union would match zero rows there anyway).
+- **Receipts tab — "Method" multi-select filter** powered by the distinct `paywith_method` values actually present on the site. `get_distinct_paywith_methods()` queries `{prefix}wc_orders_meta` first (HPOS-native) and falls back to `wp_postmeta` when HPOS isn't storing data — so the dropdown auto-reflects whatever methods the site is actually using (Cash, UPI, Cheque, gateway titles, etc.). Values are lowercased for case-insensitive matching — "Cash", "cash", and "CASH" collapse to one logical option while the UI keeps the first-seen casing as the display label. Hidden when "Zaakpay only" is on (the two filters are mutually exclusive by design). An "All" shortcut button re-selects every option with a single click.
+- **New unified filter resolver** `resolve_receipt_filters_from_request()` on the Receipts trait — returns a struct with `sources`, `zaakpay_only`, and `paywith_methods` in one call. The old `resolve_receipt_sources_from_request()` is preserved as a thin shim that extracts just `sources`, so pre-v3.16.50 call sites keep working.
+- **`query_receipt_order_ids()` gains a `$zaakpay_only` parameter** that injects the `_zaakpay_order=yes` meta AND-clause at SQL time.
+
+### Changed
+- **`build_receipt_row()` signature** — third argument is now the full filters struct (`sources` + `zaakpay_only` + `paywith_methods`). A legacy-shape detection at the top auto-promotes any caller still passing a plain sources array into the struct, so no downstream code breaks.
+- ZIP handler narrows by Zaakpay flag + method filter BEFORE the WCPDF render loop, mirroring the list endpoint — no wasted PDF regeneration for orders the filter set would exclude.
+
+### UI
+- New `.kdc-receipts-paywith-group` toolbar group at [assets/css/kdc-qtap-finance-receipts.css](kdc-qtap-finance/assets/css/kdc-qtap-finance-receipts.css) — dashed-border pill matching the Source group's visual weight, containing the Zaakpay checkbox and the method multi-select.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php) — new toolbar controls in `render_receipts_tab()`; new `get_distinct_paywith_methods()` + `resolve_receipt_filters_from_request()` helpers; extended `query_receipt_order_ids()` with `$zaakpay_only`; `build_receipt_row()` accepts the full filters struct and applies the zaakpay + method filters post-row.
+- [assets/js/kdc-qtap-finance-receipts.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-receipts.js) — new `readPaywithFilter()` + `syncPaywithVisibility()` helpers; sends `zaakpay` + `paywith_methods[]` on both list and ZIP requests; auto-reload wired to all new controls; "All" button re-selects every option.
+- [assets/css/kdc-qtap-finance-receipts.css](kdc-qtap-finance/assets/css/kdc-qtap-finance-receipts.css) — new `.kdc-receipts-paywith-group` + method-select styling.
+
 ## [3.16.49] - 2026-04-24
 
 ### Fixed

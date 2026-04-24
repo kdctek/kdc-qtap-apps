@@ -2,6 +2,23 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.52] - 2026-04-24
+
+### Changed
+- **Staff Console → Receipts tab: filter bar rewritten from scratch** at [class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php). The previous design — a single `search` text input paired with a collapsible `<details>` containing Status + Source checkboxes — was replaced with an always-visible three-row layout inside one form:
+  - **Row 1 — Targeted query.** `Search in: [parameter ▾]` dropdown paired with a text input. Parameters: `All fields`, `{Student} Name`, `Payee Name`, `Receipt Number`, `Order ID`, `UTR / Txn ID`, `Payment Method`, `Items (purchased)`. "All fields" keeps the pre-existing multi-field union semantics (WC native `s` + customer user lookup + canonical order metas) and **now also searches line-item names** via the new items-table helper. Every other parameter narrows to that one field only — so "Receipt Number: 0042" no longer spuriously matches payee names containing "0042".
+  - **Row 2 — Date range.** `Date: [Receipt Date | Order Date ▾]` + From / To date inputs. Receipt Date filters on the `payment_date` meta via `meta_query BETWEEN` (CHAR compare — ISO-8601 YYYY-MM-DD sorts lexically); Order Date filters on `date_created` via the native `wc_get_orders` arg.
+  - **Row 3 — Status + Source pills.** Always visible (not collapsed). Same checkbox semantics as before. All registered WC statuses are listed (including custom statuses contributed by other plugins).
+- **"Active filters" chip row below the bar.** Each applied filter (query, date range, non-default status, non-default source) renders as a pill with an × link that clears just that one filter while preserving the rest of the URL. "Reset all" button clears every filter in one click.
+- **Legacy `?search=` param aliased.** Bookmarked / cached URLs from the v3.16.41 era still load — the old param is read into the new `q` field when `q` itself isn't present.
+
+### Added
+- **`search_orders_by_field( $field, $token, $base_args )`** — new protected static on `KDC_qTap_Finance_Block_Editor`. Per-field dispatcher that knows the canonical data source for each parameter (user-table search, order meta, WCPDF receipt meta, order-items table, etc.). `field = 'all'` delegates to the pre-existing `search_orders_by_token()` union (plus the new items-table search for "All fields" coverage parity).
+- **`search_orders_by_items( $token, $base_args )`** — new protected static that runs a direct `SELECT DISTINCT order_id FROM wp_woocommerce_order_items WHERE order_item_name LIKE …` then re-filters by status when provided. Works for HPOS + legacy (both backends share the `order_items` table).
+
+### Files changed
+- [includes/class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php) — `render_staff_console_receipts()` rewrites parameter parsing, query-building, and the filter-bar markup; two new static helpers (`search_orders_by_field`, `search_orders_by_items`).
+
 ## [3.16.51] - 2026-04-24
 
 ### Changed

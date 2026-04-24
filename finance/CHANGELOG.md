@@ -2,6 +2,25 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.54] - 2026-04-24
+
+### Fixed
+- **Full Tenure retitle now runs synchronously on payment record**, not deferred to `shutdown`. `KDC_qTap_Finance_Admin::ajax_record_payment()` at [trait-kdc-qtap-finance-user-meta-payments.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-payments.php) previously handed `link_order_to_payment()` + `apply_allocation_breakup()` (which internally calls `apply_full_tenure_retitle()`) off to a `shutdown` callback after `fastcgi_finish_request()` so the admin saw the success response instantly. The tradeoff documented inline — *"if the deferred work throws, staff can hit 'Recompute Breakup' on the order to fix it"* — was the recurring friction admins were hitting: a freshly-recorded full-tenure payment would still read "1st Term" on the order header until they manually clicked Recompute. Now inline. Cost: ~50–200ms added to the success response. Wrapped in try/catch so a breakup exception still lets the transaction/order persistence succeed (same failure mode as before — logged and swallowed), but the success path now always produces a correct receipt.
+- **Recompute Breakup no longer explodes Tuition into 12 monthly rows on per_tenure / per_cycle enrollments.** `apply_allocation_breakup()` at [trait-kdc-qtap-finance-wc-orders.php:1264](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php#L1264) iterates every Payment_Item contribution and, before v3.16.54, emitted one breakup row per item — so a per_tenure year's 12 monthly `per_month` tuition items produced 12 "Jun 2025 @ ₹10,000", "Jul 2025 @ ₹10,000", … rows instead of a single consolidated "Tuition Fee: ₹120,000". v3.16.54 detects the enrollment's `payment_cycle` via `KDC_qTap_Finance_Enrollment::get()`; when it's `per_tenure` or `per_cycle`, the contribution rows are aggregated by slab (sum deltas, span min-start / max-end periods, take lowest sort_order, first-seen fee_type) and emitted as ONE row per slab with just the currency value (no "@ period" prefix). Per_term / per_month enrollments keep the old per-item granularity — admins reading those receipts want each term/month visible.
+
+### Changed
+- **Staff Console → Receipts filter bar layout polish** at [class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php):
+  - **Rows are now a 2-column CSS grid** (`grid-template-columns: 72px 1fr`) with a new `.kdc-qtap-rx-row__content` flex container inside. Wrapped pills (Status / Source) stay inside the content column instead of spilling under the uppercase label.
+  - **Date range inline** on one row — `<select>` + From (date) + To (date) side-by-side at a compact 150px each. Previously the date inputs wrapped to their own lines because of `flex-wrap: wrap` on the daterange span, ballooning the DATE row height.
+  - **Mobile `<details>` wrapper**. The filter bar is wrapped in a native `<details class="kdc-qtap-rx-wrap">` with a summary bar that reads "Filters [N active]" where N is the number of applied chips. On mobile (≤ 720px) the wrap is closed by default and the summary is visible. On desktop (≥ 721px) the summary is hidden via CSS and a small inline script sets the `open` attribute to keep the filters permanently expanded. The script also listens for viewport changes and flips state on resize; a `toggle` listener on the details element records "user has explicitly clicked" so the script doesn't undo an intentional mobile expand.
+  - **Mobile single-column layout**. At ≤ 720px the grid collapses to `1fr` so labels stack above their content rows — labels that were fixed-width on desktop now read as section headers on narrow viewports.
+  - **Status pills sorted alphabetically** via `asort( $all_statuses, SORT_NATURAL | SORT_FLAG_CASE )` so the order no longer depends on which plugin registered the status first.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-user-meta-payments.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-payments.php) — removed the `add_action( 'shutdown', … )` wrapper around `apply_allocation_breakup()`; now runs inline inside the same try/catch the deferred path used.
+- [includes/traits/trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) — `apply_allocation_breakup()` detects `payment_cycle` once per call and, when per_tenure / per_cycle, aggregates contribution rows by slab before emitting the breakup rows. Also suppresses the "@ period" prefix for the collapsed output.
+- [includes/class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php) — filter bar markup rewritten around the new 2-column grid; CSS `<style>` block rewritten with the grid + `<details>` + mobile-collapsible rules; tiny inline viewport-watching script added; status pills sorted alphabetically.
+
 ## [3.16.53] - 2026-04-24
 
 ### Changed

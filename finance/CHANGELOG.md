@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.57] - 2026-04-24
+
+### Changed
+- **Staff user-edit screen: moved "Additional Information" (Gender / Date of Birth / Associated Students) below the WooCommerce Orders table.** Previously the profile opened with demographics before Finance Enrollment and order activity. Staff doing day-to-day fee work need the enrollment state and payment history up top; demographics are referenced rarely. Reordered in [trait-kdc-qtap-finance-user-meta-rendering.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php) so the flow now reads: Finance Enrollment → WooCommerce Orders → Additional Information.
+- **WooCommerce Orders table on the user-edit screen now matches the Staff Console Receipts tab layout.** Replaced the compact v3.15.0 table (Order / Payment / Amount / Receipt # / Status) with the same visual cadence used on `/staff/?tab=receipts` (minus the Student column — the profile already identifies the user). Each row now shows: order number with FEE / POS badges + order-date subline; payment method + UTR/txn-id subline; right-aligned amount; receipt number with external-link glyph + receipt-date subline (same canonical `payment_date` → `date_paid` → `date_created` fallback chain as the Receipts tab); Lucide-iconed status chip via `kdc_qtap_finance_render_order_status()`; and a "View items" button that opens the shared items modal (lazy-loaded via `kdc_qtap_finance_staff_order_items` AJAX). The items-modal CSS + JS are enqueued defensively so the button works in both contexts (wp-admin profile and frontend staff console).
+
 ## [3.16.56] - 2026-04-24
 
 ### Fixed

@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.49] - 2026-04-24
+
+### Fixed
+- **WCPDF Receipt/Invoice Payment Date no longer shifts by ±1 day** when the server timezone differs from the WP timezone. Previously, `pdf_receipt_payment_details()` at [trait-kdc-qtap-finance-wc-helpers.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-helpers.php) parsed the bare `payment_date` meta via `strtotime($meta . ' 00:00:00')` (server TZ) and pushed the result into `$order->set_date_paid()` (stored as UTC), which WCPDF then formatted back in the WP TZ — a round-trip that could silently drop or gain a day depending on TZ differences.
+- The Payment Date row is now rendered directly from the `payment_date` order meta via the WCPDF filter `wpo_wcpdf_payment_date`. The meta is parsed as midnight in `wp_timezone()` using `DateTimeImmutable::createFromFormat('!Y-m-d', …)` and formatted with `wcpdf_date_format($document, 'order_date_paid')` via `wp_date()` — so the rendered day is exactly the day in the meta, regardless of server TZ, UTC, or WP TZ.
+- Side-effect removed: the receipt hook no longer mutates `$order->set_date_paid()` / `save()` on every PDF render. WCPDF output is unchanged for orders with no `payment_date` meta (falls through to default behaviour). Refund documents resolve Payment Date from the parent order's `payment_date` meta, matching WCPDF's own refund handling.
+
+### Files changed
+- [includes/class-kdc-qtap-finance-woocommerce.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-woocommerce.php) — registered a new `add_filter( 'wpo_wcpdf_payment_date', … )` next to the existing WCPDF action hooks.
+- [includes/traits/trait-kdc-qtap-finance-wc-helpers.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-helpers.php) — removed the `set_date_paid` sync block from `pdf_receipt_payment_details()`; added `pdf_payment_date_from_meta( $formatted_date, $document )` which returns a site-TZ-anchored formatted string, bypassing WCPDF's `date_paid`-based computation.
+
 ## [3.16.48] - 2026-04-24
 
 ### Added

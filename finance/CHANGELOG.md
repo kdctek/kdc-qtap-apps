@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.56] - 2026-04-24
+
+### Fixed
+- **Staff Console Receipts targeted search now actually restricts results to matching orders.** Filtering by any field (Items purchased, Payee Name, Receipt Number, UTR, Payment Method, etc.) previously returned every order matching the status filter instead of only the handful of matching orders — e.g., searching `Items (purchased) = Plate` on a dataset with ~8–10 plate items returned 1,186 tuition-fee receipts. Root cause: the code passed `'include' => $ids` to `wc_get_orders()`, but WooCommerce's HPOS `OrdersTableQuery` parameter mapping has no entry for `include` (only `post__in` → `id`), so the ID restriction was silently dropped on HPOS installs and only the status filter remained in force. Switched all three call sites in [includes/class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php) from `include` → `post__in`, which is mapped on both HPOS (→ `id`) and legacy CPT (native WP_Query param). The same bug silently broke every targeted-field search added in v3.16.52 — all restored with this one-arg change.
+
 ## [3.16.55] - 2026-04-24
 
 ### Fixed

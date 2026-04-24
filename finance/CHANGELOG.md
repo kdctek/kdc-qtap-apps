@@ -2,6 +2,20 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.53] - 2026-04-24
+
+### Changed
+- **Staff Console → Receipts tab: table header polish.** The "Customer" column header now renders the configurable `kdc_qtap_finance_label('student')` label (so sites that renamed "Student" to "Member" / "Player" / etc. see the right word). The "Receipt #" header shortens to "Receipt" since the date now shares the same cell. Only the staff-console receipts table is touched — the user-detail orders table at the same file further down (line 1726-ish) still reads "Customer" / "Receipt #" because that surface is a different context.
+- **Receipt cell now shows the Receipt Date** as a muted second line below the receipt number. Date is computed via the same `payment_date` meta → `date_paid` → `date_created` fallback chain used by the admin Receipts tab, so both surfaces always agree on the rendered date. Uses the site's configured `date_format` (not a hard-coded Y-m-d).
+- **Filter bar visual rework.** Inline styles that had accumulated on the v3.16.52 markup are collected into a dedicated `<style>` block with proper CSS classes (`kdc-qtap-rx-filters`, `kdc-qtap-rx-row`, `kdc-qtap-rx-pill`, `kdc-qtap-rx-chip`, etc.). The form is now a soft-shadowed rounded card; rows are separated by subtle bottom borders; labels use small-caps uppercase for stronger hierarchy without shouting.
+- **Status + Source checkboxes become pill buttons.** Native checkboxes are visually hidden (still keyboard-accessible via focus-visible outline); the surrounding `<label>` renders as a rounded pill. Selected state uses the modern CSS `:has(input:checked)` pseudo-class so the pill swaps to a green-filled look the instant the user ticks it — no JS round-trip, no wait for form submit. Supported in Chrome 105+/Safari 15.4+/Firefox 121+, matches the WP evergreen-browser target.
+- **Date range now renders inline** (From/To side-by-side in a single `.kdc-qtap-rx-daterange` span) instead of stacking on two separate lines.
+- **Apply + Reset anchor right** of row 1 via `margin-left: auto`.
+- **Active filter chips** swap from the grey "neutral" look to a warm amber (matches the on-hold status palette) so they visually stand out as temporary overlay state rather than blending back into the filter bar.
+
+### Files changed
+- [includes/class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php) — `render_staff_console_receipts()` table header renames; receipt-date computation + rendering in the Receipt cell; filter bar markup rewritten with the new CSS class hierarchy; new `<style>` block inlined above the filter card.
+
 ## [3.16.52] - 2026-04-24
 
 ### Changed

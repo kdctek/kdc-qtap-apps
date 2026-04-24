@@ -2,6 +2,23 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.51] - 2026-04-24
+
+### Changed
+- **Replaced the vendor-specific "Zaakpay only" toggle** (v3.16.50) **with a generic "Created Via" checkbox pill** — qTap Finance is a commercial plugin that ships to sites running any gateway, so the primary filter on top of date / source should classify *how the order was received*, not identify one specific gateway by meta key. The new pill mirrors the parent qTap App plugin's canonical six-channel taxonomy at [class-kdc-qtap-woocommerce-orders-admin.php:140-146](kdc-qtap/includes/class-kdc-qtap-woocommerce-orders-admin.php#L140-L146): **Checkout**, **Admin**, **WCPOS**, **WhatsApp**, **REST API**, **Other**. All six default checked — zero-config state is "show everything".
+- **Detection logic duplicated from parent plugin** (intentionally — keeps the finance release self-contained rather than forcing a coordinated parent bump). The new `detect_order_via()` private helper on the Receipts trait copies the parent's priority ladder verbatim: WCPOS (meta marker + `created_via` stripos + meta-key regex) → WhatsApp (`created_via` + WA-specific meta + custom `created_via` meta_data entry) → Admin (explicit `admin` or empty `created_via`) → Checkout (`checkout`/`store-api`) → REST API (`rest` stripos) → Other. Kept in sync via a docblock cross-reference.
+- **`resolve_receipt_filters_from_request()` restructured** — `zaakpay_only` bool removed; `via` array added keyed by channel slug. The v3.16.50 `zaakpay` POST param is silently ignored (no browser-cache compat needed — feature lived for one release cycle). The sources + paywith_methods groups are unchanged.
+- **`build_receipt_row()` + the ZIP filter loop** — Zaakpay meta check replaced with the 6-way `detect_order_via()` classification. The paywith_method multi-select is now always applied when non-empty (previously skipped while Zaakpay-only was on — that mutual-exclusion no longer applies). Each returned row now carries a `via` key, available for future UI enhancements (e.g., a compact "Via" column in the table).
+- **`query_receipt_order_ids()` signature reverted** — the `$zaakpay_only` parameter added in v3.16.50 is removed. Created Via detection happens in PHP post-query because the heuristics span column values + multiple meta keys + meta_data iteration — too much to express cleanly as a meta_query, and post-filtering is fast enough for the bounded date-range result set.
+
+### UI
+- New `.kdc-receipts-via-group` dashed-border pill at [assets/css/kdc-qtap-finance-receipts.css](kdc-qtap-finance/assets/css/kdc-qtap-finance-receipts.css), visually matching the existing Source pill. The (now-removed) Zaakpay-specific styling + paywith visibility toggle are cleaned up.
+
+### Files changed
+- [includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php) — Zaakpay checkbox swapped for the six Via checkboxes in `render_receipts_tab()`; new `$via_channels` property + `detect_order_via()` helper; filter resolver + query + build_receipt_row + ZIP post-filter all updated to the Via shape. Each row now emits `via` for client consumption.
+- [assets/js/kdc-qtap-finance-receipts.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-receipts.js) — `readViaFlags()` replaces the Zaakpay toggle read; `readPaywithMethods()` split out and used unconditionally; `syncPaywithVisibility()` removed (no longer needed); both list and ZIP requests send `via_<channel>` flags.
+- [assets/css/kdc-qtap-finance-receipts.css](kdc-qtap-finance/assets/css/kdc-qtap-finance-receipts.css) — Zaakpay styling dropped; new `.kdc-receipts-via-group` block added.
+
 ## [3.16.50] - 2026-04-24
 
 ### Added

@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.58] - 2026-04-24
+
+### Added
+- **Overview tab search now supports a "Search in" field selector** modeled on the Receipts tab. Staff can narrow the search to `{Student} Name` (first_name / last_name / display_name / nickname — explicitly NOT email/login/mobile, so short surname searches don't fan out to unrelated accounts) or `Payee Name` (WC order `_kdc_qtap_finance_payee_name` + `_billing_first_name` + `_billing_last_name` — returns the *student* whose order carries that payee), keeping `All fields` as the catch-all. Partial + reorder-tolerant matching is preserved: "John Smith", "Smith John", "Joh Smi" all match via the existing per-token AND semantics. Switching the field selector with an active query auto-reruns the search without a Find click. REST `staff-search` endpoint extended with a `q_field` param in [class-kdc-qtap-finance-rest-api.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-rest-api.php) (`staff_search_by_user_columns()` + `staff_search_by_payee_name()` helpers).
+- **Search results render as clickable "{student} cards"** in a responsive grid — student name, email, and Year · Grade · Division on each card. The entire card is a link; clicking opens `?user={id}` in a new browser tab with every other query parameter stripped (clean canonical URL regardless of the admin's current filter state). Hover lift + WP-admin-theme-tinted border for feedback.
+
+### Changed
+- **Overview tab: "Create New" user flow removed** pending a proper UX pass — re-planned for a later release. The dashboard search bar is now a single row: `SEARCH IN [dropdown] [input] [Find]`, matching the Receipts tab cadence exactly. Create-new REST endpoints are untouched and ready to re-wire when the new flow ships.
+- **User-edit screen: WooCommerce Orders table re-skinned for the frontend staff console.** wp-admin's `.widefat` / `.form-table` rules don't load on the frontend, which is why v3.16.57 still looked unstyled. Added staff-console-scoped CSS in [kdc-qtap-finance-staff-console.css](kdc-qtap-finance/blocks/staff-console/kdc-qtap-finance-staff-console.css) for the `.kdc-qtap-finance-wc-orders-section` table: rounded card container + soft shadow, generous header/cell padding, hover-row tint, and the "View items" action button styled as a solid primary (matching the Receipts tab's blue list button).
+- **User-edit screen: "Additional Information" now renders as a card with a 2-column grid layout** — label column + control column, so the Date of Birth input no longer stretches to full width and the Associated Students search input sits next to its label instead of below it. The date input width is capped at 170px (was `regular-text` = ~240px) and all controls use the same 34px height / 4px radius as other staff-console inputs. `render_associated_users_field()` in [trait-kdc-qtap-finance-user-meta-associations.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-associations.php) gained an optional `$args['layout']` with `'grid'` option to emit the standalone label + value pair (`'table'` fallback keeps wp-admin form-table rendering unchanged).
+
 ## [3.16.57] - 2026-04-24
 
 ### Changed

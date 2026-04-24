@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.60] - 2026-04-24
+
+### Added
+- **Staff Receipts tab: Payment Method filter row** with 11 alphabetically-sorted pills — **Card, Cash, Cheque, IMPS, NEFT, Net Banking, Online, Others, RTGS, UPI, Wallet**. Each pill maps to a list of case-insensitive substrings matched against the `paywith_method` order meta (e.g., UPI pill matches "UPI", "GPAY", "PhonePe", "BHIM"; Card matches "Card", "Credit", "Debit"; Online matches "Zaakpay", "Razorpay", "Stripe", "PayU", "PayPal", "CCAvenue", "Gateway"; Cheque matches "Cheque", "Check", "Demand Draft", "DD"; individual rails NEFT / RTGS / IMPS / Net Banking each have their own pill). "Others" is the negative space — orders whose `paywith_method` doesn't match any known pattern (or is empty) fall under it. Defaults to all pills selected (= no filtering); deselect pills to narrow the view. Filter state is mirrored into Active Filters chips and the Reset-all link, and the `payment_method[]` param is preserved through pagination. Same post-query pagination tradeoff as the existing Source filter (meta is free-text so partial matching doesn't translate cleanly to `WC_Order_Query` args).
+
 ## [3.16.59] - 2026-04-24
 
 ### Added

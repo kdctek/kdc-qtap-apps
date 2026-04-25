@@ -2,6 +2,18 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.6] — 2026-04-25
+
+### Added
+- **4th tab: "Unassigned"** — per-grade list of students whose enrollment has no division. Each row shows last name, first name, and the user_id rendered as a link to `wp-admin/user-edit.php?user_id=X` opened in a new tab. No gender breakdown — this is an operational list, not an aggregate. Uses the same expand/collapse + Expand-all/Collapse-all controls as the other tabs.
+- **Finance custom labels respected throughout the dashboard.** Tab labels, column headers, summary band, and empty-state copy now resolve through `KDC_qTap_Education_Dashboard::label()` → `kdc_qtap_finance_label()` so an institution that calls grades "Levels" and divisions "Sections" sees those words automatically. Falls back to English defaults if Finance's helper isn't loaded.
+- `KDC_qTap_Education_Dashboard::build_unassigned_view()` data builder + `fetch_user_names()` batched query (one SQL on `wp_users` for `display_name`, one on `wp_usermeta` for `first_name` / `last_name`, no N+1).
+- `KDC_qTap_Education_Dashboard::label( $key, $plural )` public helper for any future code that needs Finance-aware labels.
+
+### Changed
+- **Renamed the "RTE" tab → "Exempt"** because Finance's `exempt` flag is generic — it could mark RTE seats, scholarship students, staff-family discounts, or anything else exempted from fees. "RTE" was inaccurately specific. Internal view key also renamed from `'rte'` → `'exempt'`. CSS selectors updated.
+- View-summary shape: each view now carries a `'type'` field (`'aggregate'` for Grade/Division/Exempt, `'list'` for Unassigned). render.php dispatches to the right panel renderer based on it.
+
 ## [1.0.5] — 2026-04-25
 
 ### Added

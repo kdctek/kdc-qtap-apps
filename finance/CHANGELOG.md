@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.67] - 2026-04-25
+
+### Changed
+- **Page loader now uses the parent's `KdcQtapUI.showPageLoader()` (parent v2.7.8+) instead of the Finance-local overlay shipped in v3.16.66.** The previous release shipped its own CSS markup, JS helpers, and `window.kdcQtapFinancePageLoader` global — the moment another child plugin needed the same UX, that copy would have drifted away from theirs. Source-of-truth rule applied: visual components owned by the parent. Removed the local `.kdc-qtap-finance-page-loader*` CSS block, the local `showPageLoader()`/`hidePageLoader()` definitions, and the per-call sub-line strings (parent's API takes a single message). All four transaction call sites — `initiateSinglePayment`, `initiateMultiPayment`, `initiateTermPayment`, `submitInlinePaymentForm` — now obtain a handle from `KdcQtapUI.showPageLoader()` and use `loader.setMessage()` to flip "Processing…" → "Redirecting…" before the `window.location.href` jump. The thin wrapper `showPageLoader( msg )` is kept call-site-side as a no-op fallback (returns null) so the page still works on older parent versions without throwing. The fees-block frontend script now declares `kdc-qtap-frontend-helpers` as a `wp_register_script` dependency so the parent's helper is guaranteed to be loaded before our handlers run. Three i18n keys added in v3.16.66 (`pageLoaderPaying` / `pageLoaderRedirecting` / `pageLoaderSubmitting`) are removed — the parent's API uses the existing `processing` / `redirecting` / `submitting` strings instead.
+
 ## [3.16.66] - 2026-04-25
 
 ### Added

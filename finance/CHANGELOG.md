@@ -2,6 +2,13 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.74] - 2026-04-26
+
+### Changed
+- **Renamed the staff console tab from "Pay Stats" to "Fee Stats"**, with the URL slug shortened to `?tab=stats`. The chart only ever counted orders that had a fee component — the new name reflects what the tab actually shows. Visible label, page heading, and menu item all updated. The JS file moved from `kdc-qtap-finance-pay-stats.js` → `kdc-qtap-finance-fee-stats.js`; the AJAX action renamed from `kdc_qtap_finance_pay_stats_data` → `kdc_qtap_finance_fee_stats_data`; localized JS global `kdcQtapFinancePayStats` → `kdcQtapFinanceFeeStats`. CSS BEM blocks renamed from `kdc-qtap-finance-pay-stats__*` → `kdc-qtap-finance-fee-stats__*`.
+- **Fee-line-item filter applied to every counted order.** Regardless of source (Admin / POS / Others), an order is only counted on the chart if it contains at least one line item with `_kdc_qtap_finance_product_type === 'kdc_qtap_finance_fee'` (the meta stamped by `add_fee_line_item()`). Non-fee Woo orders — uniforms, lunch sales, anything that isn't a finance fee — are skipped. New `KDC_qTap_Finance_Block_Editor::order_has_fee_item( $order )` static helper.
+- **Source classification now uses the 6-channel `created_via` taxonomy** that already drives the parent plugin's WC Order admin "By" column and the Receipts admin tab — one source of truth. Channels: `wcpos`, `whatsapp`, `admin`, `checkout`, `rest-api`, `other`. The Fee Stats source chip row was rebuilt with one chip per channel (was 3 chips in v3.16.73: Admin/POS/Others). The classifier was lifted from the Receipts admin trait (`detect_order_via()`) into a public static helper `KDC_qTap_Finance_Block_Editor::detect_order_via_channel()`; the trait now delegates. Default selection on first load = `admin` only — the other 5 channels are opt-ins. Click-through to the staff Receipts tab maps the 6 channels onto its 3-source URL contract: `admin` → `source[]=fee`, `wcpos` → `source[]=pos`, everything else (`checkout`/`whatsapp`/`rest-api`/`other`) → `source[]=other`.
+
 ## [3.16.73] - 2026-04-26
 
 ### Added

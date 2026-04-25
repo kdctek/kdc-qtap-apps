@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.71] - 2026-04-25
+
+### Added
+- **New Staff Console tab: Pay Stats** (`?tab=pay-stats`). Interactive 2-ring doughnut chart of WC orders for a date range — outer ring shows the 11 payment-method buckets (Card / Cash / Cheque / IMPS / NEFT / Net Banking / Online / RTGS / UPI / Wallet / Others), inner ring shows Checkout vs Admin (POS folded into Admin per the staff workflow). Date range presets: **Today** (default) / **Last 7 days** / **Last 30 days** / **Custom** (start–end ISO date inputs). Count / Amount measure toggle re-skins segment proportions in place — both metrics surface in tooltips regardless. Custom legend grid below the chart lists every non-zero bucket with count + amount; clicking a legend chip is the same as clicking the matching segment.
+- **Click-through to Receipts**: clicking any segment (or legend chip) navigates to the Receipts tab pre-filtered by that bucket + the active date range. Method segment → `payment_method[]=<bucket>`. Origin segment → `source[]=fee&source[]=pos` (Admin) or `source[]=other` (Checkout). The URL contract was already supported by the v3.16.60 Receipts filter — no changes to the Receipts handler.
+- **Vendored Chart.js v4.4.1** at [assets/lib/chart.js/chart.umd.min.js](kdc-qtap-finance/assets/lib/chart.js/chart.umd.min.js). Self-hosted (no third-party CDN), enqueued only on the Pay Stats tab so the 200 KB library doesn't load on Overview / Receipts / Report.
+- **`pie-chart` Lucide icon** registered into the parent's `kdc_qtap_lucide_icons` filter map for the new tab. Parent v2.7.6 made the registry filterable specifically so child plugins could extend it without a parent release.
+
+### Changed
+- **Refactor**: lifted the inline `$payment_method_patterns` / `$all_payment_methods` declarations from `render_staff_console_receipts()` into two new public static helpers — `KDC_qTap_Finance_Block_Editor::get_payment_method_buckets()` (canonical bucket map: label + substring patterns) and `KDC_qTap_Finance_Block_Editor::classify_paywith_method( $raw )` (returns the bucket key for any free-text `paywith_method` value, or `'others'`). The Receipts filter now reads from the helper. Pure refactor — same buckets, same patterns, same classification — but the new Pay Stats AJAX endpoint reads from the same source of truth instead of re-declaring the map.
+
 ## [3.16.70] - 2026-04-25
 
 ### Removed

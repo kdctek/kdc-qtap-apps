@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.76] - 2026-04-26
+
+### Fixed
+- **Fee Stats donut tooltip header.** Hovering an inner-ring (Created Via) segment was showing the tooltip header from the *outer* ring's labels — e.g. hovering "Checkout" rendered as "Cheque" because the index aligned. Chart.js defaults the tooltip title to `data.labels[i]`, which is fixed to the outer ring; we now derive the title from the hovered dataset's own `_labels` array. Body row also reformatted to lead with the ring kind ("Method" / "Origin") so a truncated header still leaves enough context.
+
 ## [3.16.75] - 2026-04-26
 
 ### Added

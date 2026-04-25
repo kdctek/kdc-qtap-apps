@@ -2,6 +2,17 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.39] — 2026-04-26
+
+### Changed
+- **WP `user_email` now derived from the configured Parent email suffix.** WordPress requires every user record to have an email; the qTap Education create flow always uses the Parent Google Account address pattern (`{username}{parent_suffix}@{site_host}`) for `user_email` regardless of whether the *Create Parent Google Account* checkbox is ticked. Two practical effects:
+  - The WP user_email now matches the value shown in the Create form's "Parent Google Account" preview row, even when the admin opts to skip Workspace provisioning. Previously the WP user_email was hardcoded to `{username}_parent@…` while the preview reflected the configured suffix — they could disagree if an admin had changed the suffix in Education > Settings > Google Workspace.
+  - Admin changes to **Parent email suffix** now flow through to all newly-created students' WP user_email automatically.
+- The "Create Parent Google Account" checkbox now controls only Workspace provisioning (whether the account is created via Admin SDK), not whether the WP user record carries that address. The WP record always carries it.
+
+### Note
+- No migration on existing users — only newly-created students from v1.0.39 onward use the configured suffix. Sites that never customized the suffix (default `_parent`) see no change at all.
+
 ## [1.0.38] — 2026-04-26
 
 ### Changed

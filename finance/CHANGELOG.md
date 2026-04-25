@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.70] - 2026-04-25
+
+### Removed
+- **`kdc_qtap_finance_lucide()` shim removed.** The wrapper had been thin since v3.15.38 — it just delegated to the parent's `kdc_qtap_lucide()` — but kept the call-site convention `kdc_qtap_finance_*` everywhere. After v2.7.6's "parent is the source of truth" mandate, that prefix was misleading: every call really resolved to the parent's registry. Renamed all 27 call sites across [class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php) (×17), [trait-kdc-qtap-finance-user-meta-rendering.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php) (×6), and [kdc-qtap-finance-helper-functions.php](kdc-qtap-finance/includes/kdc-qtap-finance-helper-functions.php) (×2 internal); the `function_exists()` guards that referenced the old name were renamed too. The shim definition is gone — calls go straight to `kdc_qtap_lucide()` from the parent. The Finance dependency check at activation already guarantees the parent is loaded, so no fallback is needed.
+
 ## [3.16.69] - 2026-04-25
 
 ### Fixed

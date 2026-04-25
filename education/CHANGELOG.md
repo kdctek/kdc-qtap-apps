@@ -2,6 +2,21 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.40] — 2026-04-26
+
+### Added
+- **Admin setting: "WordPress user email" source.** New radio in **Education > Settings > Google Workspace**, between the email-suffix fields and the force-password-change toggle. Lets the admin pick which generated address fills the WP `user_email` field for newly-created students:
+  - **Parent Google Account address** (`first.last{parent_suffix}@domain`) — default; preserves prior behavior.
+  - **Student Google Account address** (`first.last{student_suffix}@domain`).
+- The selected address always fills WP `user_email` regardless of whether *Create Parent / Student Google Account* is ticked on the Create form. The toggles only control Workspace provisioning; the WP record always carries the chosen address (WP requires `user_email` to be non-empty).
+- **Works even when Google Workspace integration is disabled.** The suffix fields are stored independent of the integration's `enabled` flag, so admins running without Workspace can still configure the email pattern (e.g. set the parent suffix to `_parent` and the student suffix to `.student` and pick which side drives WP).
+
+### Changed
+- REST `create_student` resolves `user_email` via `KDC_qTap_Education_Google_Workspace::wp_user_email_suffix()` (new helper) instead of always using `parent_email_suffix()`. The helper reads the new `wp_user_email_source` setting and returns the matching suffix.
+
+### Note
+- No migration on existing users — only newly-created students from v1.0.40 onward respect the new source setting. Sites that haven't opened the GWS settings tab default to `'parent'` (matching v1.0.39 behavior).
+
 ## [1.0.39] — 2026-04-26
 
 ### Changed

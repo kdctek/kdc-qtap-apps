@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-04-25T19:25:00Z",
+  "updated_at": "2026-04-25T19:35:00Z",
   "plugins": {
     "kdc-qtap": {
       "version": "2.7.6",
@@ -61,7 +61,7 @@
       ]
     },
     "kdc-qtap-education": {
-      "version": "1.0.19",
+      "version": "1.0.20",
       "name": "qTap Education",
       "slug": "kdc-qtap-education",
       "requires_php": "7.4",

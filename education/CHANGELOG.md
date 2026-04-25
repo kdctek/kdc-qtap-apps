@@ -2,6 +2,15 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.20] — 2026-04-25
+
+### Changed
+- **Unified button scale across the dashboard.** The form's Create + Cancel pair was small relative to inputs, the top-bar Find + Create-new-{Student} pair didn't match it, and the dashed "+ Add" buttons (contacts, adjustments, expand/collapse) sat at 0.85em while everything around them was 1em. Now:
+  - All `kdc-qtap-btn` instances on the dashboard use the `--lg` modifier (44px min-height, 12/24px padding, larger font) for a single primary scale.
+  - Icons in those buttons bumped to 18px to keep the proportion.
+  - Dashed action buttons (`__contact-add`, `__adj-add`, `__control-btn`) bumped to 1em / 500-weight and 2.75em min-height so they align with `--lg`.
+- Net effect: every action button on the create flow reads at the same visual weight, no more "small in some places, big in others."
+
 ## [1.0.19] — 2026-04-25
 
 ### Fixed

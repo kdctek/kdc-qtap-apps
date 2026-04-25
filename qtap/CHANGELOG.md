@@ -2,6 +2,13 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.8] - 2026-04-25
+
+### Added
+- **Page Loader / Transaction Overlay** — new `KdcQtapUI.showPageLoader(message)` and `KdcQtapUI.hidePageLoader()` JS helpers for child plugin frontend blocks doing async transactions. Full-screen blurred backdrop with centered spinner card, ref-counted, accessible (`role="alertdialog"`, `aria-live`). Returns a handle with `setMessage()` for multi-step flows.
+- **`processing` i18n string** added to `kdcQtapConfig.i18n` for default page-loader message.
+- **Child Plugin docs** — new `docs/CHILD-PLUGIN_PAGE-LOADER.md` integration guide for AI agents and developers building child plugin frontend transactions. Auto-syncs to `https://changelog.qtap.app/qtap/page-loader.md`.
+
 ## [2.7.7] - 2026-04-25
 
 ### Removed

@@ -2,6 +2,14 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.6] - 2026-04-25
+
+### Added
+- **11 new icons in the parent's Lucide registry**, used by `kdc_qtap_lucide()` and the `kdc_qtap_lucide_icons` filter map: `credit-card`, `banknote`, `scroll-text`, `zap`, `landmark`, `building-2`, `globe`, `more-horizontal`, `arrow-right-left`, `smartphone`, `wallet`, plus a generic `circle`. Sourced from lucide.dev. Motivated by the Finance plugin's Receipts-tab Payment Method pill row (v3.16.60), which referenced these icon names through Finance's thin shim — but the parent's default map didn't include them, so the child silently rendered empty SVG strings. **Source-of-truth rule:** Lucide icon paths live in the parent so every child plugin reads from one registry; child plugins should add new icons here (or via the `kdc_qtap_lucide_icons` filter) rather than maintain their own copies.
+
+### Changed
+- Registry update: added the new `kdc-qtap-education` plugin entry to `apps-registry.json` (was missing the row even though the plugin has shipped multiple releases). Also bumped the registry's `updated_at` timestamp.
+
 ## [2.7.5] - 2026-04-20
 
 ### Fixed

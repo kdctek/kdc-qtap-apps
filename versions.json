@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-04-25T17:40:00Z",
+  "updated_at": "2026-04-25T17:55:00Z",
   "plugins": {
     "kdc-qtap": {
       "version": "2.7.6",
@@ -61,7 +61,7 @@
       ]
     },
     "kdc-qtap-education": {
-      "version": "1.0.9",
+      "version": "1.0.10",
       "name": "qTap Education",
       "slug": "kdc-qtap-education",
       "requires_php": "7.4",
@@ -69,7 +69,7 @@
       "status": "alpha",
       "is_premium": true,
       "subscription": false,
-      "description": "School & college administration — classes, attendance, courses, homework, timetables, and parent-teacher messaging. Requires qTap App and qTap Finance."
+      "description": "School & college administration \u2014 classes, attendance, courses, homework, timetables, and parent-teacher messaging. Requires qTap App and qTap Finance."
     },
     "kdc-qtap-events": {
       "version": "1.0.1",

@@ -2,6 +2,11 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.10] — 2026-04-25
+
+### Fixed
+- **Search results were rendering into a hidden container.** Finance's `.kdc-qtap-finance-staff-find-result` is `display: none` by default and only becomes visible when one of `.is-success` / `.is-info` / `.is-error` is also set on it. v1.0.9 set `innerHTML` but not the state class, so clicking **Find** appeared to do nothing — the markup was correct, the result was just hidden under the cushion. Now `setStatus( html, state )` toggles the state class together with content and clears it on empty queries. Also added a small CSS override to suppress Finance's coloured tint when the container holds our search list (the green/blue background would clash with the rendered list of users).
+
 ## [1.0.9] — 2026-04-25
 
 ### Changed

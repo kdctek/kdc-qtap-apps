@@ -2,6 +2,12 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.17] — 2026-04-25
+
+### Changed
+- **Contacts repeater is capped at qTap Mobile's per-user max.** Reads the parent option `kdc_qtap_block_default_max_numbers` (1-20, default 5) and disables the "Add another contact" button at the limit. Add button now also shows a `(n / max)` counter so the staff sees where they are. REST endpoint `POST /students` defensively trims any oversized payload before save.
+- **Hover contrast bumped on destructive buttons.** The contact-row × and adjustment-row × hover states were a faint pink tint that read as nearly disabled; now solid `#d63638` with white glyph + matching focus state. The "Add another contact" hover also flips to solid blue with white text instead of a tinted background.
+
 ## [1.0.16] — 2026-04-25
 
 ### Added

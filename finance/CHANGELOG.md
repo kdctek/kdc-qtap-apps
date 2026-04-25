@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.69] - 2026-04-25
+
+### Fixed
+- **Stop minting synthetic `TXN-{n}` / `IMPORT-{n}` values into the WC `transaction_id` meta.** Three write paths (admin Record Payment, frontend Submit Offline, CSV import) used to mirror the synthetic UTR fallback into BOTH `pay_utr` (our meta) AND `transaction_id` (WC's gateway field). That created two real bugs: (1) the synthetic collided with whatever the payment gateway later wrote into `transaction_id`, destroying the gateway's actual transaction reference; (2) once an admin entered the real UTR through any other path (admin metabox, gateway callback, manual edit), only `pay_utr` got updated, so `transaction_id` stayed frozen on the stale synthetic — the symptom that showed up as "pay_utr has the real UTR but transaction_id still says TXN-42." Removed the duplicate `update_meta_data( 'transaction_id', … )` line at all three write sites and dropped the synthetic fallback (`$reference ?: sprintf( 'TXN-%d', $transaction_id )`) — now an empty UTR stays empty, which receipts render as "—", more honest than a fake-looking ID. Removed the `?: $order->get_meta( 'transaction_id' )` fallback at four reader sites ([class-kdc-qtap-finance-block-editor.php](kdc-qtap-finance/includes/class-kdc-qtap-finance-block-editor.php) ×2, [trait-kdc-qtap-finance-user-meta-rendering.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-rendering.php), [trait-kdc-qtap-finance-admin-tab-receipts.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-admin-tab-receipts.php)) so the UI no longer presents synthetic-stamped `transaction_id` values as if they were UTRs. `sync_receipt_metas_from_transaction()` is unchanged — it already gated on "only when `pay_utr` is missing" and is the right place to do the source-of-truth waterfall.
+
+### Migrated
+- **One-time `migrate_clean_synthetic_txn_3_16_69()`** sweeps existing fee orders (version-gated; runs once via `kdc_qtap_finance_clean_synthetic_txn_3_16_69_done` option). For each order whose `transaction_id` matches `^(?:TXN|IMPORT)-\d+$`: copies the synthetic into `pay_utr` if `pay_utr` is empty (preserves whatever was being rendered on receipts), then clears `transaction_id` so future gateway writes win cleanly. Orders whose `transaction_id` carries a real (non-synthetic) value — gateway-stamped, admin-typed — are left alone. Idempotent: rerun is a no-op. Audit counts (scanned / copied_to_utr / cleared_txn / skipped_real) emitted via `kdc_qtap_debug_log()`.
+
 ## [3.16.68] - 2026-04-25
 
 ### Fixed

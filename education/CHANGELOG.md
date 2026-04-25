@@ -2,6 +2,14 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.38] — 2026-04-26
+
+### Changed
+- **Parent / Student Google Account preview rows now show a "Will create" / "Will skip" badge.** Previously the rows were hidden when the corresponding checkbox was unticked, which left the admin without a visual cue about what the generated email *would* be. Now both rows stay visible regardless of checkbox state, and a badge — modeled on the existing username `✓ Available` badge — sits next to each preview value:
+  - **Parent ticked** / **Student ticked** → green `✓ Will create` (matches the success-state of the username availability badge for visual continuity).
+  - **Parent unticked** / **Student unticked** → muted italic `Will skip`, with the email value also strike-through + dimmed (`opacity: 0.55`) so the row reads as informational-only.
+- The badge updates live as the staff toggles either checkbox; the row's `is-skip` class is the single CSS hook for the muting effect.
+
 ## [1.0.37] — 2026-04-26
 
 ### Changed

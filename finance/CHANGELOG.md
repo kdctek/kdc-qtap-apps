@@ -2,6 +2,21 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.73] - 2026-04-26
+
+### Added
+- **New "This Year" preset chip** in the Pay Stats date-range row. Sets the range to Jan 1 of the current calendar year through today — useful for the year-to-date view that staff want when reconciling against the academic finance log.
+
+### Changed
+- **Pay Stats inner ring now splits Admin and POS into separate segments.** Previous behaviour folded WCPOS-detected orders into the Admin segment alongside Record-Payment / fee orders; v3.16.73 keeps them distinct so staff can read POS volume independently. Three mutually-exclusive origin buckets:
+  - `fee` → orders with `_kdc_qtap_finance_is_fee_payment=yes` (Admin Record-Payment)
+  - `pos` → POS-detected orders (`detect_pos_order()`) that are NOT also fee payments
+  - `other` → everything else (customer-facing checkout)
+- **New "Source" filter row on the Pay Stats tab** with three toggle chips: **Admin** (active by default), **POS**, **Others**. The chart aggregates only orders matching the active sources — both rings honour the filter so the outer ring (method bucket) shows methods used within the selected sources only. At least one source must stay active (the chip click is ignored if it would clear the last one).
+- **Default chart now shows fee items only.** Per the staff workflow at the school, the bulk of activity is admin-recorded fee payments — that's the headline number. POS and customer-facing checkout are opt-ins via the new chips.
+- **Click-through routing updated.** Outer-ring (method) clicks now also append `source[]=` for each active source so the Receipts list matches what was on the chart. Inner-ring clicks drill into just that one source (`source[]=fee|pos|other`), independent of the rest of the active filter — a single-segment click is interpreted as "show me only this slice".
+- **Earth-tone palette** for the donut. Replaced the saturated WP-blue / red / indigo / teal mix with a warm low-saturation set: taupe, sage moss, mauve, ochre, rust, pine, olive, sand, burnt sienna, terracotta, walnut for the 11 method buckets; deep walnut / copper / sage for the three origin buckets. Source chips inherit the matching segment colour in their active state.
+
 ## [3.16.72] - 2026-04-25
 
 ### Added

@@ -2,6 +2,11 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.14.1] - 2026-04-25
+
+### Added
+- **FAB Staff/Admin shortcuts** — qTap floating action button now shows Staff (`/staff`) and Admin (`/admin`) links at the top of the menu for users with REST API access (`kdc_qtap_can_access_rest_api()`). Hidden for regular users.
+
 ## [2.14.0] - 2026-04-16
 
 ### Removed

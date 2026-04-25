@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.65] - 2026-04-25
+
+### Fixed
+- **Receipts tab icon swapped from Lucide `receipt` to `clipboard-list`.** The `receipt` glyph contains an inline `$` shape inside the receipt body (visible at the 18px the tabs render at), which violates the absolute icon policy: no currency symbol anywhere, even on icons nominally about receipts/invoices. v2.7.7 of the parent plugin removes `receipt` from the central registry and adds `clipboard-list` + `clipboard` as non-currency document alternatives — `clipboard-list` is the closest visual analogue (a clipboard with horizontal lines, suitable for "list of receipts/invoices") so the Receipts tab now uses it.
+
 ## [3.16.64] - 2026-04-25
 
 ### Changed

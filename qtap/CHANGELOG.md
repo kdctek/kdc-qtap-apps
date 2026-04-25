@@ -2,6 +2,14 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.7] - 2026-04-25
+
+### Removed
+- **`receipt` icon removed from the Lucide registry.** Its SVG path includes a literal `$` shape inside the receipt body — visible at every render size. The icon policy is absolute: no `$`, ₹, €, or any currency-symbol icon anywhere, even on icons nominally about "receipts/invoices." Previous policy carved out an exception for "literal receipts" but that exception is now closed. Child plugins that were rendering `receipt` will get an empty SVG until they swap to a non-`$` alternative.
+
+### Added
+- **Two new document icons in the Lucide registry to replace `receipt`:** `clipboard-list` (clipboard with horizontal lines — best fit for "list of receipts/invoices") and `clipboard` (plain clipboard). Combined with the existing `file-text` and `scroll-text`, child plugins now have four document-shaped non-`$` options for receipt/invoice/document concepts. For money concepts, continue to use `coins`, `banknote`, `wallet`, or `piggy-bank`.
+
 ## [2.7.6] - 2026-04-25
 
 ### Added

@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.63] - 2026-04-25
+
+### Fixed
+- **Apps List card icon now uses `dashicons-portfolio` (briefcase) instead of the 🪙 emoji shipped briefly in v3.16.62.** The icon policy is: Lucide on the frontend, **Dashicons on the backend**, and **never an emoji** anywhere — wp-admin should blend with the native admin chrome and emoji rendering varies too much across OS/browser combos to feel polished there. v3.16.62 violated the backend half of the rule. `dashicons-portfolio` keeps the "finance/business" association without invoking any currency symbol (the `$` glyph and `dashicons-money*` are also forbidden by the same policy). Still avoids the v3.16.61-and-earlier collision with the Education plugin's `dashicons-welcome-learn-more` flag.
+
 ## [3.16.62] - 2026-04-25
 
 ### Changed

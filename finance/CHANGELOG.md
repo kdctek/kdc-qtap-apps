@@ -2,6 +2,25 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.85] - 2026-04-27
+
+### Changed
+- **Receipts `q` text-search refactored from 7–14 unbounded queries to 4–5 bounded ones per token.** v3.16.41's `search_orders_by_token()` issued one `wc_get_orders` per meta key (7 keys + WC native search + customer-by-name with two `get_users` calls + customer orders) — every call had `'limit' => -1`, so on a 50K-order site a token like "John" hydrated tens of thousands of orders into memory before deduping. Multi-token searches ("John Doe") doubled or tripled the pain because the loop intersected per-token IDs, calling each helper afresh per token. New helpers replace the fan-out:
+  - `find_user_ids_for_token()` — one indexed JOIN across `wp_users` + `wp_usermeta` (login / email / nicename / display + first/last/billing names), `LIMIT 200`.
+  - `find_order_ids_by_meta_keys()` — one SQL with `meta_key IN (…) AND meta_value LIKE %s` against `wp_wc_orders_meta` (HPOS) or `wp_postmeta` (legacy); `LIMIT 500` (configurable via filter `kdc_qtap_finance_search_max_results`).
+  - `find_order_ids_by_billing()` — single SQL against `wp_wc_order_addresses` (HPOS) or postmeta `_billing_*` keys (legacy).
+  - `find_order_ids_by_item_name()` — bounded version of the existing items-table lookup.
+  - `finalize_search_ids()` — central exit point that applies the caller's status filter via `post__in` and trips `$last_search_truncated` when the cap is hit.
+  Per-token results are cached in a request-scoped `self::$search_cache[ field|token ]`, so multi-token searches re-use lookups instead of re-querying. Public method signatures are unchanged — `search_orders_by_token()`, `search_orders_by_field()`, `search_orders_by_items()` all keep their existing protected-static contracts.
+- **"Showing first 500 matches" hint** above the Receipts table when the search ceiling is hit. Tells staff to narrow the search (use a targeted field, add a more specific token) instead of silently truncating.
+- **Fee Stats default Created Via selection now includes both `admin` and `checkout`** (was `admin` only). Tridha staff routinely reconcile both bulk channels at once on first load. PHP default-source list, AJAX `sources[]` fallback, and JS `state.sources` initial value all updated in lockstep.
+
+### Fixed
+- **Filter chip hover contrast on the Fee Stats tab — second pass.** v3.16.77 added `:not(.is-active)` so active chips kept their white-on-blue text on hover, but the user reported the blue-on-blue still showed up under some frontend themes. The earlier rules used theme-color CSS variables without `!important`, so any theme rule on `button:hover` (FSE block themes, Storefront, Astra, etc.) with higher specificity overrode them. v3.16.85 pins active-chip `color: #fff !important` (and the source-chip earthy-palette colors) and explicitly anchors inactive-chip hover to `background: #fff !important` so theme styles can't bleed through.
+
+### Audited
+- Same Staff Console block audit as v3.16.84 — verified that the search refactor doesn't reintroduce any of the patterns the v3.16.81 → v3.16.82 audit flagged (no new self-joins, no HPOS+postmeta double-querying, no unbounded fan-out).
+
 ## [3.16.84] - 2026-04-27
 
 ### Changed

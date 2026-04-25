@@ -2,6 +2,16 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.10] - 2026-04-26
+
+### Added
+- **`qTap > Notifications > Templates`** — centralized template editor for ALL plugins, lifted wholesale from Finance's existing UI so admins see the same fields, labels, and tab layout (Email + WhatsApp) they already know — only the URL changed. Lists every type registered via `kdc_qtap_notification_type_owners`, grouped by source plugin, with chip-style source filter (`?source=kdc-qtap-finance` etc.). Per-type editor opens via `?section=templates&type={full_prefixed_type}` and writes to `kdc_qtap_notification_templates[$type]` with `subject`, `message`, `email_enabled`, and a `whatsapp` sub-array (template / header / body / footer / buttons / enabled). Available-variables grid is now sourced from the parent's centralized `kdc_qtap_register_notification_variables` registry — so child plugins that register variables once automatically surface them to admins editing any of their templates.
+- **Notifications tab now has sub-section nav** (Logs / Templates) with WP-style `nav-tab-wrapper` rendering. Logs view stays the default; Templates is one click away.
+- **`KDC_qTap_Admin_Templates_Trait`** in `includes/trait-kdc-qtap-admin-templates.php` — render functions (`render_templates_section`, `render_templates_list`, `render_template_editor`, `render_template_email_editor`, `render_template_whatsapp_editor`, `render_template_variables_grid`) plus `save_template_form_post()` for save/reset/validation. Uses parent's existing `kdc_qtap_render_whatsapp_template_field()` helpers and `kdc_qtap_validate_whatsapp_template/buttons()` validators.
+
+### Changed
+- **Migration v2: `migrate_finance_templates()`** now prefixes every short Finance key (`payment_due_reminder`) with the canonical `finance_` type prefix when copying into the parent option. Earlier v1 migration left keys unprefixed, so the parent's `get_template($full_type)` lookup couldn't find them. v2 also folds any unprefixed v1-migrated rows into their prefixed siblings (non-destructive: existing prefixed values win field-by-field). Tracked under a new flag `kdc_qtap_templates_migrated_from_finance_v2` so it re-runs once on upgrade. Email-enabled state from `kdc_qtap_finance_settings.email_templates[type].enabled` is now also folded into the parent option as `email_enabled`.
+
 ## [2.7.9] - 2026-04-26
 
 ### Added

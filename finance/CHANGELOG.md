@@ -2,6 +2,21 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.78] - 2026-04-26
+
+### Removed
+- **Finance > Notifications > Templates tab.** Templates editor moved to the parent at `qTap > Notifications > Templates` (kdc-qtap v2.7.10+). Same UI fields, same labels — only the URL changed. The local `trait-kdc-qtap-finance-admin-tab-templates.php` was deleted.
+- **Inline template editor inside Finance > Notifications.** The `?edit=` deep-link previously rendered an inline editor on the Notifications tab; it now redirects to the parent's editor with the type key remapped (short → full prefixed, e.g. `payment_received` → `finance_payment_received`).
+
+### Changed
+- **`Edit Template` buttons in the per-type list** now point to the parent editor (`admin.php?page=kdc-qtap&tab=notifications&section=templates&type=finance_<short>`) instead of finance's inline view. The Reminder Schedule UI and per-type enable/disable toggles remain on Finance > Notifications unchanged — they're fee-domain config, not template content.
+- **`KDC_qTap_Finance_Notifications::get_template()`** now reads the centralized parent option (`kdc_qtap_notification_templates[$full_type]`) first, then falls back to the legacy `kdc_qtap_finance_settings.notification_templates[$short_key]` storage so customizations made before the upgrade keep working until the parent's v2 migration ports them across.
+- **`is_email_enabled()`** and **`get_whatsapp_templates()`** updated the same way: parent option (full prefixed key) wins, legacy finance settings (short key) is the fallback.
+- **`?tab=templates` legacy URL** now redirects to the parent's Templates section, mapping `?edit=<short>` to `?type=finance_<short>` so existing bookmarks land on the right editor.
+- **`filter_template_edit_url`** stays registered as a hook but is now a pass-through — the parent's default URL is correct because the editor lives there.
+
+**Requires:** kdc-qtap v2.7.10+ (the parent's centralized Templates editor and prefixed-key migration). Older parents will keep using the legacy finance-side fallback.
+
 ## [3.16.77] - 2026-04-26
 
 ### Added

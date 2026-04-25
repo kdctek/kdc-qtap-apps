@@ -2,6 +2,22 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.9] — 2026-04-25
+
+### Changed
+- **Adopted the qTap-series UI conventions across the dashboard** so the Education block looks like the Finance staff console rather than a one-off. The render callback now enqueues `kdc_qtap_enqueue_frontend_components()` (parent's button/input framework) plus Finance's `kdc-qtap-finance-staff-console` stylesheet, and the markup uses the same primitives:
+  - Top-level **Count** / **{Student}** tabs render as `.kdc-qtap-finance-staff-menu` with Lucide icons (`bar-chart-3`, `user`) via the parent's `kdc_qtap_lucide()` helper. Active state is mapped from our hidden radio's `:checked` to the same visual treatment Finance uses for `.is-active`.
+  - Header uses Finance's `.kdc-qtap-finance-staff-dashboard__header` pattern (title + tagline left).
+  - **{Student} → Find** is now the Finance `.kdc-qtap-finance-staff-find` pattern: field selector (All fields / Name / Email) + input + explicit **Find** button. Search is **click-to-find** (matches Finance's Receipts UX), no longer live-debounced.
+  - Form Submit / Cancel / Find / "+ Create new {Student}" buttons all resolve through `kdc_qtap_get_button_class('primary' | 'secondary')` so they pick up the active theme's button style (WooCommerce, Block theme, or qTap custom UI mode).
+
+### Added
+- **Username = `first.last`** (lowercased, Workspace-sanitized — diacritics stripped, special chars removed; first char forced to a letter; numeric suffix only on collision, with a server-side warning).
+- **Email = `<username>_parent@<site_host>`** (e.g. `zuvi.kudmule_parent@tridha.edu.in`). The `_parent` suffix flags the mailbox as the parent/guardian contact since students don't have their own email yet.
+- **Random 20-char password** generated and **returned in the REST response** so staff can copy it once into Google Workspace setup. Site auth itself uses Google Login or WhatsApp OTP — the password is purely a Workspace seed and is never re-surfaced.
+- **Live username + email + warnings preview** under the name fields. As the staff types First / Last name, the UI shows the exact `first.last` and `first.last_parent@…` strings that the server would generate, plus inline warnings if the input contains spaces or characters Google Workspace will reject. Mirrors the server-side sanitization rules (NFD-strip diacritics + lowercase + `[^a-z0-9.\-]` strip).
+- **Success card** after create: shows the new user's name + edit-link, the assigned login + email, the generated password with a one-click **Copy** button, and any server-side warnings (e.g. "first.last was already taken; first.last2 was assigned instead").
+
 ## [1.0.8] — 2026-04-25
 
 ### Added

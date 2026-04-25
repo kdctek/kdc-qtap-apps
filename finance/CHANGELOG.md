@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.61] - 2026-04-25
+
+### Removed
+- **Legacy education-plugin migration scaffolding.** Deleted `KDC_qTap_Finance_Migration` (`includes/class-kdc-qtap-finance-migration.php`), the `maybe_migrate_from_education()` method, and the activation-time call that triggered it. The migration handled the v3.0.0 plugin rename (kdc-qtap-education → kdc-qtap-finance) and is no longer needed. **Why now:** the new `kdc-qtap-education` plugin uses the `kdc_qtap_education_*` option/meta namespace; leaving the migration in place would cause Finance to misread those new options as v2.x leftover data on next reactivation and silently rename them into `kdc_qtap_finance_*`, corrupting the new plugin's data.
+- Legacy `kdc_qtap_education()` function alias (deprecated since v3.0.0). The function name is now owned by the new `kdc-qtap-education` plugin.
+
 ## [3.16.60] - 2026-04-24
 
 ### Added

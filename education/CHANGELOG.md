@@ -2,6 +2,19 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.37] — 2026-04-26
+
+### Changed
+- **Welcome + credentials notifications now align with parent qTap App v2.7.9 conventions.** The two notification types (`qtap_education_welcome_new_user` + `qtap_education_login_credentials`) are wired through the parent's full registration recipe so admins can edit the templates centrally in **qTap App > Notifications > Templates** and see them attributed to Education in the Source filter / summary card.
+  - **Default templates** are now registered via `kdc_qtap_default_notification_templates` filter — single source of truth, no longer duplicated inline in every send call.
+  - **Template lookup at send time** uses `kdc_qtap_notifications()->get_template($type)` so admin-edited templates win automatically (lookup chain: customized → registered defaults → empty). Pre-2.7.9 parents fall back to our local default registration so the plugin keeps working unchanged.
+  - **WhatsApp template config** (template_name|lang, header, body, footer, buttons) is also picked up from the admin-edited template — admins who customize the WhatsApp tab in parent's editor get those values forwarded into the `whatsapp_*` send args.
+  - **Variable palette** registered via `kdc_qtap_register_notification_variables` action. The Templates editor's variable palette now lists Education-specific variables (`{{parent_email}}`, `{{parent_login}}`, `{{parent_password}}`, `{{parent_login_url}}`, `{{student_email}}`, `{{student_login}}`, `{{student_password}}`, `{{student_login_url}}`, `{{contact_name}}`, `{{login_url}}`, `{{app_url}}`) under a new "Education" group.
+  - **Type ownership** declared via `kdc_qtap_notification_type_owners` filter (REQUIRED as of v2.7.9) so the parent's Source filter, summary card, and Edit Template deep links can attribute the two types to `kdc-qtap-education`.
+
+### Note
+- No behavioral change for sites that have never edited templates — the registered defaults match the previous inline copy verbatim, so existing welcome / credentials notifications keep going out unchanged.
+
 ## [1.0.36] — 2026-04-26
 
 ### Changed

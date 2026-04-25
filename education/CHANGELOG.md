@@ -2,6 +2,12 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.31] — 2026-04-25
+
+
+### Fixed
+- **"Send login to Contacts" no longer enabled when no Workspace account is being created.** v1.0.30 split the single "Create Google Account" toggle into Parent + Student but didn't carry the dependency rule from v1.0.x — when both new toggles were unticked, "Send login to Contacts" stayed enabled, which is illogical (nothing to send). The dependency now watches BOTH new checkboxes (plus the legacy `create_google_account` for older renders): Send login is enabled if EITHER target is ticked, and disabled + auto-unticked when both are off.
+
 ## [1.0.30] — 2026-04-25
 
 ### Added

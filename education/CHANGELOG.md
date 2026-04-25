@@ -2,6 +2,20 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.29] — 2026-04-25
+
+### Added
+- **OU path validation at Test Connection.** The Test Connection button now also probes `GET /admin/directory/v1/customer/my_customer/orgunits/<path>` to confirm the configured OU actually exists before save. If the OU is missing, the panel shows `⚠ OU check failed: OU path "..." does not exist...` with a hint about including parent OUs (e.g. `/Indian Education Revival Trust (IERT)/Tridha Parents Group`). When the OU check fails, `verified` stays `false` so the Create form's checkbox stays gated. Catches the most common Workspace setup mistake before the first student is created.
+- **Public `verify_ou_exists()`** method on the GWS adapter so REST handlers, job handlers, or future user-edit flows can validate an OU path without re-running the full Test Connection.
+- **`SCOPE_ORGUNIT_RO` constant** for future read-only OU listing (the dropdown picker is the planned follow-up).
+
+### Changed
+- **Auto-prefix `/` on OU path save.** If an admin enters `Tridha Parents Group` (without leading slash, as the form lets them), the save handler now silently normalizes it to `/Tridha Parents Group`. Empty stays `/`. Trailing slashes are trimmed. Same normalization is applied in the REST test-connection handler so the live test runs against the canonical form.
+- **Path-segment URL encoding** in the OU verify call: each segment is `rawurlencode`'d individually so spaces and parens (e.g. `Indian Education Revival Trust (IERT)`) survive, but slashes between segments stay unencoded (Google's API uses them as URL path separators).
+
+### Note
+- The auto-prefix only fixes the **leading slash** mistake. The other common mistake — missing **parent OU** in the path (e.g. entering `/Tridha Parents Group` when the OU is actually nested under `/Indian Education Revival Trust (IERT)`) — is now caught by the new OU-exists check at Test Connection time, with a specific error message pointing the admin to the full path. The OU dropdown picker (deferred to a future release) will eliminate both classes of error entirely.
+
 ## [1.0.28] — 2026-04-25
 
 ### Added

@@ -2,6 +2,12 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.26] — 2026-04-25
+
+### Added
+- **Full-page transaction loader on Create Student submit.** Wired the parent qTap App's `KdcQtapUI.showPageLoader()` (introduced in `kdc-qtap` v2.7.6+, see `kdc-qtap/docs/CHILD-PLUGIN_PAGE-LOADER.md`) around the only server-mutating transaction in this plugin: the Create Student form POST. While the request is in flight the user sees a centered overlay with "Creating student…", switching to "Finalizing…" once the server returns and the success card is rendering. Hidden in `.finally()` so the overlay can never get stuck. Routine fetches (search, slabs refetch, username availability check, associated-user autocomplete) intentionally do NOT use the page loader — they have inline status indicators per the parent's "When NOT to use it" guidance.
+- **Explicit `kdc-qtap-frontend-helpers` dependency on the viewScript.** Pre-registered the dashboard block's viewScript handle with the helpers script as a hard dependency so `window.KdcQtapUI` is guaranteed to be defined before `view.js` runs, regardless of theme enqueue order.
+
 ## [1.0.25] — 2026-04-25
 
 ### Changed

@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.72] - 2026-04-25
+
+### Added
+- **New "Exempt" checkbox in the Additional Information block on the user-edit screen.** Stored as `kdc_qtap_finance_exempt` user meta (boolean `'yes'`/`''`). Acts as the default state for **NEW** enrollments — when staff create an enrollment for the user, the per-year `exempt` flag is pre-populated from this meta. The per-enrollment exempt toggle is still independently editable on the enrollment edit form, and toggling the user-meta after enrollments already exist does NOT retroactively mutate historical years (each year's enrollment owns its own flag once created).
+
+### Removed
+- **Legacy `is_rte` field eliminated entirely.** The plugin renamed it to `exempt` in v3.0.3 and read both names with `exempt` preferred. v3.16.72 drops the back-compat read everywhere and the per-save strip loop introduced in v3.16.28 — every read site now consults `exempt` only, every write site stores `exempt` only. AJAX handlers in [trait-kdc-qtap-finance-user-meta-enrollments.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-user-meta-enrollments.php) now read `$_POST['exempt']` (was `$_POST['is_rte']`) and the form input id renamed to `kdc_qtap_finance_enrollment_exempt`. JS payloads in [kdc-qtap-finance-user-profile-enrollments.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-user-profile-enrollments.js) and [kdc-qtap-finance-user-profile.js](kdc-qtap-finance/assets/js/kdc-qtap-finance-user-profile.js) updated to send `exempt:` matching the renamed POST field. AJAX response keys, HTML `data-rte` → `data-exempt`, JS `isRte` → `isExempt`. The `data.user.is_rte` read in the fees-block frontend renamed to `data.user.exempt`. The `KDC_qTap_Finance_Fee_Matrix::is_rte_exempt()` static (a fee-matrix slab classifier — different concern) and the CSV import alias array entry `'is_rte'` (back-compat for user CSV files) are intentionally preserved.
+
+### Migrated
+- **One-time `migrate_strip_is_rte_3_16_72()`** sweeps every user's `kdc_qtap_finance_enrollments` meta blob (version-gated; runs once via `kdc_qtap_finance_strip_is_rte_3_16_72_done` option). For each year-record carrying `is_rte`: copies a truthy value into `exempt` if `exempt` is absent/false (preserves the user's exempt status if they happen to be on an old record), then unsets `is_rte`. Re-saves the meta only when something actually changed. Idempotent — once `is_rte` is gone everywhere, re-runs are no-ops. Audit counts (users_scanned / users_updated / records_scanned / records_dropped_rte / records_promoted_rte) emitted via `kdc_qtap_debug_log()`.
+
 ## [3.16.71] - 2026-04-25
 
 ### Added

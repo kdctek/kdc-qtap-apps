@@ -2,6 +2,26 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.42] — 2026-04-26
+
+### Changed
+- **"WordPress user email" setting moved from Google Workspace tab to General tab.** It belongs there: the email source is account-creation policy that applies regardless of whether Workspace integration is enabled. The previous storage location (`gws[wp_user_email_source]`) is still read as a back-compat fallback — no migration required for sites saved on v1.0.40/v1.0.41.
+
+### Added
+- **Email domain field** in Education > Settings > General. Controls the domain inserted after "@" in generated WP user emails:
+  - **Google Workspace active+verified** → field is read-only and mirrors the Workspace primary domain (Google manages DNS/MX, so it's the source of truth). A green-checked notice tells the admin to change it in the GWS tab.
+  - **Workspace disabled or not yet verified** → admin owns the field; defaults to the WP site host.
+  - The setting is stored under `kdc_qtap_education_settings['general']['email_domain']`.
+- **REST `create_student`** now resolves the WP `user_email` domain via `KDC_qTap_Education_Google_Workspace::general_email_domain()` (new helper) instead of always using `wp_parse_url( home_url(), PHP_URL_HOST )`. The helper prefers the live GWS domain when active+verified, falls back to the admin's `general[email_domain]` value, then the WP site host.
+
+### Note
+- The "Assign vs Collect" mode + drag-to-reorder pattern list is intentionally deferred to a follow-up release once a real "non-institute / collect external email" deployment exists to validate against. This release covers the move-to-General + domain-field portion only.
+
+## [1.0.41] — 2026-04-26
+
+### Note
+- Internal release: refinements to `KDC_qTap_Education_Notifications::register_types()` (added `name`, `icon`, `audience`, `supported_channels` keys per the parent's richer registration shape).
+
 ## [1.0.40] — 2026-04-26
 
 ### Added

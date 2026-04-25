@@ -2,6 +2,50 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.15] — 2026-04-25
+
+### Changed
+- **Unified the form's font scale.** The dashboard had grown 8 distinct micro-sizes (0.7 / 0.75 / 0.8 / 0.85 / 0.9 / 0.95 / 1 / 1.5 / 2.5em) which read as visual noise. Collapsed to a 5-step scale used consistently:
+  - `2.5em` — hero count number (kept)
+  - `1.5em` — dashboard title (kept)
+  - `1em` — body: inputs, buttons, primary text, names, descriptions, contact-row inputs, adjustment-row inputs/notes, search empty/status, form status
+  - `0.85em` — small: field labels, fieldset legends, helper text, slab descriptions, contact-add / adjustment-add buttons, pill-toggle `--sm`
+  - `0.75em` — micro: badge, chevron
+- Affected ~12 selectors. Result: form chrome reads as one consistent surface instead of N micro-zoomed regions.
+
+## [1.0.14] — 2026-04-25
+
+### Fixed
+- **Slab card text was washed out.** The `.__field span { opacity: 0.7 }` rule cascaded to nested spans inside the slab cards (`.__slab-card__name` etc.), muting the text. Tightened the selector to `.__field > span` (direct child only) so descendant spans keep their own colors. Replaced `opacity` with explicit `color` so semibold-on-light reads cleanly. Slab description colour also bumped slightly darker.
+
+### Changed
+- **Google + Send-login + Exempt toggles now use the slab-card visual.** Previous render was a small rounded pill; new render is a rectangular card with a 1.4em check + label, matching `Fee Categories`. Single class change (the base `.__pill-toggle` rules now produce slab-card geometry); the existing `--sm` modifier still produces the small pill used for the Adjustments multi-select chips.
+
+## [1.0.13] — 2026-04-25
+
+### Fixed
+- **Search result year was always blank.** `KDC_qTap_Finance_Enrollment::get_current()` returns the enrollment payload but the academic year is the *outer* key in Finance's `kdc_qtap_finance_enrollments` user_meta, not a field inside it. The search endpoint now resolves the year separately via `kdc_qtap_finance_get_current_academic_year()` so the meta line shows `Grade · Division · [Year]` instead of `Grade · Division · []`.
+
+### Changed
+- **Adjustments section starts empty.** The default empty row was confusing — looked like data the staff needed to fill. Now the first row appears only when `+ Add Discount / Surcharge` is clicked. Implemented via `<template data-role="adj-template">` so the template content isn't even in the rendered DOM until JS clones it.
+- **Required fields** (HTML + REST validation): `Gender`, `Academic Year`, `Grade`. Form uses `required` attributes for native browser feedback; client-side `submitForm()` guards before fetch; REST endpoint returns `400 qtap_edu_missing_gender` / `qtap_edu_missing_enrollment` if either is empty.
+- **Mobile + Email inputs upgraded** with `inputmode` + `autocomplete` so mobile keyboards open in the right layout (numeric keypad for tel, email keyboard for email). Mobile also has a `pattern="[0-9+\-\s()]*"` so non-numeric chars get a soft warning on submit.
+- **Exempt from fees + Adjustments' "Apply to" slab checkboxes** restyled as pill-toggles to match the Google Workspace toggles + slab cards. No more bare browser checkboxes anywhere in the form. Adjustments uses a `--sm` variant (tighter padding, smaller font) so the chips read as multi-select tags rather than full toggles.
+
+## [1.0.12] — 2026-04-25
+
+### Added
+- **Custom search REST endpoint** `GET /kdc/v1/qtap/education/students/search?q=…&field=…&roles=…` that joins the user record with the current-year Finance enrollment in one round-trip. Returns `{users: [{id, name, first_name, last_name, email, login, year, grade, division, edit_url}]}`. Replaces the core `/wp/v2/users` call so each search result card can show enrollment context without an N+1 fetch from the client.
+- **Search result card meta line** — `Grade · Division · [Year]` (only the bits that are populated). Mirrors Finance staff-console's `__meta` line shape.
+- **Live debounced search restored** (350 ms after the last keystroke) on top of the explicit Find button. Switching the field selector with a query already in the box re-fires the search.
+- **Adjustments section** in the Enrollment fieldset — repeatable rows for Discounts / Surcharges. Each row: type (Discount / Surcharge), label, mode (Fixed / %), amount, optional notes, and optional per-slab targeting checkboxes (leave all unchecked → applies to every slab). The whole `adjustments[]` array passes through to `KDC_qTap_Finance_Enrollment::save()`, which is Finance's canonical handler for these values, so no parallel logic.
+- **`Exempt` badge on Fee Slab cards** when the slab is marked exempt in `kdc_qtap_finance_settings.fees_slabs.{slug}.exempt`.
+
+### Changed
+- **Fee slabs are checked by default** — most enrollments use the full slab set, so default-on saves clicks. Staff still uncheck any that don't apply.
+- **Send login to Contacts auto-disables when Create Google Account is off.** No Workspace account = nothing to send. Toggle uncheckes itself + becomes greyed-out + non-clickable until the staff re-enables Create Google Account.
+- **Payment Cycle placeholder**: `— auto —` → `-- Default --` to match the user's preferred phrasing.
+
 ## [1.0.11] — 2026-04-25
 
 ### Added

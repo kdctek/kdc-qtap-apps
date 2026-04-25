@@ -2,6 +2,11 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.36] — 2026-04-26
+
+### Changed
+- **Search input now matches the form field font size exactly.** Previously the "Type a name…" input was anchored to `var(--kdc-qtap-font-size-lg)` (1.125rem) while the First Name / Last Name fields used `1em`, which inherits through the wrapper's 1.125em scale. The two values were nominally equal but rendered subtly differently because one is rem-anchored and the other is em-relative — so glyphs in the search row appeared a hair thinner/smaller than the form below. Switching the search to `font-size: 1em` puts both on the same em ladder; identical glyph metrics. Min-height stays 44px (matching the lg buttons sharing the row), padding tweaked to em units (`0.55em 0.8em`) to scale with the new font baseline.
+
 ## [1.0.35] — 2026-04-26
 
 ### Added

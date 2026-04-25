@@ -2,6 +2,20 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.43] — 2026-04-26
+
+### Added
+- **"Primary email handling" mode** in Education > Settings > General — radio with two options:
+  - **Assign — auto-generate** (default) — current behavior; the WP `user_email` is generated from `{login}{suffix}@{domain}` driven by the WP-user-email-source + Email-domain settings.
+  - **Collect — staff enters an external email at create time** — for non-institute deployments where students bring their own email (Gmail, Outlook, etc.).
+- **Collect-mode field on the Create form**: when mode = collect, a `WordPress user email *` input appears below the Identity grid; the auto-generated parent/student email preview rows are hidden. The username preview row stays (it still drives `user_login`).
+- **REST `create_student` validates collected emails server-side**: required when mode = collect; must pass `is_email()`; rejects with `qtap_edu_user_email_taken` (409) when the address already belongs to a WP user.
+- **Settings page hides the auto-generation rows** ("WordPress user email" radio + "Email domain") when Collect mode is selected — they're irrelevant in that mode. Plain JS, no jQuery dep.
+- **GWS adapter helper `email_mode()`** reads `general[email_mode]` from the option, defaulting to `assign`.
+
+### Note
+- Drag-to-reorder priority list of email patterns is intentionally still deferred. Between Parent and Student the existing radio already expresses "primary"; a real reorder primitive only earns its keep when a third pattern is added. Easy to bolt on later if you grow more patterns.
+
 ## [1.0.42] — 2026-04-26
 
 ### Changed

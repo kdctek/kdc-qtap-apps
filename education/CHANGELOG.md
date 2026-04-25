@@ -2,6 +2,15 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.4] — 2026-04-25
+
+### Added
+- **Three tabs on the dashboard**: **Grade** (default — same view as before), **Division** (inverse grouping — outer = division, sub-rows = grades), and **RTE** (Grade > Division but only counting enrollments where Finance's `exempt` flag is `true`). Each tab gets its own total + per-gender pills + breakdown table; the RTE tab's total reflects only exempt students. Tab switching is pure CSS (radio + `:checked ~ .panel--X`) — no JavaScript runtime, no AJAX, accessible via keyboard, multiple instances of the block on the same page get unique radio names so they don't interfere.
+- `KDC_qTap_Education_Dashboard::build_view()` private helper that builds any outer-by-inner view from one enrollment iteration. Accepts an optional filter callable so the same code path serves the Grade, Division, and RTE views (the RTE view passes `fn($e) => !empty($e['exempt'])`).
+
+### Changed
+- Output shape of `KDC_qTap_Education_Dashboard::build_summary()` changed: dropped the top-level `total`, `by_gender`, `grades` keys in favour of a single `views` map (`grade`, `division`, `rte`), each with its own `total`, `by_gender`, and `rows` (outer → sub). The `gender_keys` and `year` keys at the top level are unchanged. **Breaking** for any external code that read the old shape — but the dashboard block was the only consumer.
+
 ## [1.0.3] — 2026-04-25
 
 ### Changed

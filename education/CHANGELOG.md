@@ -2,6 +2,20 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.34] — 2026-04-25
+
+### Added
+- **Shareable tab links + Create-new deep link.** The top-level Count / Student tabs are now URL-addressable, so admins can copy the address bar and share. URL slugs are vertical-agnostic — `?tab=count` and `?tab=user` (the `user` slug stays meaningful when the same dashboard is reused for non-school verticals; internal radio keys `count` / `student` are unchanged for back-compat with existing CSS).
+  - `?tab=count` → activates the Count section on load.
+  - `?tab=user` → activates the Student section on load.
+  - `?tab=user&action=create` → activates Student AND opens the Create New form.
+  - Tab clicks update the URL via `history.replaceState` (no extra browser-history entries, no scroll).
+  - Toggling the Create form open/closed adds/removes `&action=create` automatically.
+- **Routing layer is JS-only** (`initUrlRouting()` in `view.js`) — no PHP changes, no CSS changes, no migration. The radio-driven tab system continues to work on JS-disabled pages; the URL routing is progressive enhancement.
+
+### Note
+- Slug-key map: `{ count: 'count', student: 'user' }`. To add a new top-level section in the future, add an entry to both `KEY_TO_SLUG` and `SLUG_TO_KEY` maps in `view.js`'s `initUrlRouting()`.
+
 ## [1.0.33] — 2026-04-25
 
 ### Changed

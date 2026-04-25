@@ -2,11 +2,19 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.62] - 2026-04-25
+
+### Changed
+- **Apps List dashboard icon switched from `dashicons-welcome-learn-more` (a flag) to 🪙 (coins emoji)** in the qTap App > Apps List card. The previous flag dashicon collided with the new `kdc-qtap-education` plugin which uses the same icon, making the two cards visually identical and forcing staff to read the title to tell them apart. Coins is the canonical "finance" imagery without invoking the $ glyph or any other currency symbol (per the codebase icon policy: never use a currency-symbol icon — coins or banknote imagery only). The parent plugin's card renderer in `trait-kdc-qtap-admin-apps.php` treats any non-`dashicons-` prefixed string as inline text, so the emoji renders at the same 24px slot alongside its dashicon-using siblings.
+
 ## [3.16.61] - 2026-04-25
 
 ### Removed
 - **Legacy education-plugin migration scaffolding.** Deleted `KDC_qTap_Finance_Migration` (`includes/class-kdc-qtap-finance-migration.php`), the `maybe_migrate_from_education()` method, and the activation-time call that triggered it. The migration handled the v3.0.0 plugin rename (kdc-qtap-education → kdc-qtap-finance) and is no longer needed. **Why now:** the new `kdc-qtap-education` plugin uses the `kdc_qtap_education_*` option/meta namespace; leaving the migration in place would cause Finance to misread those new options as v2.x leftover data on next reactivation and silently rename them into `kdc_qtap_finance_*`, corrupting the new plugin's data.
 - Legacy `kdc_qtap_education()` function alias (deprecated since v3.0.0). The function name is now owned by the new `kdc-qtap-education` plugin.
+
+### Fixed
+- **Orphan WP-cron event from v3.0.0 rename.** Production was carrying a daily `kdc_qtap_education_check_overdue` cron schedule with no listener — leftover from the v3.0.0 rename which migrated options/tables but never touched the cron schedule. Activation now unschedules it on first run. Harmless until/unless the new `kdc-qtap-education` plugin registers a listener for that hook name; defensive cleanup so the new plugin can use the namespace without surprise.
 
 ## [3.16.60] - 2026-04-24
 

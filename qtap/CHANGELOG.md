@@ -2,6 +2,12 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.11] - 2026-04-26
+
+### Fixed
+- **Templates tab now actually appears.** v2.7.10 added the Templates surface but registered the sub-section nav inside `render_notifications_tab()` — a method the Notifications page never calls. The Notifications page is a standalone WP submenu (`page=kdc-qtap-notifications`) with its own top-level tab system (`?ntab=`) at `class-kdc-qtap-admin.php::render_notifications_page()`. v2.7.11 wires Templates as a real sibling of Notification Logs / Scheduled / Channel Settings / Log Settings on that page, with `?ntab=templates` opening the editor.
+- **Deep-link helpers (`kdc_qtap_get_notifications_admin_url`, `kdc_qtap_get_template_edit_url`)** now point at `?page=kdc-qtap-notifications&ntab=templates&type={full_prefixed_type}` instead of the never-rendered `?tab=notifications&section=templates`. Edit Template buttons in the per-source summary cards (Finance General tab, etc.) now land users on the right page.
+
 ## [2.7.10] - 2026-04-26
 
 ### Added

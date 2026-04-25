@@ -2,6 +2,13 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.80] - 2026-04-27
+
+### Fixed
+- **Critical error on Finance > Notifications tab.** v3.16.78 deleted `trait-kdc-qtap-finance-admin-tab-templates.php`, which carried `get_template_key_for_notification()`. That helper is also called from `render_notifications_tab()` to compute the per-row Email/WhatsApp status chips, so removing the trait turned every visit to Finance > Notifications into a fatal `Call to undefined method` — exactly the page that already shouldn't have templates anymore. Restored the helper inline in `trait-kdc-qtap-finance-admin-tab-notifications.php` (where its only remaining caller lives).
+
+**Requires:** kdc-qtap v2.7.11+ for the Templates tab to actually render at qTap > Notifications > Templates.
+
 ## [3.16.79] - 2026-04-27
 
 ### Added

@@ -2,6 +2,27 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.11] — 2026-04-25
+
+### Added
+- **Search results + Associated User picker** now render with Finance's `.kdc-qtap-finance-student-card` markup (responsive grid, name + email, hover lift) so they look identical to the Finance staff-console search.
+- **Payment Cycle** field in the Enrollment fieldset (Monthly / Quarterly / Half-Yearly / Full Year / Full Cycle / Full Tenure — sourced from `KDC_qTap_Finance_Fee_Matrix::COLLECTION_MODES`). Empty value falls through to Finance's auto-resolution.
+- **Two Google Workspace toggles** under the username/email preview:
+  - **Create Google Account** *(default ON)* — controls whether the REST response surfaces the seed password. Off = local-only WP user, no password returned.
+  - **Send login to Contacts** *(default OFF)* — when on, after creating the user the REST endpoint dispatches the credentials to each contact's email/WhatsApp via the parent's `kdc_qtap_send_notification()` framework.
+- **Slab cards (Fee Categories)** — replaced the row of bare browser checkboxes with a responsive grid of pill-cards. Hidden checkbox + state-aware `__check` indicator; descriptions surface inline if Finance settings provide one.
+- **Server-side validation: at least one contact required** (with name, mobile, or email). Mirrored client-side in `submitForm()` so the staff sees the error before hitting the network.
+
+### Changed
+- **Custom checkboxes throughout the form.** Browser-default checkboxes looked unfit beside Finance's UI; replaced with a hidden native input + painted `__check` indicator (Lucide check on tick). Affects the Exempt-from-fees toggle, the two Google Workspace toggles, and the Fee Categories cards.
+- **Bigger border-radii across the form** for a softer, more current look — buttons, inputs, selects, fieldsets, success cards, slab cards all bumped to `0.5em` / `0.6em` / `0.7em` from `0.25em` / `0.3em`.
+- **Button classes use parent's `.kdc-qtap-btn` directly** instead of `kdc_qtap_get_button_class()`. The theme-detecting helper was returning a bare `.button` class on Tridha that inherited zero color from the active Beaver Builder theme. Parent's qTap button family is unconditional and CSS-loaded via `kdc_qtap_enqueue_frontend_components()`, so styling is now guaranteed regardless of theme.
+- **Associated User label**: "(parent / guardian)" → "(Sibling)" — matches the more common case for new student creation (parent connection is via the `_parent` email suffix; the explicit picker is for sibling / family linkage).
+- **Live preview area** now also houses the two Google Workspace toggles, framed with a dashed separator so the relationship between the generated username/email and the Workspace intent is visible at a glance.
+
+### Fixed
+- v1.0.10 follow-up: search results container now reliably visible because `setStatus()` toggles `.is-info` / `.is-success` / `.is-error` (Finance's CSS hides the bare container).
+
 ## [1.0.10] — 2026-04-25
 
 ### Fixed

@@ -2,6 +2,12 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.21] — 2026-04-25
+
+### Changed
+- **Search row inputs match the Create form's field size.** Finance's `staff-find__field` + `__input` ship their own (smaller) padding/min-height that didn't line up with our larger Create form on this theme. Added a dashboard-scoped override (1em font / 0.7em 0.9em padding / 2.75em min-height) so the search row's "All fields" select and "Type a name…" input match First Name / Last Name / Gender. Override is scoped to `.qtap-education-dashboard` so Finance's own pages aren't affected.
+- **Dashboard's `.kdc-qtap-btn` overrides em-based.** The parent ships fixed-pixel font sizes via CSS variables, which on this theme resolved smaller than the surrounding 1em form labels. Now every `.kdc-qtap-btn` instance inside the dashboard reads at 1em / 2.5em min-height (`--lg`: 2.75em / 0.7-1.25em padding) so all action buttons line up with the form text.
+
 ## [1.0.20] — 2026-04-25
 
 ### Changed

@@ -2,6 +2,12 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.7] — 2026-04-25
+
+### Changed
+- **Replaced the Unicode chevron `▶` with an inline Lucide `chevron-right` SVG** to comply with the project's frontend icon policy (Lucide on frontend, Dashicons in WP admin, no emojis, no `$` / currency glyphs). The SVG inherits `currentColor` and uses the existing `transform: rotate(90deg)` for the expand state, so the visual behaviour is unchanged.
+- **Removed the middle-dot (`·`) marker on student rows** in the Unassigned tab; it was decorative only and not a Lucide icon. The existing column indent already conveys the hierarchy. Empty leading cell preserves alignment.
+
 ## [1.0.6] — 2026-04-25
 
 ### Added

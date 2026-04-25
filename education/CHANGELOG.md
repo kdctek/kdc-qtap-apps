@@ -2,6 +2,20 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.35] — 2026-04-26
+
+### Added
+- **Dynamic two-row Google Workspace preview.** The account-preview panel inside the Create form now shows a row per requested Workspace account, gated on the corresponding checkbox:
+  - "Parent Google Account" row appears only when *Create Parent Google Account* is ticked, and uses the **parent_email_suffix** from Education → Settings → Google Workspace.
+  - "Student Google Account" row appears only when *Create Student Google Account* is ticked, and uses the **student_email_suffix** from the same settings.
+  - Suffixes are now read from settings (no longer hardcoded `_parent`), so changing them in admin reflects in the preview without code edits.
+- **Silent Title-Case for First Name / Last Name.** On `blur`, e.g. `john  KEMP` is rewritten to `John Kemp` — done on blur (not input) so we don't fight the user mid-typing. The preview updates to match.
+
+### Changed
+- **Search row sizing.** "Type a name…" input + "All fields" select now match the height of the lg buttons next to them on the same row (`min-height: 44px`, `font-size: var(--kdc-qtap-font-size-lg)`, `padding: 12px 16px`).
+- **Student personal email field sizing.** Now mirrors the pill-toggle's metrics (1.5px border, 0.6em radius, 0.7em/0.9em padding) so the email input and the *Create Student Google Account* pill on the row above appear as same-height twins.
+- **Contact-row name placeholder** updated from `Name (e.g. Father)` to `Name (e.g. Mother)`.
+
 ## [1.0.34] — 2026-04-25
 
 ### Added

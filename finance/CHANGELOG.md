@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.81] - 2026-04-27
+
+### Fixed
+- **502 Bad Gateway when applying the v3.16.79 "Paid With" filter.** The filter built a `meta_query` of OR/NOT-LIKE clauses against `paywith_method` — the "Others" bucket alone produced ~17 NOT-LIKE clauses against the same meta key, which translated into 17 self-joins on `wp_wc_orders_meta` (HPOS) or `wp_postmeta` (legacy). The query timed out at the nginx upstream and surfaced as a 502. Replaced with a direct-SQL pre-fetch in `KDC_qTap_Finance_WC_Orders_Admin::get_order_ids_for_paywith_bucket()` — one indexed `SELECT order_id` against the appropriate meta table, fed back via `post__in`. Same per-bucket semantics, same source of truth (the canonical `KDC_qTap_Finance_Block_Editor::get_payment_method_buckets()` map), drastically cheaper. HPOS + legacy storage both queried so dual-write installations are covered.
+- **Filter URL pollution on the WC Orders admin table.** Every WC Orders filter dropdown ships with an empty default option ("All Status", "All Sources", "All Paid With", etc.); submitting the form sent every named field, so the URL accumulated empty params like `&qtap_paywith_filter=&qtap_order_source=&_customer_user=` every time any filter changed. New `KDC_qTap_Finance_WC_Orders_Admin::orders_admin_filter_cleanup_js()` runs once on the orders screen and disables empty fields just before submit — disabled fields don't appear in the resulting URL. Scoped to `#wc-orders-filter` (HPOS) and `#posts-filter` (legacy); leaves WP-wired hidden fields (page, paged, action, nonce) alone.
+
 ## [3.16.80] - 2026-04-27
 
 ### Fixed

@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.68] - 2026-04-25
+
+### Fixed
+- **WCPDF receipts no longer render the un-broken-up "full fee" line item, removing the manual "Recompute Breakup" step from every payment flow.** Two new gates establish the user-requested pipeline `recompute (conditional) → process_order → WCPDF` for every order, regardless of how it was created.
+  - **Pre-completion gate** — new `maybe_recompute_breakup_for_amount_mismatch()` in [trait-kdc-qtap-finance-wc-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-wc-orders.php) hooked at priority **5** on `woocommerce_order_status_completed` + `woocommerce_order_status_processing` (ahead of the default-priority `process_completed_order()` at 10). Compares the WC order total against the sum of `Payment.amount_due` across linked payments; if they differ by more than ₹0.01 it invokes `recompute_order_allocation_breakup( $order, 'auto-mismatch' )` first. In the normal full-payment path the gate is a no-op and `process_completed_order()` retains ownership of the breakup at priority 10 — no double-work.
+  - **Pre-PDF defensive guard** — `maybe_recompute_breakup_before_pdf()` hooked on `wpo_wcpdf_init_document`. Catches the legacy / direct-download case where an order skipped the status flow entirely (manual import, never went through `processing`/`completed`). Idempotent: skips when `_kdc_qtap_finance_breakup_applied_at` is already set, so existing orders aren't re-touched on every PDF download.
+  - The "amount mismatch" trigger condition is exactly what the user asked for — the gate doesn't fire when line items already sum to the intended fee total. Partial payments, manual edits, refunds, and coupons that drift the total are the cases it catches.
+
 ## [3.16.67] - 2026-04-25
 
 ### Changed

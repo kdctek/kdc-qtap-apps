@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.82] - 2026-04-27
+
+### Changed
+- **Paid With filter: dropped the wasteful HPOS+postmeta double-query.** v3.16.81's `get_order_ids_for_paywith_bucket()` ran the same `SELECT order_id` against both `wp_wc_orders_meta` AND `wp_postmeta` and merged with `array_unique` — but on HPOS-active sites the HPOS table already has every record (whether HPOS-only or sync mode dual-writes), so the postmeta query was wasted work. Now picks one table based on `OrderUtil::custom_orders_table_usage_is_enabled()`: HPOS active → `wp_wc_orders_meta`, otherwise → `wp_postmeta`. One indexed query per filter application.
+
+### Audited
+- **Reviewed every `restrict_manage_*` filter and its query handler across the qTap plugin family** (kdc-qtap, kdc-qtap-finance, kdc-qtap-mobile, kdc-qtap-events, kdc-qtap-education) for the same self-join risk that produced the v3.16.79 → v3.16.81 502. Findings:
+  - **kdc-qtap "Created Via" filter** (parent's 6-channel order source): clean. Each channel emits ≤5 EXISTS / equality clauses on `_created_via` or single-key meta. The "other" channel is intentionally a no-op (returns empty meta_query). No NOT-LIKE chains.
+  - **kdc-qtap-finance user-list filters** (Year/Grade/Division/Exempt on `wp-admin/users.php`): clean. Single LIKE against the `kdc_qtap_finance_enrollments_index` meta key per filter; no chains.
+  - **kdc-qtap-events attendee ticket-type filter**: mild. Two-step (fetches all ticket post IDs, then filters attendees via `post__in`); fine at current scale, candidate for direct-SQL optimization if event/ticket volumes grow 10×. Not changed in this release.
+
 ## [3.16.81] - 2026-04-27
 
 ### Fixed

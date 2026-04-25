@@ -2,6 +2,15 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.8] — 2026-04-25
+
+### Added
+- **Two-level tabs.** Top-level **Count** | **{Student}** sections. The whole previous block (Grade / Division / Exempt / Unassigned) now lives inside Count. Pure-CSS toggling (radio + `:checked`) at both levels — distinct class prefixes (`__section-*` outer, `__tab-*` inner) so the two layers don't fight each other.
+- **{Student} tab — Search.** Live debounced search field (300 ms) calling `/wp/v2/users?search=…&roles=kdc_qtap_student,kdc_qtap_parent,subscriber&context=edit`. Each result links to `wp-admin/user-edit.php?user_id=…` in a new tab. Min query length 2 chars; results show last/first name, email, roles, and the user ID. Uses the `wp_rest` nonce so any user with a REST-API role configured in qTap App Settings can search.
+- **{Student} tab — Inline create form.** Toggleable (no page reload). Captures First Name, Last Name, Gender (from Finance `gender_options`), Date of Birth, an Associated User (parent/guardian, picked via the same kind of debounced search), a **repeatable Contact list** (Name / Mobile / Email — kdc-qtap-mobile's `kdc_qtap_mobile_numbers` shape), and an **Enrollment** block (Academic Year, Grade, Division, Fee Slabs multi-select, Exempt flag) — all sourced from Finance settings. Submit goes to a new REST endpoint and reports success/failure inline; the "+ Create new" button toggles it open/closed without nuking page state.
+- **REST endpoint** `POST /wp-json/kdc/v1/qtap/education/students`, gated by `kdc_qtap_rest_permission_check()` (parent's REST role config). Creates a WP user with role `kdc_qtap_student`, sets `first_name`, `last_name`, `display_name`, `kdc_qtap_finance_gender`, `kdc_qtap_finance_dob`, `kdc_qtap_mobile_numbers`, runs Finance's `sync_associated_users()` for bidirectional parent/student linking when an associated user is provided, and calls `KDC_qTap_Finance_Enrollment::save()` so the enrollment row is written via Finance's canonical helper (which auto-assigns applicable fee slabs when the form leaves the slab boxes unchecked). Returns `{user_id, login, name, edit_url, enrolled}`.
+- New class `KDC_qTap_Education_REST_API` wired through `load_dependencies()` + `init_components()`. Single endpoint today, room to grow into a `qtap-education` Abilities API surface later — same auth path the planned parent mobile app will use.
+
 ## [1.0.7] — 2026-04-25
 
 ### Changed

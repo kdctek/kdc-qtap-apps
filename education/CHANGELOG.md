@@ -2,6 +2,22 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.32] — 2026-04-25
+
+### Added
+- **Student's Personal Email field** on the Create form. New input under the Student toggle, hidden until *Create Student Google Account* is ticked, then required (HTML5 `required` + `inputmode="email"` + format validation client-side AND server-side). Persisted to `kdc_qtap_education_student_personal_email` user_meta. This is the single external destination for student-account credentials — we explicitly do **not** collect a student mobile.
+- **Welcome + credentials notifications now also dispatch to the student's personal email** when a student account was created and an email is on file. Email-only channel (no WhatsApp/SMS — we have no student mobile). Parent contacts continue to receive the parent-account credentials separately. Two distinct dispatches, both flowing through parent's notification framework with the existing `qtap_education_*` types.
+
+### Changed
+- **Toggle layout reshaped to 2×2 grid.** Row 1: *Create Parent Google Account* | *Send login to Contacts*. Row 2: *Create Student Google Account* | Student's Personal Email input. The email cell collapses to empty when Student is unticked. Stacks to single column on viewports ≤600px.
+- **Section title legends bumped** for IDENTITY / CONTACTS / ENROLLMENT — now 1em (was 0.85em), with a 2px primary-color bottom border and a small accent dot before the label so each fieldset reads clearly as the start of a new section. Spacing between sections increased.
+- **Search input visually matches the Create form fields.** Added `font: inherit` + `line-height: 1.5` to the search-row override so Finance's `font-size: 13px` (and any inherited line-height differences) are fully neutralized — height + font now line up with First Name / Last Name.
+- **Empty associated-user "selected" container is hidden.** The faint placeholder block under the sibling search no longer shows when no sibling is picked.
+
+### Note
+- "Why is the search input ID `qtap-edu-1-...`?" — the `1` is from WordPress's `wp_unique_id('qtap-edu-')` which auto-increments per block instance on the page. It's not configurable, just a unique-ID counter; second instance on the same page would be `qtap-edu-2-...`. Cosmetic only — has no functional impact.
+- `Academic Year`, `Grade`, and `Division` already use Finance's label helpers (`kdc_qtap_finance_label('academic_year')` etc.) via `KDC_qTap_Education_Dashboard::label()`. Admin-customized labels in Finance flow through automatically — has been so since v1.0.0.
+
 ## [1.0.31] — 2026-04-25
 
 

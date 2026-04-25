@@ -2,6 +2,16 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.19] — 2026-04-25
+
+### Fixed
+- **Resting × button contrast.** v1.0.17's hover fix made the hover state look great but the resting state's `opacity: 0.6` + neutral border made the × icon look nearly invisible by comparison. Switched the resting state to a visible red glyph (`color: #d63638`) with a 35%-alpha red border, so the affordance reads as destructive at rest too. Hover behavior unchanged (solid red bg, white glyph). Same fix applied to the adjustment-row × button.
+
+## [1.0.18] — 2026-04-25
+
+### Changed
+- **Find + Create new {Student} now match.** They're peer call-to-actions in the same control bar, so both use `kdc-qtap-btn--primary`. Previously Create was `--secondary` (transparent/outline) which read as a different visual weight on the host theme. The form's submit/cancel pair keeps its primary/secondary hierarchy since that's the right pattern *inside* a form.
+
 ## [1.0.17] — 2026-04-25
 
 ### Changed

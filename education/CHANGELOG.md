@@ -2,6 +2,11 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.33] — 2026-04-25
+
+### Changed
+- **Login-required state now shows the inline `wp_login_form()`** instead of a "Please log in" sentence + Log in link. When a logged-out visitor hits the Education Dashboard block they get a real username/password form right inline, with a Remember-me checkbox and a redirect_to back to the same page on success. Form is styled to match the dashboard's input/button scale (font: inherit, line-height 1.5, primary-color submit button). The form ID `qtap-education-dashboard-loginform` is what the CSS targets — any plugin that filters `login_form_*` (Login With OTP, Google Sign-In, etc.) still works because `wp_login_form()` runs through the standard WP filters.
+
 ## [1.0.32] — 2026-04-25
 
 ### Added

@@ -1,7 +1,7 @@
 # qTap Notification System - Child Plugin Integration Guide
 
-**Version:** 2.2.27  
-**Last Updated:** January 2026
+**Version:** 2.7.9
+**Last Updated:** April 2026
 
 ## Overview
 
@@ -10,7 +10,157 @@ The qTap Notification System provides a robust, hook-based notification architec
 1. **Send notifications** through multiple channels (email, SMS, WhatsApp, webhooks, etc.)
 2. **Register custom channels** for new delivery methods
 3. **Register custom notification types** with default channels and priorities
-4. **Hook into the notification lifecycle** to modify, log, or extend functionality
+4. **Register types as ADMIN-EDITABLE** so admins can customize subject/body via parent's centralized Templates editor (v2.7.9+)
+5. **Surface a summary card** on the child plugin's admin page with stats + deep links into the parent's Notifications UI (v2.7.9+)
+6. **Hook into the notification lifecycle** to modify, log, or extend functionality
+
+## Where Things Live (v2.7.9+)
+
+```
+Parent qTap > Notifications              Child Plugin Admin
+├── Logs (all sources, source filter)    ├── Settings...
+├── Templates (canonical store, all      └── kdc_qtap_render_notifications_summary( source )
+│   types from all plugins)                  └── Card with stats per type +
+├── Channels                                     deep links to parent
+└── Settings
+```
+
+**Templates are stored centrally** in the `kdc_qtap_notification_templates` option (parent owns it). The lookup chain when sending: admin-customized template (parent option) → registered defaults (`kdc_qtap_default_notification_templates` filter) → empty.
+
+## Creating an Admin-Editable Notification Type (v2.7.9+)
+
+This is the canonical recipe. Use ALL these hooks together for one notification type:
+
+| Hook / Function                           | Purpose                                          | Required |
+|-------------------------------------------|--------------------------------------------------|----------|
+| `kdc_qtap_notification_init` (action)     | Hook point for type registration                 | YES |
+| `kdc_qtap_register_notification_type()`   | Register type metadata (label, default_channels) | YES |
+| `kdc_qtap_default_notification_templates` | Provide default subject/body/whatsapp data       | YES |
+| `kdc_qtap_register_notification_variables`| Declare `{{variables}}` your template uses       | If using vars |
+| `kdc_qtap_notification_type_owners` ⭐NEW | Declare your plugin owns this type               | YES (for cross-ref) |
+| `kdc_qtap_notification_template_edit_url` | (Optional) Override where Edit Template lands    | Optional |
+| `kdc_qtap_scheduled_notification_types`   | If your type fires from cron, not user actions   | Only if scheduled |
+
+### Minimum Viable Recipe
+
+```php
+class My_Plugin_Notifications {
+    public function __construct() {
+        add_action( 'kdc_qtap_notification_init',                array( $this, 'register_type' ) );
+        add_filter( 'kdc_qtap_default_notification_templates',   array( $this, 'register_defaults' ) );
+        add_filter( 'kdc_qtap_register_notification_variables',  array( $this, 'register_variables' ) );
+        add_filter( 'kdc_qtap_notification_type_owners',         array( $this, 'register_owners' ) );
+    }
+
+    /** Register the type so it appears in the parent's UI. */
+    public function register_type() {
+        kdc_qtap_register_notification_type( 'my_plugin_event_completed', array(
+            'label'            => __( 'Event Completed', 'my-plugin' ),
+            'description'      => __( 'Sent when an event completes successfully', 'my-plugin' ),
+            'default_channels' => array( 'email', 'whatsapp' ),
+            'default_priority' => 'normal',
+        ) );
+    }
+
+    /** Provide default subject/body. Admin can override via parent's Templates editor. */
+    public function register_defaults( $templates ) {
+        $templates['my_plugin_event_completed'] = array(
+            'subject' => 'Event "{{event_title}}" completed',
+            'message' => "Hi {{user_name}},\n\n" .
+                         "Your event \"{{event_title}}\" completed at {{event_time:human}}.\n\n" .
+                         "View it: {{event_url}}",
+        );
+        return $templates;
+    }
+
+    /** Declare {{variables}} this type uses (auto-surfaces in parent editor's variable palette). */
+    public function register_variables( $vars ) {
+        $vars['my_plugin'] = array(
+            'label'     => __( 'My Plugin', 'my-plugin' ),
+            'variables' => array(
+                'event_title' => __( 'Event title', 'my-plugin' ),
+                'event_time'  => __( 'Event datetime', 'my-plugin' ),
+                'event_url'   => __( 'Event public URL', 'my-plugin' ),
+                'user_name'   => __( 'Recipient display name', 'my-plugin' ),
+            ),
+        );
+        return $vars;
+    }
+
+    /** ⭐ NEW: declare your plugin owns this type. Required for cross-ref UI to work. */
+    public function register_owners( $owners ) {
+        $owners['my_plugin_event_completed'] = 'my-plugin';
+        // Add one entry per type your plugin owns:
+        // $owners['my_plugin_event_cancelled'] = 'my-plugin';
+        return $owners;
+    }
+
+    /** Then anywhere in your plugin, send the notification: */
+    public function send_event_completed( $event, $user ) {
+        kdc_qtap_send_notification( array(
+            'type'      => 'my_plugin_event_completed',
+            'recipient' => array( 'email' => $user->user_email, 'user_id' => $user->ID ),
+            'channels'  => array( 'email', 'whatsapp' ),
+            'data'      => array(
+                'event_title' => $event->title,
+                'event_time'  => $event->starts_at,
+                'event_url'   => get_permalink( $event->post_id ),
+                'user_name'   => $user->display_name,
+            ),
+            'source'    => 'my-plugin', // ALWAYS pass — drives logs filtering and the summary card
+        ) );
+    }
+}
+new My_Plugin_Notifications();
+```
+
+That's it. The admin can now find this type in **qTap App > Notifications > Templates**, edit subject/body/WhatsApp template, and your `send_event_completed()` will use the customized version automatically (lookup falls back to the default if untouched).
+
+### Show the Summary Card on Your Plugin's Admin Page
+
+```php
+public function render_my_settings_page() {
+    ?>
+    <div class="wrap">
+        <h1>My Plugin Settings</h1>
+        <?php
+        // ... your settings UI ...
+
+        // Drop the notifications summary card. Renders nothing if you haven't
+        // registered any types via kdc_qtap_notification_type_owners filter.
+        if ( function_exists( 'kdc_qtap_render_notifications_summary' ) ) {
+            kdc_qtap_render_notifications_summary( 'my-plugin' );
+        }
+        ?>
+    </div>
+    <?php
+}
+```
+
+The card lists each registered type with 7-day sent/failed/latest stats, an "Edit template" button per row, and a "View all logs" footer link.
+
+### Override the Edit Template URL (optional)
+
+If your plugin already has its own template editor (e.g., kdc-qtap-finance has one), point Edit Template at it instead of the parent:
+
+```php
+add_filter( 'kdc_qtap_notification_template_edit_url', function( $url, $type, $source ) {
+    if ( 'my-plugin' !== $source ) {
+        return $url;
+    }
+    return admin_url( 'admin.php?page=my-plugin&tab=templates&edit=' . $type );
+}, 10, 3 );
+```
+
+## What NOT To Do
+
+- ❌ **DO NOT build your own template editor** for new plugins. The parent will provide a centralized editor (lifted from finance) — leverage it. The summary card already deep-links into it.
+- ❌ **DO NOT save admin-edited templates to your own option key.** Storage is `kdc_qtap_notification_templates` (parent option). The parent runs a one-time migration on upgrade for any existing self-managed templates.
+- ❌ **DO NOT duplicate the variable set** — register once via `kdc_qtap_register_notification_variables` and the parent surfaces them in the editor.
+- ❌ **DO NOT forget to pass `source`** in `kdc_qtap_send_notification()` calls — without it, the summary card and Source filter can't attribute the log row to your plugin.
+- ❌ **DO NOT skip `kdc_qtap_notification_type_owners`** — without it, the summary card renders nothing and Edit Template links can't be routed.
+
+## Architecture
 
 ## Architecture
 

@@ -1,11 +1,13 @@
 # Notification Template Variables - Child Plugin Guide
 
-**Version:** 2.0.5  
+**Version:** 2.7.9
 **Parent Plugin:** qTap App
 
 ## Overview
 
 The qTap Notification Template Variables system allows you to create dynamic notification content using `{{variable}}` placeholders. Variables are automatically resolved when notifications are sent.
+
+> **v2.7.9+:** Variables you register here become available in the **parent's centralized Templates editor** automatically — admins see them as a clickable palette next to the template body. You don't need to surface them anywhere else. Templates are stored centrally in the parent's `kdc_qtap_notification_templates` option (admin-edited values override your registered defaults).
 
 ## Quick Start
 

@@ -2,6 +2,15 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.75] - 2026-04-26
+
+### Added
+- **Notification cross-referencing card on the Finance > General tab.** Calls the parent's new `kdc_qtap_render_notifications_summary( 'kdc-qtap-finance' )` (parent v2.7.9+) at the end of the General tab. Admins now see, without leaving Finance: every Finance notification type with 7-day Sent / Failed counts, the latest-sent timestamp, and inline **Edit Template** + **View Logs** deep-links into the parent's Notifications log/templates UI.
+- **`KDC_qTap_Finance_Notifications::register_type_owners()`** — declares Finance's 9 notification types (`finance_payment_due_reminder`, `finance_payment_overdue`, `finance_payment_received`, `finance_payment_refunded`, `finance_payment_verified`, `finance_payment_rejected`, `finance_offline_submitted`, `finance_enrollment_created`, `finance_fee_assigned`) to the parent via the new `kdc_qtap_notification_type_owners` filter. Drives the summary card scope, the parent's Source filter on the Notifications log, and Edit Template deep-link routing.
+- **`KDC_qTap_Finance_Notifications::filter_template_edit_url()`** — hooks `kdc_qtap_notification_template_edit_url` so Edit Template buttons rendered from the parent's summary card route to Finance's existing per-type editor at `?page=kdc-qtap-finance&tab=notifications&edit={type}`. Preserves the current template-edit UX intentionally — no regression to admins who already know it.
+
+**Requires:** kdc-qtap v2.7.9+ (the parent's cross-referencing infrastructure). Older parents will silently no-op the registration filter; the General tab card will not render.
+
 ## [3.16.74] - 2026-04-26
 
 ### Changed

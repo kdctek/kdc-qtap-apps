@@ -2,6 +2,28 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.9] - 2026-04-26
+
+### Added
+- **Notification cross-referencing between parent and child plugins.** Each child plugin's admin overview can now drop in `kdc_qtap_render_notifications_summary( 'kdc-qtap-finance' )` (or any source slug) and surface a card listing every notification type that plugin owns — with 7-day Sent / Failed counts, latest-sent timestamp, and inline **Edit Template** + **View Logs** deep-links into the parent's UI. Closes the long-standing gap where admins managing a child (Finance, Events, Education) had no in-context view of whether their reminders were actually firing.
+- **Type-owner registry** — new filter `kdc_qtap_notification_type_owners` lets each child plugin declare which notification type keys it owns, e.g.: `$owners['finance_payment_due_reminder'] = 'kdc-qtap-finance';`. Parent reads this map to scope the summary card, drive the Source filter on the Notifications log tab, and route Edit Template deep-links back to the owning child's editor (preserving each child's existing template UI).
+- **Centralized template storage with non-destructive migration.** Templates stored under a single parent option `kdc_qtap_notification_templates` (per-type subject / message / whatsapp fields). On first load post-upgrade, the parent runs a one-shot, idempotent `migrate_finance_templates()` that copies any custom values from `kdc_qtap_finance_settings.notification_templates` (and `whatsapp_templates`) into the parent option without overwriting existing values — Finance's own option is left intact as a fallback. Sets a `kdc_qtap_templates_migrated_from_finance` flag to prevent re-running.
+- **`KDC_qTap_Notifications::get_template( $type )`** and **`save_template( $type, $fields )`** — new public helpers for any caller (parent admin UI, future child editors) to read/write the centralized templates with proper field-level merge semantics.
+- **`KDC_qTap_Notifications::get_type_owners()`**, **`get_types_for_source( $source )`**, **`get_known_sources()`** — public registry accessors.
+- **`KDC_qTap_Notification_Log::count( $args )`** and **`get_latest_for_type( $type )`** — new helpers powering the summary card's stats. Also added `type__in` array filter to `query()` so the card can fetch logs for several types in one shot.
+- **`kdc_qtap_get_notifications_admin_url( $args )`** — global URL builder for deep-linking into the parent's Notifications tab with `section`, `type`, `source` query params.
+- **`kdc_qtap_get_template_edit_url( $type, $source )`** — filterable via `kdc_qtap_notification_template_edit_url`. Default points at the parent's editor; child plugins (e.g. Finance) override it to keep Edit Template buttons routed to their own existing template UI.
+- **`kdc_qtap_render_notifications_summary( $source, $args )`** — full card renderer (header with totals, per-type table, footer with View All Logs link). Outputs a single `<div class="kdc-qtap-notifications-summary">` ready to drop on any child's settings page.
+
+### Changed
+- **`get_default_template()` lookup priority updated.** Parent now checks the centralized customized-templates option *first* (any non-empty admin edit wins), then falls back to defaults registered via `kdc_qtap_default_notification_templates`. Existing send paths (`kdc_qtap_send_notification`) automatically resolve through this — no per-channel changes needed.
+
+### Documentation
+- **`docs/CHILD-PLUGIN_NOTIFICATIONS.md`** (renamed from `_v2.4.17.md` — un-versioned filename is future-proof). New top-level section "Creating an Admin-Editable Notification Type (v2.7.9+)" covering the full required filter chain (`kdc_qtap_notification_init`, `kdc_qtap_register_notification_type`, `kdc_qtap_default_notification_templates`, `kdc_qtap_register_notification_variables`, `kdc_qtap_notification_type_owners`). Includes minimum-viable recipe + explicit "What NOT to do" list (no own template UI; no own option key; don't duplicate variable sets).
+- **`docs/CHILD-PLUGIN_TEMPLATE-VARIABLES.md`** (renamed from `_v2.0.5.md`). Adds v2.7.9+ note: variables registered via the standard filter automatically surface in the parent's template editor — no extra wiring required.
+- **`docs/CHILD-PLUGIN_NOTIFICATIONS-SUMMARY.md`** (new). Companion guide for the summary card surface: where to mount it, deep-link query param contract (`?source=`, `?section=templates`, `?type=`), migration notes for plugins that previously self-managed templates. Auto-syncs to `https://changelog.qtap.app/qtap/notifications-summary.md`.
+- **`docs/CLAUDE.md`** — added "Section 0: ALWAYS register `type_owners`" with the required hook example so future child-plugin agents wire into the cross-referencing UI by default.
+
 ## [2.7.8] - 2026-04-25
 
 ### Added

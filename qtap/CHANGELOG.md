@@ -2,6 +2,39 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.12] - 2026-04-27
+
+### Added — Better Notifications & Templates v2
+
+**Card-row Templates list.** `qTap > Notifications > Templates` now renders the same card-row layout the old Finance editor used: white rounded cards, a leading enable-checkbox, bold name + User/Admin/System badge, gray description, channel chips below (Email / SMS / WhatsApp / Webhook with on/off state), and Edit Template button on the right. CSS classes `.kdc-notification-type*`, `.kdc-channel-indicator*` ported verbatim from the finance trait. Cards group by source plugin under H3 headers.
+
+**Multi-channel editor tabs.** The per-type editor now renders **one tab per `supported_channels[]` entry** instead of hardcoded Email + WhatsApp. New built-in editors: SMS (single body, character counter, plain text only) and Webhook (URL override + JSON payload). Custom channels can plug in via `kdc_qtap_template_editor_tabs`.
+
+**`supported_channels` declaration.** `kdc_qtap_register_notification_type()` accepts a new `supported_channels` array. Drives which tabs the editor surfaces. Defaults to `['email']` for back-compat. New filter `kdc_qtap_notification_supported_channels` lets plugins declare per-type channel lists when their types aren't formally registered (e.g. Finance).
+
+**`get_type_meta()` + filter.** New public method returns name/description/icon/audience for the editor list. Filter `kdc_qtap_notification_type_meta` lets child plugins provide display metadata without registering types via `register_type()` — Finance hooks this for its 9 types so the new editor renders the same labels admins know.
+
+**Prefix-alias normalization.** `get_default_templates()` now auto-aliases short keys (e.g. Finance's legacy `payment_received`) to full prefixed type ids (`finance_payment_received`) before returning. Fixes "all defaults look empty" symptom — defaults were registered all along; the lookup was wrong. Debug-only log warns about types registered without defaults so devs notice the gap.
+
+**v3 storage shape (additive).** Per-type templates extended to: `[type_enabled, email{enabled,subject,message}, sms{enabled,message}, whatsapp{enabled,template,header,body,footer,buttons}, webhook{enabled,url,payload}, ...custom]`. `get_template()` exposes both the v3 sub-arrays AND legacy v2 top-level keys (`subject`/`message`/`whatsapp`/`email_enabled`) so existing send-side callers don't break. `save_template()` merges sub-arrays field-by-field.
+
+**8 new hooks** for child plugin extensibility:
+- `kdc_qtap_template_editor_tabs` (filter) — add/remove/reorder editor tabs per type
+- `kdc_qtap_template_editor_render_{channel}` (action) — render fields for a custom channel
+- `kdc_qtap_template_save_{channel}` (filter) — sanitize/validate per-channel save (return WP_Error to abort)
+- `kdc_qtap_template_saved` (action) — fires after a template is saved (clear caches, audit, etc.)
+- `kdc_qtap_template_reset` (action) — fires after Reset to Default
+- `kdc_qtap_notification_supported_channels` (filter) — runtime override of a type's channel tabs
+- `kdc_qtap_notification_variables_for_type` (filter) — scope the variable palette per type
+- `kdc_qtap_template_editor_help` (filter) — per-channel help HTML below the form
+
+**OTP type now editable.** Parent registers `qtap_otp` as a first-class notification type with full Email + SMS + WhatsApp defaults. Visible in the Templates list under the `kdc-qtap` group. The OTP REST endpoint reads the customized email subject + message from the editor (falls back to inline defaults if untouched). New variables `{{otp_code}}` and `{{otp_expiry_minutes}}` registered in the Notification group.
+
+### Changed
+
+- **Notifications page top-tab nav** now lists Templates between Notification Logs and Scheduled (was previously misrouted via `?section=templates`).
+- **Existing v2 storage keeps working.** No migration prompts; the shape normalizer reads either v2 (top-level) or v3 (sub-array) and exposes both.
+
 ## [2.7.11] - 2026-04-26
 
 ### Fixed

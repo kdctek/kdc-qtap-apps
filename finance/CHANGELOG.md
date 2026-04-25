@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.83] - 2026-04-27
+
+### Added
+- **`declare_supported_channels()` filter handler** — declares which channels each finance notification type's editor renders tabs for. Drives the new card-row UI in parent v2.7.12+ at `qTap > Notifications > Templates`. The 7 user-facing reminder/payment types support `email + whatsapp`; `enrollment_created`, `fee_assigned`, `offline_submitted` are email-only.
+- **`declare_type_meta()` filter handler** — provides display metadata (name, description, icon, audience) for each finance type. Mirrors the old finance template_info array verbatim so the parent's card-row list shows exactly the same labels (Payment Due Reminder, Payment Overdue, Payment Received, etc.) admins were used to.
+
+**Requires:** kdc-qtap v2.7.12+ for the new card-row Templates UI to render correctly.
+
 ## [3.16.82] - 2026-04-27
 
 ### Changed

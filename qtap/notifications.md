@@ -27,19 +27,74 @@ Parent qTap > Notifications              Child Plugin Admin
 
 **Templates are stored centrally** in the `kdc_qtap_notification_templates` option (parent owns it). The lookup chain when sending: admin-customized template (parent option) → registered defaults (`kdc_qtap_default_notification_templates` filter) → empty.
 
-## Creating an Admin-Editable Notification Type (v2.7.9+)
+## Creating an Admin-Editable Notification Type (v2.7.9+, expanded in v2.7.12)
 
 This is the canonical recipe. Use ALL these hooks together for one notification type:
 
-| Hook / Function                           | Purpose                                          | Required |
-|-------------------------------------------|--------------------------------------------------|----------|
-| `kdc_qtap_notification_init` (action)     | Hook point for type registration                 | YES |
-| `kdc_qtap_register_notification_type()`   | Register type metadata (label, default_channels) | YES |
-| `kdc_qtap_default_notification_templates` | Provide default subject/body/whatsapp data       | YES |
-| `kdc_qtap_register_notification_variables`| Declare `{{variables}}` your template uses       | If using vars |
-| `kdc_qtap_notification_type_owners` ⭐NEW | Declare your plugin owns this type               | YES (for cross-ref) |
-| `kdc_qtap_notification_template_edit_url` | (Optional) Override where Edit Template lands    | Optional |
-| `kdc_qtap_scheduled_notification_types`   | If your type fires from cron, not user actions   | Only if scheduled |
+| Hook / Function                                  | Purpose                                          | Required |
+|--------------------------------------------------|--------------------------------------------------|----------|
+| `kdc_qtap_notification_init` (action)            | Hook point for type registration                 | YES |
+| `kdc_qtap_register_notification_type()`          | Register type metadata (label, default_channels, **`supported_channels`**) | YES |
+| `kdc_qtap_default_notification_templates`        | Provide default content per channel              | YES |
+| `kdc_qtap_register_notification_variables`       | Declare `{{variables}}` your template uses       | If using vars |
+| `kdc_qtap_notification_type_owners`              | Declare your plugin owns this type               | YES (for cross-ref) |
+| `kdc_qtap_notification_supported_channels` ⭐v2.7.12 | Declare channel tabs the editor renders for this type (alt to `supported_channels` arg) | If types not registered via `register_type()` |
+| `kdc_qtap_notification_type_meta` ⭐v2.7.12      | Provide name/description/icon/audience for editor list | If types not registered via `register_type()` |
+| `kdc_qtap_template_saved` ⭐v2.7.12              | React when admin saves a template (clear caches, audit, etc.) | Optional |
+| `kdc_qtap_template_editor_tabs` ⭐v2.7.12        | Inject custom channel tabs (advanced)            | Optional |
+| `kdc_qtap_template_editor_render_{channel}` ⭐v2.7.12 | Render fields for a custom channel              | Optional |
+| `kdc_qtap_template_save_{channel}` ⭐v2.7.12     | Sanitize/validate per-channel save               | Optional |
+| `kdc_qtap_template_editor_help` ⭐v2.7.12        | Per-channel help HTML below the editor          | Optional |
+| `kdc_qtap_notification_variables_for_type` ⭐v2.7.12 | Scope the variable palette per type            | Optional |
+| `kdc_qtap_notification_template_edit_url`        | Override where Edit Template lands               | Optional |
+| `kdc_qtap_scheduled_notification_types`          | If your type fires from cron, not user actions   | Only if scheduled |
+
+### Type registration: `supported_channels` (v2.7.12+)
+
+```php
+kdc_qtap_register_notification_type( 'my_plugin_event_completed', array(
+    'name'               => __( 'Event Completed', 'my-plugin' ),
+    'description'        => __( 'Sent when an event completes successfully', 'my-plugin' ),
+    'icon'               => 'dashicons-calendar-alt',           // Used in card-row UI
+    'audience'           => 'user',                              // 'user' | 'admin' | 'system' — drives badge color
+    'default_channels'   => array( 'email', 'whatsapp' ),        // Channels enabled by default at send time
+    'supported_channels' => array( 'email', 'sms', 'whatsapp' ), // Tabs the editor renders for this type
+    'default_priority'   => 'normal',
+) );
+```
+
+`supported_channels` drives which **tabs** show in the per-type editor at `qTap > Notifications > Templates`. If your type makes no sense for SMS, leave SMS out — admins won't see an empty tab for it. If unset, defaults to `['email']`.
+
+### Defaults: per-channel shape (v2.7.12+)
+
+The defaults filter now accepts a per-channel shape (recommended) AND keeps the legacy top-level shape working:
+
+```php
+add_filter( 'kdc_qtap_default_notification_templates', function( $templates ) {
+    $templates['my_plugin_event_completed'] = array(
+        'email' => array(
+            'enabled' => true,
+            'subject' => 'Event "{{event_title}}" completed',
+            'message' => "Hi {{user_name}},\n\nYour event \"{{event_title}}\" completed.\n\nView it: {{event_url}}",
+        ),
+        'sms' => array(
+            'enabled' => false,
+            'message' => 'Your event {{event_title}} just completed. View: {{event_url}}',
+        ),
+        'whatsapp' => array(
+            'enabled'  => false,
+            'template' => 'event_completed|en',
+            'header'   => '{{event_title}}',
+            'body'     => "{{user_name}}\n{{event_time}}",
+            'footer'   => '{{site_name}}',
+            'buttons'  => 'url|{{event_url}}',
+        ),
+    );
+    return $templates;
+} );
+```
+
+Legacy top-level keys (`subject`/`message`/`whatsapp`) still work and are mirrored into `email.subject`/`email.message` automatically.
 
 ### Minimum Viable Recipe
 

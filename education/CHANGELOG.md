@@ -2,6 +2,35 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.27] — 2026-04-25
+
+### Added
+- **Google Workspace user provisioning.** When a school configures the integration in *qTap Education > Settings > Google Workspace*, ticking "Create Google Account" on the Create Student form now actually creates a user in the school's Workspace via the Admin SDK. The flow:
+  1. Staff submits the form. WP user is created (fast); a background job is scheduled and the response returns immediately.
+  2. ~15 seconds later (or on the next admin page load if WP-Cron is sleepy), the job runs. Hand-rolled service-account JWT auth (RS256 via `openssl_sign`) exchanges for an OAuth access token, then `POST /admin/directory/v1/users` creates the Workspace user in the configured OU with `changePasswordAtNextLogin: true`.
+  3. On success: user_meta `kdc_qtap_education_workspace_status=created`, plus the welcome notification fires (always) and credentials notification fires (only if "Send login to Contacts" was ticked).
+  4. On failure: status is set to `failed:<code>` with the verbatim error message; staff can retry from the user-edit screen (next release).
+- **Settings page with verbose setup guide.** New `qTap Education > Settings` page has tabs (General + Google Workspace). The Workspace tab includes a master toggle + reveal pattern, fields for domain / super-admin email / service-account JSON upload / OU path / force-password-change toggle, and a step-by-step setup guide with direct links to Google Cloud Console (Admin SDK enablement, Service Account creation) and Workspace Admin (Domain-wide Delegation page). Test Connection button probes the credentials inline before save.
+- **Notification types registered with parent.** Two new types via `kdc_qtap_register_notification_type()`:
+  - `qtap_education_welcome_new_user` — sent to all contacts after Workspace creation succeeds. Default channels: email + WhatsApp. Variables: `{{site_name}}`, `{{user_name}}`, `{{contact_name}}`, `{{login_url}}`, `{{app_url}}`.
+  - `qtap_education_login_credentials` — sent to all contacts when "Send login to Contacts" is ticked, **only after Workspace creation succeeds**. Variables include `{{login}}`, `{{email}}`, `{{password}}`. Templates editable in *qTap > Notifications*.
+- **AES-256-GCM encryption helper** (`KDC_qTap_Education_Secret`) for the service-account JSON at rest, keyed off WP `AUTH_KEY`. The encrypted blob is stored in the `kdc_qtap_education_settings` option; decrypted only at API-call time.
+- **`kdc-qtap-frontend-helpers` viewScript dep** (carried over from v1.0.26) — already explicit in the block registration.
+
+### Changed
+- **"Create Google Account" toggle is gated.** When the Workspace integration is not enabled+verified in settings, the toggle is hidden and replaced with a one-line note pointing the staff (admin: with link, non-admin: with message) to *Settings > Google Workspace*. Prevents collecting opt-in for an integration that won't fire.
+- **`send_login_to_contacts` timing.** When Workspace integration is active, the credentials notification now waits until Workspace creation succeeds (so the credentials emailed actually work). When not active, falls back to inline dispatch as before.
+- **Welcome + credentials notifications now use parent's framework.** Templates are admin-editable in *qTap > Notifications* and respect channel-enabled flags.
+
+### Fixed
+- **`$login_result` undefined warning** in the create-student response when `username_override` was supplied (introduced in v1.0.22). Now uses `isset()` guard. The bug was harmless in practice (the override path returns null for `username_taken_suffix` anyway) but PHP would emit a notice.
+
+### Architecture notes
+- Used `wp_schedule_single_event` for the Workspace creation job rather than parent's `kdc_qtap_jobs` table because (a) the job is per-user, not per-batch — natural status home is user_meta; (b) parent's job system is shaped for import/export with a results array, awkward fit for an API call.
+- Hand-rolled JWT signing avoids a Composer dep on `google/apiclient`. ~30 lines using `openssl_sign(OPENSSL_ALGO_SHA256)`. Token cached in WP transients keyed by (client_email, sub, scope) until expiry minus 60s.
+- Service account requires domain-wide delegation in Workspace Admin → API Controls → Domain-wide delegation, with scope `https://www.googleapis.com/auth/admin.directory.user`. Setup guide in the settings page walks through this.
+- The `KDC_qTap_Education_Secret` helper is a candidate for promotion to parent if a second qTap plugin needs encrypted option storage.
+
 ## [1.0.26] — 2026-04-25
 
 ### Added

@@ -2,6 +2,11 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.2] — 2026-04-25
+
+### Changed
+- **Doubled font sizes** across the dashboard for projection/screen-share readability — title 1.75→3.5rem, meta 1→2rem, total value 2.25→4.5rem, total label 0.85→1.7rem, summary pills 1→2rem (with proportional padding), table 1.05→2.1rem (with proportional cell padding), header row 0.875→1.75rem.
+
 ## [1.0.1] — 2026-04-25
 
 ### Changed

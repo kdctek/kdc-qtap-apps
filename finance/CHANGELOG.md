@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.66] - 2026-04-25
+
+### Added
+- **Page-level loader overlay during transactional actions on the Fees block.** Previously, clicking Pay Now / Pay All Dues / Submit Offline Payment only flipped the button text to "Processing…" and disabled it — easy to miss on mobile, when scrolled past the button, or when the AJAX takes a few seconds to respond. The new overlay covers the full viewport with a soft-blurred backdrop, a centered card with a spinner, a primary message ("Processing…" / "Redirecting…" / "Submitting…"), and a secondary line explaining the action ("Preparing your payment…" / "Sending you to checkout…" / "Recording your payment details…"). Shows on action start; updates the message before the `window.location.href` redirect so the user sees a clear "leaving this page" cue; hides on AJAX error so the user can retry. Singleton — re-calling `showPageLoader()` updates the message instead of stacking overlays. Wired into all four transaction triggers in [kdc-qtap-finance-block-frontend.js](kdc-qtap-finance/blocks/fees-block/kdc-qtap-finance-block-frontend.js): `initiateSinglePayment()`, `initiateMultiPayment()`, `initiateTermPayment()`, and `submitInlinePaymentForm()`. The `window.kdcQtapFinancePageLoader` global is exposed so future blocks (Staff Console transactional actions, etc.) can reuse the same overlay without duplicating markup. Strings are translatable via three new i18n keys: `pageLoaderPaying`, `pageLoaderRedirecting`, `pageLoaderSubmitting`.
+
 ## [3.16.65] - 2026-04-25
 
 ### Fixed

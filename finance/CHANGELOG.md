@@ -2,6 +2,19 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.84] - 2026-04-27
+
+### Changed
+- **Fee Stats AJAX: removed N+1 hydration in `ajax_fee_stats_data()`.** Since v3.16.71 the aggregator ran two `wc_get_orders( return='ids' )` calls (primary by `payment_date`, fallback by `date_created`), merged the IDs, then `wc_get_order( $id )` per ID inside the foreach — that's 2 + N round-trips, ~5,002 hits on a 5,000-order date range. Switched both queries to `return='objects'` so WC hydrates everything in one batched DB load per query (2 round-trips total, regardless of result-set size). The dedupe loop now compares `$o->get_id()` instead of merging two ID arrays through `array_unique`. No semantic change — same date filter, same status set, same fee-line-item gate, same created_via classification — just dropped ~N redundant order lookups per chart render.
+
+### Audited
+- **Reviewed every Staff Console frontend block tab** (Overview / Receipts / Report / Fee Stats) for repeat or unbounded query patterns:
+  - **Receipts paginated query** — OK. One `wc_get_orders` with `paged + paginate=true`. Source / payment_method post-fetch filtering acts on a 20-row page, bounded.
+  - **Receipts `q` text search (`search_orders_by_token` / `search_orders_by_field`)** — heavy. Each search token fans out to up to 7–14 unbounded `wc_get_orders` / `get_users` calls (WC native search + first/last name meta + customer-id orders + 3 meta-key lookups). On a 50K-order site a single multi-token query (e.g. "John Doe") could touch 70K+ order objects in memory before deduping. Pre-existing pattern (predates this audit). Documented but not changed in this release — refactor needs careful scope (caching layer + LIMIT-bounded SQL).
+  - **Fee Stats AJAX** — fixed in this release (above).
+  - **Overview tab** — OK. Defers to `KDC_qTap_Finance_Enrollment::get_enrolled_users()` and `KDC_qTap_Finance_Payment::get_year_summary()`; no per-render fan-out on the tab handler itself.
+  - **Report tab** — OK. PHP just emits the scaffold; data is fetched client-side via REST API + DataTables AJAX.
+
 ## [3.16.83] - 2026-04-27
 
 ### Added

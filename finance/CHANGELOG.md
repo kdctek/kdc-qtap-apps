@@ -2,6 +2,13 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.79] - 2026-04-27
+
+### Added
+- **New "Paid With" column on the WC Orders admin table** (HPOS + legacy CPT). Shows the order's `paywith_method` meta value with the matching bucket label as a small subtitle (e.g. "GooglePay" / "UPI", "ICICI Net Banking 6783" / "Net Banking"). Inserts immediately after the parent's Transaction ID column at priority 50; falls back to appending if the parent's "By"/"Transaction ID" columns aren't loaded. The column constant is `KDC_qTap_Finance_WC_Orders_Admin::COLUMN_PAYWITH_KEY`.
+- **"Paid With" filter dropdown** above the orders table, mirroring the parent's "Created Via" filter. Options come from the canonical `KDC_qTap_Finance_Block_Editor::get_payment_method_buckets()` map — the same source of truth as the Receipts pill row and Fee Stats donut: All / Card / Cash / Cheque / IMPS / NEFT / Net Banking / Online / RTGS / UPI / Wallet / Others. URL param: `qtap_paywith_filter`.
+- **Filter query handlers** for HPOS (`woocommerce_order_list_table_prepare_items_query_args`) and legacy CPT (`pre_get_posts`). Each bucket OR-LIKEs every substring pattern in the bucket map. The `others` bucket is the negative space — `paywith_method` exists, is non-empty, and AND-NOT-LIKEs every pattern across all other buckets.
+
 ## [3.16.78] - 2026-04-26
 
 ### Removed

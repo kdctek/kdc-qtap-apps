@@ -2,6 +2,37 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.30] — 2026-04-25
+
+### Added
+- **Parent + Student Workspace targets** — independent accounts. Each new student can now optionally provision **two** Google Workspace accounts:
+  - **Parent account** (default ON, ticked) — for the parent's portal login, fee payments, etc. Email: `first.last_parent@domain` (suffix configurable).
+  - **Student account** (default OFF, unticked) — for the student's own Workspace (Classroom, school email). Email: `first.last@domain` (suffix configurable, default empty).
+  - Admin can tick/untick either checkbox per student.
+  - Each account is created in its own configurable OU (Parent OU + Student OU in *qTap Education > Settings > Google Workspace*).
+
+- **Two OU paths in settings.** Replaces the single OU field with `Parent OU path` + `Student OU path` (each separately validated by Test Connection). Pre-v1.0.30 single `ou_path` is read as the parent OU for upgrades.
+
+- **Two email-suffix fields in settings** — `parent_email_suffix` (default `_parent`) and `student_email_suffix` (default empty), so admins can shape both email patterns to match school conventions.
+
+- **Per-target user_meta keys**: `kdc_qtap_education_workspace_parent_*` and `kdc_qtap_education_workspace_student_*` (status, user_id, email, created, error, suspended). Legacy `workspace_*` keys still mirror the parent target for back-compat with existing UI / reports.
+
+- **Combined notification dispatch.** Welcome and credentials notifications now fire **once** per student create — from the LAST scheduled job to settle, so the message can include credentials for both targets in one go. The completion barrier looks at the OTHER target's status (`pending`/`processing` = wait; anything else = fire). Notifications go to **parent contacts only** (no student external contact data is collected). Templates extended with `{{parent_email}}`, `{{parent_login}}`, `{{parent_password}}`, `{{student_email}}`, `{{student_login}}`, `{{student_password}}`. Missing target's variables resolve to empty strings — admin can edit templates in *qTap > Notifications*.
+
+- **User-edit metabox split.** The "Google Workspace" section on `user-edit.php` now shows TWO subsections (Parent / Student), each with its own status + lifecycle dropdown. Admin can suspend the student account while leaving the parent active, etc. Multiple per-target actions on one save show all results as separate admin notices.
+
+### Changed
+- **`KDC_qTap_Education_Job_Handler::schedule()`** signature extended: 4th arg is an optional `array $args = ['target','email','ou_path']`. The 3-arg call shape (legacy) still works and defaults to `target=parent`.
+- **`KDC_qTap_Education_Notifications::send_credentials()`** signature: prefers the new 2-arg form `($user_id, $password)` which sources both targets' details from user_meta. The 4-arg legacy form still works for the inline dispatch path.
+- **REST `POST /students`** accepts `create_parent_google` (default true) + `create_student_google` (default false). Legacy `create_google_account=true` is honored as `create_parent_google=true`. Response now includes `workspace_parent_scheduled` + `workspace_student_scheduled`.
+- **REST `POST /google-workspace/test-connection`** now validates BOTH the parent and student OU paths (when provided). `verified` flips on only when all probes pass. Response shape switched from `ou_check` (single object) to `ou_checks` (array, one per probed path).
+- **Frontend Create form** now shows three pill toggles: *Create Parent Google Account*, *Create Student Google Account*, *Send login to Contacts*.
+
+### Architecture notes
+- **One seed password serves both targets.** Both Workspace accounts force-change-on-first-login per the integration's standing setting; the user picks their own password the first time they sign in to either.
+- **Failure isolation.** If parent succeeds and student fails (or vice versa), notifications still fire, mentioning whichever account exists. Failed target shows in the user-edit metabox with a Retry option.
+- **No separate "send to student" path.** The student doesn't receive a separate notification — all credentials go to the parent's contact rows. Architecturally simpler and matches the data we collect.
+
 ## [1.0.29] — 2026-04-25
 
 ### Added

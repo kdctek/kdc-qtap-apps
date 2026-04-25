@@ -2,7 +2,14 @@
 
 All notable changes to this plugin will be documented here.
 
-## [1.0.4] — 2026-04-25
+## [1.0.5] — 2026-04-25
+
+### Added
+- **Expand-all / Collapse-all controls + per-row toggle** for each tab's table. Outer rows (grades in Grade/RTE tabs, divisions in Division tab) are clickable and now show a small chevron that rotates 90° when expanded. Sub-rows are server-rendered with `is-hidden` so the **default state on first paint is collapsed** — no flash of expanded content before the JS attaches. Keyboard-accessible (Enter / Space toggle, Tab focuses outer rows, role=button + aria-expanded).
+- New `blocks/dashboard/view.js` (~80 lines, vanilla, no dependencies) registered as the block's `viewScript` so WordPress only loads it on pages that contain the block.
+
+### Changed
+- Outer rows now have hover styling and `cursor: pointer` to invite the click. `user-select: none` so dragging-to-select doesn't fight the toggle.
 
 ### Added
 - **Three tabs on the dashboard**: **Grade** (default — same view as before), **Division** (inverse grouping — outer = division, sub-rows = grades), and **RTE** (Grade > Division but only counting enrollments where Finance's `exempt` flag is `true`). Each tab gets its own total + per-gender pills + breakdown table; the RTE tab's total reflects only exempt students. Tab switching is pure CSS (radio + `:checked ~ .panel--X`) — no JavaScript runtime, no AJAX, accessible via keyboard, multiple instances of the block on the same page get unique radio names so they don't interfere.

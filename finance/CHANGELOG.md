@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.64] - 2026-04-25
+
+### Changed
+- **Staff Console tabs (Overview / Receipts / Report / POS) now use Lucide icons** instead of Dashicons. Per the icon policy: Lucide on the frontend, Dashicons on the backend — the Staff Console is rendered as a frontend Gutenberg block, so Dashicons were the wrong primitive there (they pull in the wp-admin icon font and look out of place against block-themed pages). New mapping: `dashicons-dashboard` → `layout-dashboard`, `dashicons-media-document` → `receipt`, `dashicons-chart-bar` → `bar-chart-3`, `dashicons-cart` → `shopping-cart`. All four Lucide names resolve via the parent's filterable `kdc_qtap_lucide_icons` map (parent v2.7.6+); the Finance shim delegates there. Icons render at 18px with a small right margin to match the visual weight of the previous Dashicons.
+
 ## [3.16.63] - 2026-04-25
 
 ### Fixed

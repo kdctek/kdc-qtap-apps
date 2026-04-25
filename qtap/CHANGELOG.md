@@ -2,6 +2,22 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.13] - 2026-04-26
+
+### Added — Global pause ("nuke switch")
+
+Top of `qTap > Notifications` (visible across every sub-tab) now has a one-click pause toggle. When pressed, every `kdc_qtap_notifications()->send()` call short-circuits with a `paused` error, and the cron-driven scheduled-notification processor returns early — so queued items stay in `scheduled` status and re-fire after you resume. Per-channel and per-type settings are NOT modified — pausing is a global override, not a destructive change. A red `notice-error` banner is shown on EVERY wp-admin page while paused so the state is impossible to forget.
+
+New helper: `kdc_qtap_notifications()->is_paused( $args = array() )`. Filterable via `kdc_qtap_notifications_paused` so you can selectively bypass the pause for critical types (e.g., let `qtap_otp` and password resets through while marketing notifications stay paused).
+
+Storage: single boolean option `kdc_qtap_notifications_paused`.
+
+### Fixed — Chip vs editor enabled-state inconsistency
+
+The card-row chips at `qTap > Notifications > Templates` were reading raw stored data (`$tpl[$channel]['enabled']`) which is empty for an unsaved type → chips read "Email Off, SMS Off, WhatsApp Off". The editor for the same type read through `normalize_template_shape()` which defaulted `email.enabled = true` → "Active". For unsaved types like `qtap_otp` the two views disagreed.
+
+`normalize_template_shape()` now accepts an optional `$type` parameter. When provided, each channel's `enabled` default reflects whether that channel is in the type's registered `default_channels` (true if listed, false otherwise). The chip renderer and editor both pass the type id, so they always agree on the unsaved-state read. `get_template($type)` also passes through.
+
 ## [2.7.12] - 2026-04-27
 
 ### Added — Better Notifications & Templates v2

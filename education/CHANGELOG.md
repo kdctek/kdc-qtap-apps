@@ -2,6 +2,16 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.16] — 2026-04-25
+
+### Added
+- **Live fee-slab amounts + due dates in the Create form.** New `GET /kdc/v1/qtap/education/slabs?year&grade` REST endpoint wraps `KDC_qTap_Finance_Enrollment::get_available_slabs_for_enrollment()` and returns each applicable slab with its amount, due date, and exempt flag. The Create form's slab cards refetch when the year/grade selectors change and now show amount + `Due: <date>` per card. Slabs that don't apply to the chosen grade are hidden and unticked so they aren't submitted.
+- **Server-side currency formatting.** Slab amounts are formatted via `kdc_qtap_finance_format_amount()` so currency rendering matches Finance throughout the site (symbol, decimals, locale grouping). The endpoint returns both `amount` (raw) and `amount_formatted` (display string).
+
+### Changed
+- **Contact mobiles are normalized to E.164 on save.** If the input already starts with `+` it's stored as full E.164. Otherwise the dial code from the parent's `kdc_qtap_settings[phone][default_country]` is prepended (e.g. `9876543210` → `+919876543210` for `IN`). New private helpers `to_e164()` + `get_default_dial_code()` in the REST controller.
+- **Tightened the unified font scale + bumped base size.** The form still felt small on the host theme even after v1.0.15's collapse to 5 sizes; bumped the wrapper to `font-size: 1.125em` so all em-based children scale up uniformly. Also collapsed remaining outliers (1.2 / 1.1 / 1.05 / 0.95 / 0.9em → canonical 1 or 0.85em). The 5-step scale is now the only set in use: `2 / 1.25 / 1 / 0.85 / 0.75em`.
+
 ## [1.0.15] — 2026-04-25
 
 ### Changed

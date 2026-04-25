@@ -2,6 +2,32 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.25] — 2026-04-25
+
+### Changed
+- **Use parent's `--kdc-qtap-radius-md` directly instead of a custom variable.** v1.0.23 introduced `--qtap-edu-field-radius` to unify field/button radii — but the parent already exposes `--kdc-qtap-radius-md` (the same token its own `kdc-qtap-btn` uses). Dropped the custom var, dropped the `.kdc-qtap-btn` override (parent already sets it correctly), and pointed all 12 field-shaped elements at `var(--kdc-qtap-radius-md)`. One token, parent-controlled, consistent across all qTap dashboards.
+
+## [1.0.24] — 2026-04-25
+
+### Changed
+- **Use parent qTap color tokens.** Swept 49 hardcoded color literals (`#2271b1`, `#d63638`, `#1f7a1f`, `#646970`, `#1d2327`, `#d4a017`, `#5d4500`, `#5d2226`) and replaced them with the parent's CSS variables (`--kdc-qtap-color-primary`, `--kdc-qtap-color-error`, `--kdc-qtap-color-success-dark`, `--kdc-qtap-color-text-muted`, `--kdc-qtap-color-input-text`, `--kdc-qtap-color-warning`, `--kdc-qtap-color-warning-dark`, `--kdc-qtap-color-error-dark`). Any future qTap brand-color change in `kdc-qtap` now flows through to this dashboard automatically. Same pattern should be adopted by all qTap-series dashboards (Finance, Mobile, etc.) for visual consistency across the suite.
+
+## [1.0.23] — 2026-04-25
+
+### Changed
+- **Unified field + button border-radius.** Inputs/selects were `0.25em`, adjustment-row inputs `0.35em`, contact-add `0.3em`, adjustment-add `0.5em`, parent `kdc-qtap-btn` was a fixed 4px — five different radii on visually-similar elements made the form read as patchwork. Introduced a single CSS variable `--qtap-edu-field-radius: 0.4em` on the dashboard wrapper and pointed every field-shaped element (form inputs, search row, contact row, adjustment row, conflict input, control buttons, contact-add, adjustment-add, contact-remove, adjustment-remove, all `.kdc-qtap-btn` instances) at it. Card-shaped elements (slab cards, pill toggles, notice cards, success card, conflict alert) keep their larger radii intentionally — that's the field/card distinction.
+
+## [1.0.22] — 2026-04-25
+
+### Added
+- **Live username availability check.** New `GET /students/check-username?username=...` REST endpoint. The Create form fires it 350ms after the staff stops typing first/last; the preview shows a `✓ Available` / `⚠ Taken` badge next to the username so conflicts are caught before submit, not after.
+- **Editable conflict-resolution field.** When the live check finds a conflict, an inline editable input appears inside the preview card with the suggested suffixed alternative (`zuvi.kudmule1`) pre-filled. Staff can pick a different username and click "Check" to re-verify. On submit, `username_override` is sent and the server uses it verbatim (no auto-suffix). When there's no conflict the alert stays hidden and submit goes through unchanged.
+- **Server respects `username_override`.** `POST /students` validates the override against the Workspace-safe regex + a fresh `username_exists()` check; returns 409 if the override was claimed between the live check and submit.
+
+### Changed
+- **Search row matches Create form field size for real this time.** v1.0.21's override only set `min-height` while Finance's staff-find ships fixed `height: 34px` and `font-size: 13px`. Now the dashboard scope explicitly resets `height: auto` plus matches the create-form padding (`0.45em 0.6em`) and border so the search input/select line up exactly with First Name / Last Name / Gender.
+- **Preview labels.** `Username (Google Workspace)` → `Username` (the qualifier was redundant); `Default email` → `Default email (Google Workspace)` (the email IS the Workspace login, so the qualifier moves there).
+
 ## [1.0.21] — 2026-04-25
 
 ### Changed

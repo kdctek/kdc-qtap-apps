@@ -2,6 +2,24 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.28] — 2026-04-25
+
+### Added
+- **Google Workspace lifecycle controls on the WP user-edit screen.** New "Google Workspace" section appears on user-edit / profile screens for any user with a `kdc_qtap_education_workspace_status` value. State-aware UI:
+  - **`created`**: shows status header (Workspace user ID, created-at) plus a dropdown — *No change* (default) / *Activate* / *Suspend* / *Delete*. Save runs the corresponding Admin SDK call inline; admin gets a one-shot `admin_notices` flash with the result. Delete uses a JS `confirm()` because Google has no soft-delete.
+  - **`pending` / `processing`**: shows the status; no actions (job is in flight or about to be).
+  - **`failed:<code>`**: shows status + the verbatim error message. If the seed password is still on file, also shows a "Retry Workspace creation on save" checkbox that re-schedules the creation job.
+  - **No status meta at all**: section is omitted (keeps user-edit tidy for non-Education users).
+- Three new methods on `KDC_qTap_Education_Google_Workspace`: `activate_user($id)`, `suspend_user($id)`, `delete_user($id)`. Activate/Suspend `PATCH /admin/directory/v1/users/<id>` with `{ suspended: false|true }`; Delete `DELETE /users/<id>`.
+
+### Changed
+- On Activate/Suspend, a new `kdc_qtap_education_workspace_suspended` user_meta is set (1 = suspended, 0 = active) so reports/filters can quickly find suspended accounts without round-tripping to Google.
+- On Delete, `workspace_status` is set to `deleted` and the Workspace user ID / created-at / error metas are wiped. Status survives so admins can see the account was once provisioned.
+
+### Notes
+- Lifecycle actions run inline (not via the cron-scheduled job) because the admin is staring at the screen and expects immediate feedback. Failures surface in the admin notice.
+- Delete is **irreversible** — Google's API doesn't expose a soft-delete. The JS confirm() prompt is the only guardrail; consider a stronger confirmation pattern (type DELETE) in a later release if accidental deletions become an issue.
+
 ## [1.0.27] — 2026-04-25
 
 ### Added

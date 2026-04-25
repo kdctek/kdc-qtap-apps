@@ -2,6 +2,18 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.77] - 2026-04-26
+
+### Added
+- **Two new Fee Stats date presets: "This Month" and "Last Month".** This Month = 1st of the current calendar month → today. Last Month = full previous calendar month (1st through last day; computed as `new Date(year, currentMonth, 0)` so February's 28/29-day boundary handles itself).
+
+### Changed
+- **Default Fee Stats range is now "This Month"** (was "Today"). On first load, both server-side initial state and the client preset highlight default to the 1st of the current month → today. The Today chip stays available for single-day reads.
+- **Initial preset highlight extended.** Previously only "Today" was auto-detected on load if the range matched; now the loader walks all 6 presets in priority order (Today, This Month, Last Month, Last 7d, Last 30d, This Year) and highlights the first match.
+
+### Fixed
+- **Filter chip hover contrast.** Hovering an active chip (e.g. the blue "This Year" pill in the screenshot from the user) was overriding its white text with the theme blue, producing blue-on-blue and rendering the label illegible. The hover rule now uses `:not(.is-active)` so active chips keep their white-on-blue contrast; an active-chip hover instead applies a small `filter: brightness(0.92)` for a tactile press feel.
+
 ## [3.16.76] - 2026-04-26
 
 ### Fixed

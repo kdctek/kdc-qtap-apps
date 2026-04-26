@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.103] - 2026-04-26
+
+### Changed — Receipts: real-time pill + date filtering
+
+Pills (Status / Source / Payment / By) and the date selector / from / to inputs now auto-submit the form on change — no Apply click needed for those interactions. The form fades to ~55% opacity for the round-trip so the click feels acknowledged and accidental double-clicks don't fire two requests.
+
+The Apply button stays wired up for the search query (`q`) and search-field selector (`q_field`) — typing each character into a text input shouldn't refetch, so those still respect the explicit Apply step.
+
 ## [3.16.102] - 2026-04-26
 
 ### Changed — Receipts: Status row keeps full taxonomy, but only Completed + Processing are clickable by default

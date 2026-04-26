@@ -2,6 +2,35 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.95] - 2026-04-26
+
+### Fixed — Fee Stats: legend hover-blue-on-blue (4th report)
+
+The legend `<button>` items had the same hover-blue-on-blue issue that v3.16.93 fixed for the table-cell links: block themes apply default `button:hover { background: #2271b1; color: #fff }` styles that paint the entire row solid blue, clobbering the swatch + label + meta line. The v3.16.93 fix only covered the `__tablecell-link` selector — the legend uses a different class. Now hardened the same way: `!important` on background / color / box-shadow / outline across `:hover` / `:focus` / `:focus-visible` / `:focus-within` / `:active`, with hover indicating selection via border-color + subtle box-shadow only.
+
+### Changed — Fee Stats: 60/40 chart-to-legend split on desktop
+
+The desktop side-by-side layout (introduced in v3.16.94) used a 50/50 split which left the donut feeling cramped — the inner ring needed more room to render the smaller channel slivers legibly. v3.16.95 changes the grid to `3fr 2fr` (60% chart, 40% legend) so the donut gets the larger half. Mobile (<900px) still stacks chart-then-legend with no width split.
+
+### Added — Fee Stats: donut center title
+
+The donut hole was empty space. v3.16.95 lands a permanent center title showing the active measure's grand total at a glance:
+
+- **Top line** — measure label ("Total orders" / "Total amount", caps small grey).
+- **Middle line** — the headline number itself (e.g. `161` for count, or `₹2,07,73,575` for amount), 18px bold.
+- **Bottom line** — the *other* measure's value as context (so the count view shows the amount underneath, and vice-versa), 11px muted.
+
+Toggling the Count ↔ Amount measure flips the center title in lockstep with the chart. `pointer-events: none` so the title never blocks hover/click on the segments — segment tooltips still surface the per-bucket breakdowns on hover.
+
+### Added — Fee Stats: sectioned legend
+
+The legend was a flat list mixing payment-method rows and created-via-channel rows, which on the desktop stacked-column layout was hard to scan. Now split into two clearly labelled sections:
+
+- **By payment method** — outer-ring buckets (UPI / Card / Cash / NEFT / IMPS / RTGS / Net Banking / Online / Cheque / Wallet / Others).
+- **By created-via channel** — inner-ring buckets (Admin / Checkout / WCPOS / WhatsApp / REST API / Other).
+
+Section headings reuse the same i18n keys (`methodTable` / `originTable`) the v3.16.92 tables introduced, so localizers don't need to translate twice.
+
 ## [3.16.94] - 2026-04-26
 
 ### Changed — Fee Stats: chart on the left, legend stacked on the right (desktop)

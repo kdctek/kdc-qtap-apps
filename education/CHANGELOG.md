@@ -2,6 +2,15 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.44] — 2026-04-26
+
+### Fixed
+- **Save button now stays visible after unticking "Enable Google Workspace user provisioning".** Previously the entire integration-fields wrapper (including the Save button at its bottom) was hidden via `display:none` when the checkbox was unticked, leaving the admin no way to persist the disable. The Save button now lives outside the hidden wrapper.
+- **Disabling integration no longer wipes existing data.** When the admin unticks the integration and saves, the existing `domain`, `super_admin_email`, OU paths, email suffixes, service-account JSON, and verification status all stay in the DB — only the `enabled` flag flips. Re-enabling later brings the configuration right back without re-entering credentials. Implemented via per-field fallback to existing values in the save handler.
+
+### Note
+- Behavior when GWS is disabled: the *Create Parent / Student Google Account* toggles + *Send login to Contacts* toggle on the Create form are replaced with a "Google Workspace not configured" note. WP user records are still created with the auto-generated email pattern (Assign mode) or a staff-collected email (Collect mode); no Workspace API calls fire and no welcome notifications dispatch (those depend on successful Workspace creation).
+
 ## [1.0.43] — 2026-04-26
 
 ### Added

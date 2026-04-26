@@ -2,6 +2,12 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.47] — 2026-04-26
+
+### Fixed
+- **Create form preview now respects the configured Email domain.** The `siteHost` value localized to view.js was hardcoded to `wp_parse_url( home_url(), PHP_URL_HOST )` (the WP site host), so the Parent / Student preview rows kept showing e.g. `…@tridha.edu.in` even after the admin set Email domain to `tridha.com` in Education > Settings > General > Email. Now the preview reads through `KDC_qTap_Education_Google_Workspace::general_email_domain()` — same lookup chain as the REST handler that creates the WP user — so the preview, the WP user_email, and (when GWS is active) the Workspace account address all use the same domain.
+- **Username override now drives the Parent / Student email preview.** Previously, when a username collision triggered the "Username already taken — pick another" alert, staff could type an alternative (e.g. `zuvi.kudmule1`) and Check it, but the Parent Account / Student Account preview rows kept showing the *old* taken username (`zuvi.kudmule_parent@…`). The preview now updates live as the staff types the override — so what the staff sees is exactly what gets created (`zuvi.kudmule1_parent@…`). Server-side already used the override for both the WP `user_login` and the email's local-part; this is purely a UI sync fix.
+
 ## [1.0.46] — 2026-04-26
 
 ### Added

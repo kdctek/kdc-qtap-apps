@@ -2,6 +2,31 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.17.0] - 2026-04-26
+
+### Added — Searchable + paginated Pending Verifications card
+
+The "Pending Verifications" card on the frontend Staff Console Overview was previously a fixed list of the five oldest awaiting-review submissions with no way to scope it. With even a modest queue, staff had to switch to the wp-admin Verify Payments tab to find a specific submission a parent was calling about. This release rebuilds the card around a **single search field + page-by-page pagination** (10 per page, AJAX-driven, no full reload) so staff can resolve queries directly from the dashboard.
+
+The search field is intentionally one input, not a panel of dropdowns. It LIKE-matches across:
+
+- Student name — `display_name`, `user_login`, plus `first_name` / `last_name` joined from `wp_usermeta`
+- Payee Name — read from the linked WC order's `_kdc_qtap_finance_payee_name` meta. Picks `wp_wc_orders_meta` automatically under HPOS, falls back to legacy `wp_postmeta` otherwise (no schema change required to ship the search)
+- UTR / receipt reference — `t.receipt_file`
+- Payment date — `t.payment_date` substring (typing `2026-04` filters to that month)
+
+### Changed — Pending Verifications card UI
+
+The card body has been redesigned for information density without crowding:
+
+- **Two-column row layout** — student name (bold) with email subtitle on the left, amount large + green-tinted on the right. Long names truncate cleanly with ellipsis instead of wrapping into a second visual column.
+- **Status chips** under each row — color-coded by type so the eye sorts them at a glance: blue method, monospace UTR, calendar-iconed date, amber payee-name (rendered only when payee differs from the student's own name, which is the case staff actually need to action).
+- **Header** now carries a warning-toned count badge (`#fff4e0` / `#8b5000`) instead of a parenthetical number, and an "Open full tab ↗" link (admin-only) for cases where the inline card isn't enough.
+- **Search input** has a magnifier prefix icon, focus ring, debounced 250ms input, and a clear-button that appears only when there's a query.
+- **Pagination footer** shows `Prev · Page X of Y · Next` with `tabular-nums` so the indicator doesn't jiggle as the page number changes. Hidden entirely when there's only one page.
+- **States** — distinct empty (no pending payments at all), no-match (search returned zero), and error states; live region announces busy state to screen readers.
+- **Mobile** — under 600px the row collapses to a single column with the action button stretched full-width.
+
 ## [3.16.111] - 2026-04-26
 
 ### Added — DirectPay duplicate-submission prevention

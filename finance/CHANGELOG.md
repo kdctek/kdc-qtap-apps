@@ -2,6 +2,19 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.96] - 2026-04-26
+
+### Added — Fee Stats: segment labels drawn directly onto the donut slices
+
+Each non-trivial slice now carries its own label (UPI / Cash / NEFT / Card / Admin / Checkout / etc.) painted directly on the segment in white, with a soft drop-shadow so the text stays readable across all earth-tone fill colors. The tooltip on hover still surfaces the full breakdown (count + percent + amount + percent) — the segment label is just the at-a-glance identity overlay.
+
+Implementation: a small custom Chart.js plugin (`kdcSegmentLabels`, ~40 LOC inline) registered per-chart-instance. Walks each dataset's `meta.data` arc geometry, computes the midpoint of the slice (average radius × angle bisector), and renders the label there. Two automatic skip conditions keep the chart clean:
+
+- **Zero-value slices** are skipped (they have no arc geometry to label).
+- **Slices too thin to fit the label** are skipped — heuristic compares `ctx.measureText(label).width` against the chord length at midradius (90% threshold). Long labels like "Net Banking" auto-hide on small UPI-dominated charts where the slice is a sliver, while "UPI" stays visible on the same slice.
+
+No new vendor dependency — reuses the already-vendored Chart.js v4 plugin API.
+
 ## [3.16.95] - 2026-04-26
 
 ### Fixed — Fee Stats: legend hover-blue-on-blue (4th report)

@@ -2,6 +2,11 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.51] — 2026-04-26
+
+### Changed
+- **Renamed the "→ WP user email" tag to "Primary"** on the Create New Student preview rows. The previous label was technically accurate but visually heavy next to the section headings; "Primary" is shorter and reads cleanly inline. Hover title (`This address fills the WordPress user_email field`) is unchanged so the full meaning remains a tooltip away.
+
 ## [1.0.50] — 2026-04-26
 
 ### Changed

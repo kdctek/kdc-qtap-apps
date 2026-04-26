@@ -2,6 +2,15 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.48] — 2026-04-26
+
+### Fixed
+- **Collect-mode email field no longer leaks into Assign mode.** The "WordPress user email *" input rendered with the HTML `hidden` attribute, but `.qtap-education-dashboard__field { display: flex; }` (a class selector) outranked the user-agent `[hidden] { display: none; }` rule, so the field stayed visible regardless of mode. Added `.qtap-education-dashboard__field[hidden] { display: none; }` to restore the expected behavior.
+- **Username override now updates the main "Available / Taken" badge** when re-checked. Previously, even after staff entered an alternative (e.g. `zuvi.kudmule1`) and clicked Check → "✓ Available", the main row still showed `⚠ Taken` (because that badge was bound to the *original* generated username's check). Now an "Available" override result swaps the main badge to "✓ Available" — the badge reflects what will actually be created on submit, not what was originally generated. Same swap for "Still taken" / "Invalid format" → main badge stays "⚠ Taken".
+
+### Changed
+- **Conflict status text adds a "this will be used when you submit" hint** so staff aren't left guessing whether they need a separate "Apply" action — they don't; just submitting the form is enough. New label `willBeUsed` localizable in render.php.
+
 ## [1.0.47] — 2026-04-26
 
 ### Fixed

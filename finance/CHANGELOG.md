@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.99] - 2026-04-26
+
+### Fixed — Receipts URLs now show literal `[]` instead of `%5B%5D`
+
+v3.16.93's `build_receipts_url()` helper was emitting `key%5B%5D=val` (percent-encoded brackets). Browsers vary on whether they decode this for the address bar — Chrome decodes to `key[]=val`, Safari often leaves it as `%5B%5D`. The result: shared / bookmarked URLs read as `?status%5B%5D=completed&status%5B%5D=processing` in some browsers and `?status[]=completed&status[]=processing` in others.
+
+Fixed by emitting the literal `[]` characters in the query string (still RFC-3986-acceptable as sub-delims, every browser + server stack handles them, and PHP's `parse_str()` reads both forms identically — so this is purely a cosmetic upgrade for the address bar).
+
 ## [3.16.98] - 2026-04-26
 
 ### Fixed — Fee Stats click-through now lands on the same orders the chart counted

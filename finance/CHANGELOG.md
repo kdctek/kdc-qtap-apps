@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.17.5] - 2026-04-26
+
+### Added — `meta_data` collapsed `<details>` panel in the Verify modal
+
+A new collapsible technical-metadata panel sits just above the modal footer (between the Reject-reason textarea and the action buttons) so staff debugging a stuck verification can see the foreign-key spine of the row without flipping screens. Closed by default, monospaced inside, and matches the existing `<details>` aesthetic used elsewhere in the admin.
+
+Fields exposed: `transaction_id`, `payment_id`, `user_id`, `wc_order_id`, `attachment_id`, `parent_transaction`, `verification_status`, `payment_status`, `academic_year`, `grade`, `slab`, `amount_due`, `amount_paid`, `created_at`, `transaction_date`. Empty values render as a muted em-dash so missing FKs (e.g. an orphaned trickle row with no `parent_transaction`) are visually distinct from real values.
+
+The `attachment_id` field uses the same fallback chain as the v3.17.4 receipt-URL fix — txn row → linked WC order's `_kdc_qtap_finance_receipt_attachment_id` meta — so it accurately reports the screenshot ID even mid-deferred-upload.
+
 ## [3.17.4] - 2026-04-26
 
 ### Fixed — "Open uploaded document" link 404 in the Verify modal

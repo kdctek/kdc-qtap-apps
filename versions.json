@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-04-26T21:40:00Z",
+  "updated_at": "2026-04-26T22:00:00Z",
   "plugins": {
     "kdc-qtap": {
       "version": "2.7.15",
@@ -44,7 +44,7 @@
       "updated_at": "2026-04-26T21:15:00Z"
     },
     "kdc-qtap-finance": {
-      "version": "3.17.4",
+      "version": "3.17.5",
       "name": "qTap Finance",
       "slug": "kdc-qtap-finance",
       "requires_php": "7.4",

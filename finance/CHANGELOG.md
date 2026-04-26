@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.86] - 2026-04-27
+
+### Fixed
+- **Fee Stats currency formatting now uses the canonical `kdcQtapFinanceFmtAmount()` helper** from `assets/js/kdc-qtap-finance-currency.js` (the same formatter every other Finance frontend uses). v3.16.71 shipped Fee Stats with a local `formatAmount()` that did `n.toLocaleString()` — that always emits international grouping (`12,345,678`) regardless of the configured currency, so an INR site rendered `₹12,345,678` instead of the expected Indian `₹1,23,45,678`. The shared helper consults the localized `kdcQtapFinanceCurrency.code` and switches to the Indian grouping pattern when `code === 'INR'`. Affects the Total amount pill, the donut tooltip body, and the legend chip amounts. Defensive fallback to the previous inline formatter only if the helper script failed to load.
+- **Script registration:** `kdc-qtap-finance-currency` is now a hard dep on the `kdc-qtap-finance-fee-stats` script handle, so the formatter is always loaded before the chart handler executes.
+
 ## [3.16.85] - 2026-04-27
 
 ### Changed

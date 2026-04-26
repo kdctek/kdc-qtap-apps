@@ -2,6 +2,27 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.110] - 2026-04-26
+
+### Fixed — Cart/checkout breakup recomputes against advances and partial payments
+
+When a Payment_Item carried an advance (e.g. ₹50 already paid against the Term Fee row), the cart line total reflected the remaining balance correctly (`Pay ₹1,08,000`), but the visible breakup beneath it kept emitting the **original scheduled** amount per row — ₹14,990 + ₹15,510 × 6 = ₹1,08,050. The 50-rupee discrepancy between the breakup sum and the cart total was confusing for both staff and parents reading their checkout invoice.
+
+Three call sites were duplicating the same broken builder:
+
+- `KDC_qTap_Finance_WC_Orders::create_fee_order()` (single-fee offline submit)
+- `KDC_qTap_Finance_WC_Orders::create_multi_fee_order()` (multi-select online checkout)
+- `KDC_qTap_Finance_WC_Frontend_Ajax::ajax_create_term_order()` (term-grouped online checkout — the one in the screenshot)
+
+All three now go through a new shared helper, `KDC_qTap_Finance_WooCommerce::build_payment_item_breakup_rows( $payment_id, $year )`, which:
+
+- Reads each Payment_Item's `amount` *and* `amount_paid`.
+- Computes `remaining = max(0, amount - amount_paid)` with sub-paisa rounding to defend against float drift.
+- Skips rows where `remaining < 0.01` (fully paid items shouldn't clutter the cart).
+- Emits the breakup row at the **remaining** amount, not the scheduled amount.
+
+End-to-end: the cart line total and its breakup sum now match. The downstream `apply_allocation_breakup()` rewrite that runs after each payment event is unchanged — that handles receipt-time allocation tracking, which is a separate concern.
+
 ## [3.16.109] - 2026-04-26
 
 ### Changed — /fees lands on the user's oldest unpaid year

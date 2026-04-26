@@ -69,7 +69,7 @@
       ]
     },
     "kdc-qtap-education": {
-      "version": "1.0.44",
+      "version": "1.0.45",
       "name": "qTap Education",
       "slug": "kdc-qtap-education",
       "requires_php": "7.4",

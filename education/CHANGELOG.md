@@ -2,6 +2,23 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.45] — 2026-04-26
+
+### Changed
+- **Provider-neutral labels.** Dropped "Google Account" from the Create form labels — preview rows now read "Parent Account" / "Student Account" and toggles read "Create Parent Account" / "Create Student Account". The label text is provider-neutral so the same UI can host Google, Microsoft 365, Zoho, etc. in future without copy churn.
+- **Email settings restructured under a new "Email" section in the General tab.** Moved `parent_email_suffix` + `student_email_suffix` out of the GWS tab and into General — they're account-creation policy, not Workspace-specific config. The GWS tab now only houses Workspace-specific things (provisioning toggle, domain, super-admin, service-account JSON, OU paths, force-password-change).
+- **REST `create_student` enforces the new Allow gates server-side.** Even if a client POSTs `create_parent_google=true`, it's forced false when "Allow Parent account" is unchecked. Same for student.
+
+### Added
+- **"Allow Parent account" + "Allow Student account" toggles** in General > Email. Each reveals its own suffix field when ticked. Defaults: parent ON, student OFF (preserves prior Create-form behavior). Disabling either hides the matching toggle on the Create form *and* short-circuits Workspace provisioning at the REST level.
+- **GWS adapter helpers**: `allow_parent_account()`, `allow_student_account()`, plus `parent_email_suffix()` / `student_email_suffix()` now read from the new `general[]` location first with a back-compat fallback to the legacy `gws[]` location (no migration needed).
+
+### Fixed
+- **No more phantom "Will create" badge when GWS is disabled.** Previously the badge logic defaulted to "checked" when the underlying checkbox didn't exist in the DOM, so the preview rows showed "✓ Will create" even though no provisioning would happen. Now the badge is suppressed entirely (tri-state: `true`/`false`/`null = no badge`) when the matching toggle is absent.
+
+### Note
+- Existing sites: suffixes saved on <= v1.0.44 stay readable via the back-compat fallback. The GWS tab's save handler carries the legacy values forward so the fallback keeps resolving until the admin re-saves the General tab.
+
 ## [1.0.44] — 2026-04-26
 
 ### Fixed

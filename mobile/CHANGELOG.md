@@ -2,6 +2,20 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.14.2] - 2026-04-26
+
+### Changed — qTap FAB default position is now bottom-LEFT
+
+The floating qTap menu used to default to the bottom-right corner and lift itself above the WooCommerce Cart FAB by 90 px when the cart was on screen. Two FABs in the same corner is busy and the offset trick stopped working when the cart count changed (the cart slid down on empty state, leaving the qTap FAB awkwardly floating mid-air). Now the qTap FAB defaults to **bottom-left** so the cart FAB keeps its natural bottom-right slot — opposite corners, no stacking math.
+
+User-moved positions still come from `localStorage` (drag-to-anywhere persists), so this only affects fresh installs / never-moved instances. Cart FAB's `desktop_bottom` was simplified back to `20px` since it no longer has to dodge the qTap FAB.
+
+The expandable menu now anchors the correct horizontal edge based on the FAB's actual position (FAB on left half of viewport → menu opens rightward; FAB on right half → opens leftward) instead of always anchoring `right:0`. Without this the bottom-left FAB would have rendered its menu off-screen.
+
+### Changed — Cart FAB color resolution
+
+Previously the cart FAB used `woocommerce_email_base_color` with a fallback to `#7f54b3` (WC's stock email purple). On Tridha-style brand-neutral installs that hadn't configured email branding, this produced an off-brand purple cart FAB next to the site's own primary blue. The resolver now walks: filter override → `woocommerce_checkout_button_color` → `woocommerce_email_base_color` → `#2271b1` (WP-admin blue), so brands that have only configured the checkout button colour get a matching cart FAB out of the box. A new filter `kdc_qtap_mobile_cart_fab_color` lets sites override the auto-resolved colour without touching WooCommerce settings.
+
 ## [2.14.1] - 2026-04-25
 
 ### Added

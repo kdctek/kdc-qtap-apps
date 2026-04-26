@@ -2,6 +2,21 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.14.3] - 2026-04-26
+
+### Added — Notification template variables for mobile contacts
+
+The plugin now registers a **Mobile Contacts** group with the parent's notification template variable system. Notifications can address the recipient's saved mobile contacts directly, the same way `{{name}}` or `{{email}}` work for the recipient themselves.
+
+**Variables:**
+- `{{contact_name}}`, `{{contact_mobile}}`, `{{contact_email}}` — primary (first saved) contact
+- `{{contact_name_1}}`, `{{contact_mobile_1}}`, `{{contact_email_1}}` — first contact (1-based)
+- `{{contact_name_2}}`, `{{contact_mobile_2}}`, `{{contact_email_2}}` — second contact, and so on
+
+The numbered variants are 1-based on purpose (variable `_1` = array index 0, variable `_2` = array index 1). Variables 1–5 are pre-listed in the template variable picker; higher indexes still resolve at runtime, so `{{contact_name_8}}` works even if the recipient has eight saved contacts. If the recipient has fewer contacts than the requested index, the variable resolves to an empty string.
+
+Recipient lookup falls back through `context.user_id → recipient.user_id → recipient.phone → recipient.email`, so any notification dispatched with a recognizable recipient will populate these variables automatically.
+
 ## [2.14.2] - 2026-04-26
 
 ### Changed — qTap FAB default position is now bottom-LEFT

@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.90] - 2026-04-26
+
+### Changed — Reminder Queue + Schedule merged into one tab
+
+The standalone `Reminder Queue` and `Reminder Schedule` tabs are now stacked under a single **Reminder** tab in the Finance settings nav. Queue (manual-trigger button + pending list) renders on top, schedule (before/after-due day offsets, sending time window) below — separated by a thin divider rule. Each section keeps its own `<h2>` heading so the visual hierarchy stays clear without nested sub-tabs.
+
+Legacy URLs `?tab=reminder-queue` and `?tab=reminder-schedule` 302-redirect to `?tab=reminder`. The redirect runs at the top of `render_settings_page()` *before* `get_current_tab()` filters unknown slugs, so old bookmarks land on the new tab instead of silently bouncing to Enrollments.
+
 ## [3.16.89] - 2026-04-26
 
 ### Restored — Reminder Schedule tab

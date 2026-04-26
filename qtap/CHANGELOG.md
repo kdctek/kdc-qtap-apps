@@ -2,6 +2,29 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.16] - 2026-04-26
+
+### Added — Conditional blocks in templates
+
+`kdc_qtap_replace_variables()` now understands Handlebars-style conditional blocks (single-level, no nesting):
+
+```
+{{#if division}}-{{division}}{{/if}}
+{{#if rejection_reason}}Reason: {{rejection_reason}}{{else}}No reason provided.{{/if}}
+{{#unless email_verified}}⚠ Unverified contact{{/unless}}
+```
+
+The conditional pre-pass runs BEFORE variable substitution, so `{{var}}` placeholders inside dropped branches don't get resolved. Truthy = any non-empty string and non-zero number; falsy = empty string, `"0"`, `null`, `false`, empty array. Solves the common "I don't want a trailing dash when division is empty" pattern: `{{grade}}{{#if division}}-{{division}}{{/if}}` cleanly renders as `III` or `III-B`.
+
+### Added — Modifiers + conditionals reference on Edit Template page
+
+The "Available Variables" panel at `qTap > Notifications > Templates > Edit Template` now has two collapsible sub-sections below the variable grid:
+
+- **Format modifiers** — every supported modifier grouped by value type (String / Amount / URL / Date) with a one-line example each. Includes the often-overlooked URL modifiers `:path` (strips site URL → `/dashboard/?p=1`), `:domain`, `:query` — useful when WhatsApp template buttons need a path-only suffix.
+- **Conditional blocks** — three copy-paste examples covering `{{#if}}`, `{{#if}}/{{else}}`, and `{{#unless}}`.
+
+Both sections are `<details>` elements — closed by default so they don't dominate the panel for admins who already know the syntax.
+
 ## [2.7.15] - 2026-04-26
 
 ### Fixed — WhatsApp template params reject newlines

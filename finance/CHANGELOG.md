@@ -2,6 +2,22 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.100] - 2026-04-26
+
+### Changed — Receipts: 0-count pills are no longer clickable
+
+Pills with a `0` count badge (filters that wouldn't change the result) now ship with `disabled` on the underlying checkbox + `pointer-events: none` on the label. They still render at reduced opacity (45% now, was 55%) so the row's full taxonomy stays visible at a glance, but staff can no longer accidentally click into a 0-result combination. **Exception:** if a 0-count pill is already checked (typical when someone shared a stale URL), it remains clickable so the user can uncheck it without having to clear the filter via the chip.
+
+### Changed — Receipts: rich pagination
+
+Replaced the previous *← Prev · Page 1 of 16 · Next →* bar with a proper pagination control:
+
+- **First / Prev / page-number window / Next / Last** — page numbers always anchored by 1 and the last page, with ellipses gluing the gaps. Window is current page ±2.
+- **Showing N–M of T** counter on the left so staff can see exactly which slice of the result set they're viewing.
+- **Jump-to-page** input on the right (only shown when there are >5 pages) — type a number, hit Go, lands directly. Inline JS reads the current URL and replaces the `paged` arg, so the destination preserves all active filters.
+- **Disabled state** on First/Prev when on page 1, and Next/Last when on the last page — `aria-disabled="true"` + `pointer-events: none`, no more dead clicks.
+- **Mobile** (≤600px): summary, pages, and jump stack vertically, each centred. Page-number row wraps cleanly when the page count is large.
+
 ## [3.16.99] - 2026-04-26
 
 ### Fixed — Receipts URLs now show literal `[]` instead of `%5B%5D`

@@ -2,6 +2,39 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.98] - 2026-04-26
+
+### Fixed — Fee Stats click-through now lands on the same orders the chart counted
+
+The Receipts tab and the Fee Stats chart were running on **two different taxonomies**:
+
+- **Fee Stats inner ring** classifies orders via `detect_order_via_channel()` — 6 buckets keyed off `created_via`: *wcpos / whatsapp / admin / checkout / rest-api / other*. Same classifier the parent's WC Order admin "By" column uses.
+- **Receipts tab Source filter** classifies via `_kdc_qtap_finance_is_fee_payment` order-meta + `detect_pos_order()` — 3 buckets: *fee / pos / other*.
+
+When you clicked an inner-ring slice, the JS did a lossy projection — `admin → fee`, `wcpos → pos`, everything else → `other`. That works only when the two taxonomies happen to agree on every order. They don't:
+
+- Order with `created_via=admin` but no `_kdc_qtap_finance_is_fee_payment=yes` meta → chart counts it under **Admin**, but the click-through `?source[]=fee` filter on Receipts excludes it. The order then *appears* under the **Checkout** drill-through (which expands to `source=other` = `! is_fee && ! is_pos`).
+- This produced the "why is this order showing as Checkout in Fee Stats?" report.
+
+**Fix:** Receipts now speaks the same 6-channel `via_channel[]` taxonomy as Fee Stats. New URL contract:
+
+```
+?tab=receipts&via_channel[]=admin
+?tab=receipts&via_channel[]=checkout&via_channel[]=admin
+?tab=receipts&via_channel[]=wcpos
+…
+```
+
+The Fee Stats JS click-through now passes `via_channel[]` directly — outer-ring click sends `payment_method[]=<bucket>` plus `via_channel[]` for each currently-active source chip; inner-ring click sends `via_channel[]=<that channel>`. The lossy `viaToSource()` projection is removed.
+
+### Added — Receipts: "By" pill row + active-filter chip
+
+New filter row (after Payment) with one pill per channel: *POS / WhatsApp / Admin / Checkout / REST API / Other*. Each pill carries an earth-tone Lucide icon matching the Fee Stats inner-ring palette so a click-through from the chart lands on the same hue. Pills include the same subtle count badge the v3.16.93 row got — number of orders in the date range matching that channel, computed via SQL (no per-order WC_Order hydration).
+
+The aggregator's existing meta scan was extended to also pull `_created_via` (legacy) / `wp_wc_orders.created_via` column (HPOS) so the badge counts come for free out of the same query batch — no extra SQL per channel.
+
+Active selections surface in the existing "Active filters" chip row as `By: Admin, Checkout`, with a × link to clear just that filter (same UX as the existing Source/Payment chips).
+
 ## [3.16.97] - 2026-04-26
 
 ### Changed — Fee Stats: scoped to the current active academic year only

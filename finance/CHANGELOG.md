@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.89] - 2026-04-26
+
+### Restored — Reminder Schedule tab
+
+v3.16.87 deleted the entire Notifications tab when the per-type/per-channel toggles centralized to the parent. That removal also took down the **Sending Time Window**, **Reminders Before Due Date**, and **Overdue Reminders After Due Date** controls — those configure WHEN the Finance reminder cron fires, which is Finance-specific cron timing the parent's Templates UI doesn't (and shouldn't) handle. The underlying settings (`reminder_before_days`, `reminder_after_days`, `reminder_window_start`, `reminder_window_end`) were never deprecated — `KDC_qTap_Finance_Notifications::get_reminder_schedule_settings()` still reads them — so admins were left with a hidden, uneditable cron config.
+
+This release restores those controls as a dedicated **Reminder Schedule** tab (placed right after Reminder Queue in the Finance settings nav). The form posts to `options.php` against the existing `kdc_qtap_finance_settings_group` setting group, and uses the same explicit-list hidden-field preservation pattern as the Labels tab so saving this tab doesn't wipe other Finance settings. No data migration needed — existing values populate the tab on first load.
+
+What's NOT restored: the per-type enable checkboxes, the "Enable Notifications" master toggle, and the Edit Template buttons. Those genuinely belong at `qTap > Notifications > Templates` (parent v2.7.12+) and the global pause (parent v2.7.13+).
+
 ## [3.16.88] - 2026-04-26
 
 ### Added

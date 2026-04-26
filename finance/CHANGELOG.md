@@ -2,6 +2,22 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.92] - 2026-04-26
+
+### Added — Fee Stats: tabular view below the chart
+
+Below the donut chart and the legend, the **Fee Stats** tab now renders the same data as two side-by-side tables — one per ring. **No new query** runs to populate them: it's a pure client-side re-render of the response that the chart already received (`state.latest`), so flipping date ranges or `created_via` chips updates the chart and the tables in lockstep on the same fetch.
+
+**By payment method** — one row per non-zero bucket from `get_payment_method_buckets()` (UPI / Card / Cash / Cheque / IMPS / NEFT / Net Banking / Online / RTGS / Wallet / Others).
+
+**By created-via channel** — one row per non-zero bucket from `get_via_channels()` (WCPOS, WhatsApp, Admin shop, Checkout flow, REST API, Other).
+
+Each table has 5 columns: **Label**, **Count**, **Count %**, **Amount**, **Amount %** — every percentage computed against the totals of the active filter set (same denominator as the percentages in the donut tooltip + legend chips, so the numbers cross-check exactly with the totals pills above the chart). A footer row sums the column.
+
+Each row's label is a click-target — clicking drills into the Receipts tab pre-filtered by that bucket + the active date range, the same URL contract the legend chips already used. Color swatches mirror the chart's earth-tone palette so a row's identity is visually obvious without reading the label.
+
+Mobile: each table sits in its own `overflow-x: auto` wrapper, so narrow viewports get horizontal scroll on the table instead of squashed columns. On viewports wider than 900px the two tables sit side-by-side; below 900px they stack.
+
 ## [3.16.91] - 2026-04-26
 
 ### Changed — Block Editor class split into 8 traits (refactor only, zero behaviour changes)

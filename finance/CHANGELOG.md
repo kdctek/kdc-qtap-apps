@@ -2,6 +2,32 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.17.6] - 2026-04-26
+
+### Fixed — DirectPay verified / rejected emails now resolve `{{payment_method}}`, `{{payment_date}}`, `{{reference_number}}`
+
+The Finance variable picker has had `{{payment_method}}`, `{{payment_date}}`, `{{reference_number}}`, and `{{transaction_amount}}` registered for years, but the `payment_verified` / `payment_rejected` notification handlers (`KDC_qTap_Finance_Notifications::on_transaction_verified()` and `on_transaction_rejected()`) only forwarded `user_id`, `payment_id`, `transaction_id`, `amount` and `slab_label` into the template context. Result: a customised verified/rejected email referencing `{{payment_method}}` or `{{reference_number}}` rendered them as empty strings even though the data sat right there on the txn row.
+
+Both handlers now forward the full DirectPay-form-submitted payload — `payment_method`, `payment_method_title`, `payment_date`, `reference` (UTR), and an explicit `transaction_amount` alias for `amount` — pulled from the `$transaction` object (not re-queried). `{{payment_method}}`, `{{payment_date}}`, `{{reference_number}}`, `{{transaction_amount}}` now resolve correctly in both the verified confirmation email (when sent — see suppress filter in v3.17.1) AND the DirectPay - Rejection email.
+
+### Added — Notification variable tokens shown inline in the Verify modal's `meta_data` panel
+
+The `meta_data` collapsed panel introduced in v3.17.5 now surfaces the corresponding registered template variable next to each field. Each row carries `{ label, variable, value }`; rows whose `variable` is set render a small click-to-copy `{{variable}}` chip next to the human label. Click the chip → it copies the token to the clipboard and flashes green for 900ms. Staff editing a notification template can now see "this is what `{{transaction_id}}` resolves to right now, here's the value, and here's the exact token to paste" without flipping to the variable picker.
+
+The panel also gained four new rows that mirror the form-submitted DirectPay values (separate from the underlying payment record's `amount_due` / `amount_paid` to make the difference visible at a glance):
+
+| meta_data row | Template token | Source |
+|---|---|---|
+| Transaction Amount | `{{transaction_amount}}` | `txn.amount` (what the parent typed in the DirectPay form) |
+| UTR / Reference | `{{reference_number}}` | `txn.receipt_file` |
+| Payment Date | `{{payment_date}}` | `txn.payment_date` |
+| Payment Method | `{{payment_method}}` | `txn.payment_method_title` (fallback `payment_method`) |
+| Fee Category | `{{fee_category}}` | resolved slab label |
+| Amount Due | `{{amount_due}}` | parent payment record |
+| Amount Paid | `{{amount_paid}}` | parent payment record |
+
+Rows without a registered template variable (`wc_order_id`, `attachment_id`, `parent_transaction`, `verification_status`, `created_at`, `transaction_date`) render the label only — no chip — so the asymmetry between "data you can reference in templates" and "data that's only useful for debugging" is visible at a glance.
+
 ## [3.17.5] - 2026-04-26
 
 ### Added — `meta_data` collapsed `<details>` panel in the Verify modal

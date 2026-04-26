@@ -2,6 +2,11 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.53] — 2026-04-26
+
+### Changed
+- **Preview row labels shortened** from "Parent Account" / "Student Account" → "Parent" / "Student" to reclaim horizontal real estate next to the "Primary" tag and the email value. The toggle pill labels lower in the form ("Create Parent Account" / "Create Student Account") keep the noun for verb–object clarity.
+
 ## [1.0.52] — 2026-04-26
 
 ### Changed

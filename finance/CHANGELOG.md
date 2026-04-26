@@ -2,6 +2,32 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.97] - 2026-04-26
+
+### Changed — Fee Stats: scoped to the current active academic year only
+
+The Fee Stats chart was counting **every** fee-tagged order in the date range, regardless of which academic year the receipt belonged to. On a school site running multi-year cohorts in parallel (e.g. catching up on prior-year arrears in April), this mixed last year's fee receipts into "this month" — making the donut misleading.
+
+v3.16.97 filters the AJAX aggregator to only orders whose `_kdc_qtap_finance_academic_year` order-meta matches `kdc_qtap_finance_settings.current_academic_year`. Orders without the meta or with a different year are excluded from both the count and the amount totals on every ring (method + origin) and every legend / table row. The AJAX response now also returns an `academic_year` field for the JS layer, so future variants can re-display the scope alongside the totals.
+
+**Defensive fallback:** when the active-year setting is empty (dev / staging where `current_academic_year` hasn't been configured), the filter is skipped and the chart counts all orders — so a misconfigured setting doesn't render an empty chart with no clue why.
+
+### Added — Fee Stats: active-academic-year chip in the page header
+
+Right next to the **Fee Stats** H2 — a small pill: *calendar-icon · AY · 2025-2026* — surfacing exactly which academic year the chart is scoped to. Title attribute on hover points to the setting that controls it (*qTap Finance > Settings > General*) so a confused staff member knows where to switch the active year.
+
+The chip only renders when the active-year setting is configured (matching the AJAX filter behaviour).
+
+### Added — Fee Stats: percent on each slice
+
+v3.16.96 painted the bucket label onto each slice (UPI / Cash / NEFT / Admin / Checkout). v3.16.97 stacks the percent below it as a second line ("UPI" / "11.8%"). The width-fitting heuristic adapts:
+
+- **Tier 1** — both lines fit → render label + percent stacked.
+- **Tier 2** — only the label fits → render label only (skip the percent).
+- **Tier 3** — neither fits → skip both.
+
+Percent denominator is the dataset's own data sum, so it automatically tracks the active measure (count vs amount) — the chart's slice geometry was already using `data[i]` as the value, so dividing by the dataset's own sum gives the right percent regardless of the toggle.
+
 ## [3.16.96] - 2026-04-26
 
 ### Added — Fee Stats: segment labels drawn directly onto the donut slices

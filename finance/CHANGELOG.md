@@ -2,6 +2,41 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.17.1] - 2026-04-26
+
+### Added — DirectPay Verification modal (Pending Verifications card)
+
+The "Review" button on each Pending Verifications row (Staff Console card and the wp-admin Verify Payments tab) now opens a single shared modal instead of drilling into the user's profile page. The modal carries the full review surface in one place so staff don't have to flip between the dashboard and the user's enrollment view to action a submission:
+
+- **Submitted form** — amount, payment method, payment date, UTR/reference, submitted timestamp, academic year, grade, fee slab, and the student's own submission notes (read-only).
+- **"Open uploaded document"** link → opens the screenshot/receipt in a new tab via the existing `Payment_Transaction::get_receipt_url()` resolver.
+- **Editable Payee Name** — pre-filled with this fallback chain: txn row's `payee_name` → WC order meta `_kdc_qtap_finance_payee_name` → order `billing_first_name` → user `display_name`. Approving writes the (possibly edited) name to BOTH the canonical order meta (which WCPDF reads for the receipt) AND the order's `billing_first_name`.
+- **Fee items breakup** — the parent payment row's `Payment_Item` rows: slab × installment × due / paid, so staff see exactly what this submission pays toward.
+- **Past verified payments** — the user's last 20 verified transactions ordered most-recent-first, with method, UTR, date, amount.
+- **Internal Notes textarea** — staff-only audit field, persisted to the new `internal_notes` column. Distinct from the student's `notes` (which is the student's own submission note and stays read-only in the modal).
+
+### Added — Approve / Reject flow
+
+- **Approve** runs the existing `Payment_Transaction::verify($id, true)` path: payment recorded, items allocated, WC order set to **completed**. The customer receives the WooCommerce order-completion email as the canonical confirmation; our own `payment_verified` notification is suppressed in this code path via the new `kdc_qtap_finance_skip_payment_verified_notification` filter (so the user doesn't get two emails for the same event).
+- **Reject** reveals an inline "Reason for Rejection" textarea in the same modal. Confirming runs `Payment_Transaction::reject($id, $reason, true)`: WC order set to **cancelled** (kept as a trackable entry for the customer instead of trashed), `finance_payment_rejected` notification fires with the reason. The notification was relabeled in the qTap Notifications UI to **"DirectPay - Rejection"** (internal type ID `finance_payment_rejected` is unchanged — existing per-channel toggles, message templates and per-user opt-outs continue to work).
+
+### Database — Migration to schema 2.3.0
+
+Two new NULLable columns on `wp_kdc_qtap_finance_payment_transactions`:
+
+- `payee_name VARCHAR(191) NULL` (indexed) — mirrors the student-submitted Payee Name onto the txn row at submission time, so the v3.17.0 search-by-payee-name no longer has to JOIN WC order meta. Existing pending rows stay NULL until the next submission or a staff edit; the modal's payee-name resolver still falls back through WC order meta + billing_first_name + display_name.
+- `internal_notes TEXT NULL` — staff-only verification notes (see modal feature above).
+
+Migration runs on `admin_init` via the existing `maybe_create_tables()` path. No backfill required.
+
+### Changed — Permission gate widened for verify/reject AJAX
+
+`ajax_verify_transaction` / `ajax_reject_transaction` previously gated on `current_user_can('manage_options')`, which locked out frontend Staff Console users (who hold the parent plugin's REST role mapping but not `manage_options`). Both endpoints now also accept `kdc_qtap_can_access_rest_api()` as a permission source so the same modal works identically across both surfaces.
+
+### Removed — Inline per-card Approve / Reject buttons in admin Verify Payments tab
+
+The admin tab's per-card Approve + Reject buttons (and the inline "Reject reason" mini-modal that the old Reject button opened) are replaced with a single Review button per card that opens the shared modal — the same UI staff get on the frontend. The old AJAX handlers (`kdc_qtap_finance_verify_transaction`, `kdc_qtap_finance_reject_transaction`) are still registered and still callable; only the per-card UI is gone.
+
 ## [3.17.0] - 2026-04-26
 
 ### Added — Searchable + paginated Pending Verifications card

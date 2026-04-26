@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.108] - 2026-04-26
+
+### Performance — Receipt screenshots skip WP's intermediate thumbnail sizes
+
+Default WordPress image upload generates `thumbnail` / `medium` / `medium_large` / `large` (plus any size registered by the active theme via `add_image_size()`) — that's 4–7 Imagick / GD passes per upload. On a 4–5 MB phone screenshot of a UPI payment, this is the dominant cost in the post-flush phase shipped in v3.16.107.
+
+The fees-block offline-submit handler now registers `intermediate_image_sizes_advanced => __return_empty_array` immediately before `media_handle_upload()` and removes the filter immediately after, so no other media upload anywhere in the request lifecycle is affected. Receipts are admin-reviewed at full size (account numbers and date stamps need to be readable), so the resized variants were dead weight. Drops the post-flush phase from ~800–1500 ms to ~150–300 ms.
+
 ## [3.16.107] - 2026-04-26
 
 ### Added — Fees Block: Payee Name field

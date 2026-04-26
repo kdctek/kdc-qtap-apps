@@ -2,6 +2,16 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.54] — 2026-04-26
+
+### Added
+- **Multi-sibling Associated User picker.** The Create New Student form's "Associated User (Sibling)" field now accepts multiple linked users — pick one, search again, pick another. Each pick lands as a removable chip above the search input. Field label updated to "Associated Users (Siblings)" to reflect the plural intent.
+- **REST `POST /students` accepts `associated_user_ids: int[]`.** The legacy `associated_user_id: int` is still honored as a back-compat fallback when the array is missing/empty — older clients keep working.
+- **`link_associated_users()` helper** replaces the old single-user `link_associated_user()`. It validates IDs, deduplicates, and prefers Finance's `sync_associated_users()` (which already accepts an array). Direct-meta fallback writes to every linked side bidirectionally.
+
+### Changed
+- The picker's hidden inputs are now `associated_user_ids[]` (one per chip) instead of a single `associated_user_id`. This is the only client-facing wire-format change; ignore if you're not bypassing the block UI.
+
 ## [1.0.53] — 2026-04-26
 
 ### Changed

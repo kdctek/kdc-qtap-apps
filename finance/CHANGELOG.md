@@ -2,6 +2,21 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.94] - 2026-04-26
+
+### Changed — Fee Stats: chart on the left, legend stacked on the right (desktop)
+
+On viewports ≥ 900px, the donut chart now sits on the **left** half of the chart area and the legend stacks as a single vertical column on the **right** — using the horizontal whitespace that was previously wasted next to the donut. Result: the entire breakdown reads at a glance without scrolling, and the legend's per-bucket meta lines (count + percentage + amount) get full-width room to breathe instead of squashing into a 4-up grid.
+
+Below 900px (tablet portrait + mobile), the layout collapses back to the previous stack: chart centered, legend below in a responsive auto-fill grid. The `<div class="kdc-qtap-finance-fee-stats__chart-area">` wrapper around the canvas + legend is the new structural element — reuse it if you build other fee-stats variants.
+
+### Fixed — Fee Stats: mobile vertical-space waste
+
+Long INR currency strings (e.g. `₹2,07,73,575`) were making each "Total orders" / "Total amount" pill wide enough to wrap onto its own line, so on a 375px viewport the totals row alone ate ~80px of vertical space before the donut even started rendering. Two-step fix:
+
+- **Totals pills now 2-up via grid** at `max-width: 600px` — `grid-template-columns: 1fr 1fr` with `min-width: 0` and ellipsis-truncation on the value spans, so the pills always sit side-by-side even when the currency string is long.
+- **Filter card padding tightened** on mobile (`12px → 10px` block padding, `8px → 6px` row gap) so the entire pre-chart strip (filter card + totals) is visibly shorter, getting the donut into the viewport sooner.
+
 ## [3.16.93] - 2026-04-26
 
 ### Fixed — Fee Stats: hover-blue-on-blue on the new tables (3rd report)

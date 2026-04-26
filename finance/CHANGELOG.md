@@ -2,6 +2,32 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.87] - 2026-04-26
+
+### Removed — Duplicate Notifications tab
+
+The `qTap Finance > Notifications` admin tab is gone. After parent v2.7.12 centralized notification templates and per-type/per-channel toggles at `qTap > Notifications > Templates`, the Finance tab's "Enable Notifications" master toggle and per-type checkboxes became a parallel source of truth — admins had to keep two places in sync, and Finance's "Edit Template" deep-links pointed at the wrong URL anyway.
+
+What you'll notice:
+- The **Notifications** tab no longer appears in the Finance settings nav.
+- Old links to `?tab=notifications` (and the legacy `?tab=templates`) **redirect** to `qTap > Notifications > Templates`, preserving any `edit=` / `channel=` query args as `type=` / `channel=` on the parent editor.
+- Per-type enable lives at the parent's card-row checkbox (`type_enabled`); per-channel enable lives at the parent's editor toggle (`email.enabled`, `sms.enabled`, `whatsapp.enabled`, `webhook.enabled`).
+- Global pause/"nuke switch" at parent v2.7.13+ replaces the Finance-wide "Enable Notifications" master toggle.
+
+### Migrated — legacy gating preserves admin intent
+
+A one-shot `admin_init` migration (`maybe_migrate_legacy_notification_gating`) lifts the existing Finance settings into parent storage so opt-outs survive the cutover:
+
+- If `kdc_qtap_finance_settings['notifications_enabled']` was **0** (Finance-wide off): every Finance type id (`finance_payment_due_reminder`, `finance_payment_overdue`, `finance_payment_received`, `finance_payment_refunded`, `finance_payment_verified`, `finance_payment_rejected`, `finance_offline_submitted`, `finance_enrollment_created`, `finance_fee_assigned`) gets `type_enabled = false` written to `kdc_qtap_notification_templates`.
+- If `kdc_qtap_finance_settings['enabled_notifications']` was an explicit allow-list: any Finance type id NOT in the list gets `type_enabled = false`. Types in the list keep the default-enabled behaviour.
+- Idempotent — flagged via `kdc_qtap_finance_notifications_migrated` so subsequent runs short-circuit. Logged via `kdc_qtap_debug_log()` with the count of types disabled.
+
+The legacy keys themselves stay in `kdc_qtap_finance_settings` (no destructive cleanup) — they're simply no longer consulted by `Finance::send()`. The settings sanitizer + labels-tab hidden-field preservation remain so importing old config still parses cleanly.
+
+### Changed — `Finance::send()` gating
+
+`KDC_qTap_Finance_Notifications::send()` no longer reads `kdc_qtap_finance_settings['notifications_enabled']` or `enabled_notifications`. It now consults `kdc_qtap_notification_templates[$full_type]['type_enabled']` directly via the new `is_type_enabled_in_parent()` helper. Returns `{ success: true, skipped: true, reason: 'type_disabled' }` when the parent has the type switched off — same response shape as before.
+
 ## [3.16.86] - 2026-04-27
 
 ### Fixed

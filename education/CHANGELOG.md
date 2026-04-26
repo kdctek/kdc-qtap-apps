@@ -2,6 +2,19 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.49] — 2026-04-26
+
+### Changed
+- **"WordPress user email" question is no longer asked when only one side is allowed.** Previously the radio (Use Parent address / Use Student address) showed regardless of the Allow Parent / Allow Student state — even though the question is moot when only one side is enabled. New behavior:
+  - **Both** Allow Parent + Allow Student checked → radio appears, the saved choice wins.
+  - **Only one** of them checked → radio is hidden; `wp_user_email_source()` auto-resolves to the active side (saved value ignored).
+  - **Neither** checked → radio hidden; falls back to `'parent'` (legacy default).
+- The hide/show logic is reactive: ticking either Allow checkbox updates the row's visibility immediately (plain JS in the General tab).
+- Description copy under the radio updated to clarify the both-allowed-only semantics.
+
+### Fixed
+- **Server-side resolver matches the UI rule.** `KDC_qTap_Education_Google_Workspace::wp_user_email_source()` now short-circuits to the active side when only one Allow flag is true — so the WP `user_email` constructed in REST `create_student` always uses a suffix that the admin actually has enabled, even if the saved radio value is stale.
+
 ## [1.0.48] — 2026-04-26
 
 ### Fixed

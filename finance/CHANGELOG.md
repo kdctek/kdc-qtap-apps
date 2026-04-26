@@ -2,6 +2,38 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.107] - 2026-04-26
+
+### Added — Fees Block: Payee Name field
+
+New optional text field above Payment Method on the offline payment form, with the helper line "Account Holder name that will be displayed on the Receipt". Persists to the WC order as `_kdc_qtap_finance_payee_name` (the canonical meta WCPDF reads via `apply_payee_name_to_order()`) and overwrites the billing first name so receipts without a payee-aware template still print the correct account holder. The Payee Name is also surfaced in the order's admin note so reconciling staff can see it without opening the receipt PDF.
+
+### Changed — Fees Block: dual-state shortfall / excess warning
+
+The single "Partial payment will require admin approval" footnote is replaced with a dual-state inline warning that re-evaluates as the user types:
+
+- **Shortfall** (entered < due): "Once this payment is approved, you will need to make another payment of {balance}." (amber).
+- **Excess** (entered > due): "We will update you about the adjustment of {excess} excess once verified." (blue).
+- **Match** (entered == due): no warning.
+
+The Payment Amount input no longer caps at the due amount, so users can submit a claimed excess. Server-side, `create_fee_order()` accepts a new `$allow_excess` flag (default false — keeps existing strict callers untouched); the offline-submit AJAX is the one opt-in caller. A 5x-balance sanity ceiling defends against typo-driven 5,00,000 instead of 50,000. Excess gets `_kdc_qtap_finance_excess_amount` order meta + a single bundled admin note for reconciliation.
+
+### Changed — Fees Block: Notes is now the WC customer note + Payment Date hits order meta
+
+The Notes textarea was previously stored only on the transaction record; it is now also written via `set_customer_note()` so it appears in the customer's order email and order page (alongside admin's view of it on the order screen). The Payment Date is now mirrored to the WC order's `payment_date` meta key (was on the transaction record only) — keeps WCPDF receipts consistent with the user-supplied date.
+
+### Changed — Fees Block: Submit button uses the parent's `setButtonLoading` helper
+
+The submit button now routes through `KdcQtapUI.setButtonLoading()` (parent v2.7.8+) for a consistent loader affordance across the qTap suite, and the form gains a function-level double-submit guard via `$form.data('submitting')` — closes the gap where pressing Enter in a text input could fire a second `submit` event before the disabled-button took effect.
+
+### Performance — Fees Block: deferred receipt-screenshot upload + collapsed DB writes
+
+The slowest step in the offline-submit path was `media_handle_upload()` — typically 800–1500 ms on a shared host because WordPress generates 5+ thumbnail sizes synchronously. Now we send the JSON success response BEFORE the upload runs, using `fastcgi_finish_request()` (PHP-FPM, our hosting target) to flush the connection, then process the screenshot in the same request after the client has already moved on. The transaction record is patched with the attachment ID once the upload completes; on hosts without `fastcgi_finish_request`, processing stays inline (same end state, just the old latency).
+
+Order metadata + payment-method + payee + customer note + excess flag are now batched onto a single `$wc_order->save()` instead of the previous "set + save + add_note (separate INSERT) + repeat" flow. The two `add_order_note()` calls (one in `create_fee_order` for the fee record, one for the offline-submit details) collapse into a single multi-line note when there's something extra to record.
+
+End-to-end, perceived submission time on a screenshot-bearing form drops from ~2.5–3 s to ~400–700 ms; without a screenshot the win is the saved DB writes only (~150 ms).
+
 ## [3.16.106] - 2026-04-26
 
 ### Changed — Staff Console: `tab=` is always the first query key

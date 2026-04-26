@@ -2,6 +2,36 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.14] - 2026-04-26
+
+### Added — Deferred pause with auto-resume timer
+
+The pause banner at `qTap > Notifications` now offers **two buttons** when notifications are active:
+
+- **Pause Indefinitely** — the v2.7.13 behavior. Manual resume only.
+- **Pause for…** — opens an inline duration picker with presets (1 hour / 4 hours / 8 hours / 24 hours) plus a `datetime-local` input for any custom future moment, an optional reason textarea, and "Pause Notifications" submit. Once the deadline passes, `is_paused()` auto-clears the active flag on its next call (so the banner shows "active" again on the very next page load past the deadline). 24-hour selected by default, 30-day cap on custom durations.
+
+While paused with a timer, the red active-pause banner now shows **"Auto-resumes in 4 hours (at Apr 27, 04:00)"** with a strong-tagged countdown, plus the optional reason underneath if one was supplied. The site-wide `notice-error` (every wp-admin page) appends `Auto-resumes in 4 hours.` so the timer is visible even when admins navigate away.
+
+### Changed — Storage: struct option replaces boolean
+
+Storage moved from `kdc_qtap_notifications_paused` (bool) to `kdc_qtap_notifications_pause` (array struct):
+
+```php
+[
+  'active'      => bool,
+  'started_at'  => 'YYYY-MM-DD HH:MM:SS',
+  'until'       => 'YYYY-MM-DD HH:MM:SS' | '',
+  'reason'      => string,
+  'resumed_at'  => 'YYYY-MM-DD HH:MM:SS',  // when active flipped false
+  'resumed_via' => 'manual' | 'auto_expiry',
+]
+```
+
+`is_paused()` reads through `get_pause_config()` (new public method) which back-compat-falls-back to the legacy boolean on first call after upgrade — first pause/resume action writes the struct and `delete_option()`s the legacy boolean.
+
+`resumed_at` and `resumed_via` provide a small audit trail so support can answer "was this an auto-resume or did someone click Resume?" without log scraping.
+
 ## [2.7.13] - 2026-04-26
 
 ### Added — Global pause ("nuke switch")

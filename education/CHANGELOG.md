@@ -2,6 +2,25 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.46] — 2026-04-26
+
+### Added
+- **"Email provider" dropdown** as the second question in Education > Settings > General > Email (right after Primary email handling). Choices:
+  - **Manual** (default) — no external provisioning. Only WP user records are created when staff submits the Create form.
+  - **Google Workspace** — routes Parent / Student account creation through the GWS adapter (configured in the GWS tab).
+  - List items below "Manual" sort alphabetically; future providers (Microsoft 365, Zoho, etc.) will slot into that order.
+- **GWS adapter helper `email_provider()`** — single source of truth for any consumer that needs to know the active provider slug. Whitelisted to known values; unknown values fall back to `'manual'`.
+
+### Changed
+- **WordPress user email row moved to the bottom of the Email section.** The radio sample addresses (`first.last_parent@…`, `first.last@…`) are derived from the Parent/Student suffixes + Email domain set above, so showing this row last makes the cause-and-effect obvious to admins.
+- **Provider-neutral radio labels.** Dropped "Google Account" hardcoding from the WP user email options:
+  - "Use the Parent Google Account address (…)" → "Use the Parent address (…)"
+  - "Use the Student Google Account address (…)" → "Use the Student address (…)"
+- **Description copy** for the WP user email row now clarifies that the sample addresses are computed from the suffixes + domain set in the same section, and references "Create … Account" (provider-neutral) instead of "Create … Google Account".
+
+### Note
+- Provider routing is captured but not yet wired to provisioning behavior — selecting "Manual" doesn't currently disable Workspace provisioning when the GWS tab's own enable-toggle is on. Wiring the dropdown to be the master switch (and removing redundancy with the GWS-tab toggle) is a follow-up; for this release the field is metadata + future-proofing.
+
 ## [1.0.45] — 2026-04-26
 
 ### Changed

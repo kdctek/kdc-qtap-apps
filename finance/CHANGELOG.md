@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.105] - 2026-04-26
+
+### Changed — Fee Stats: "Admin" channel renders as "Direct Pay"
+
+Staff find "Admin" too abstract — it sounds like a system role rather than a payment channel. The Admin bucket on Fee Stats is the front-desk handover (cash / cheque / NEFT / RTGS / IMPS / direct bank transfer reconciled into a manual order), so the chip, donut legend, segment label, and tables now read **Direct Pay**. The override is local to Fee Stats; the underlying key stays `admin` so URLs, click-through filters, the Receipts "By" pill row, and the WC Orders admin column are unchanged.
+
 ## [3.16.104] - 2026-04-26
 
 ### Added — Fee Stats: Payment Method filter row

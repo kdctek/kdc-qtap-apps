@@ -2,6 +2,31 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.109] - 2026-04-26
+
+### Changed — /fees lands on the user's oldest unpaid year
+
+The Fees block (used by both the standalone /fees/ page and the WooCommerce My Account `/my-account/fees/` endpoint) now defaults to the user's **oldest academic year with an outstanding balance** instead of the active academic year. The previous behaviour dumped the user on the active AY even when prior years were still unpaid — staff had to flip the year dropdown manually to find the year they actually needed to action.
+
+Resolution order (a URL `?year=` parameter still wins for explicit deep links):
+
+1. `?year=` query param.
+2. **Oldest year with `balance > 0`** from the user's enrollment summaries.
+3. Active academic year (fallback when nothing is due — clean state).
+
+### Fixed — Dashboard summary cards no longer 404 / land on the wrong year
+
+The WC My Account dashboard summary cards (one per enrolled year) used to link to `/fees/?year=2024-2025`. Two problems:
+
+1. The `?year=` query 404'd on certain WC endpoint configurations because the rewrite rule didn't pass it through cleanly.
+2. Even when it didn't 404, the URL year always wins over the new "oldest unpaid year" PHP default — so clicking *any* card landed the user on that card's year regardless of dues, which made the cards useless as triage shortcuts.
+
+Cards now link to bare `/fees/`. The Fees block then picks the right landing year via its new oldest-unpaid default — which, in 99% of cases, is exactly the year the user just clicked anyway. (When it isn't, the user can still flip the dropdown.)
+
+### Removed — sessionStorage year persistence
+
+The block was caching the user's last-selected year in `sessionStorage` and restoring it on every visit. That defeated the new "always land on the oldest unpaid year" behaviour and re-introduced the dashboard-card symptom (a stale stored year would override the PHP default). The dropdown still reflects the resolved year on each visit; the value just isn't persisted across page loads anymore. Existing sessionStorage values in users' browsers become harmless dead data — the block simply stops reading them.
+
 ## [3.16.108] - 2026-04-26
 
 ### Performance — Receipt screenshots skip WP's intermediate thumbnail sizes

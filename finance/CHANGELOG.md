@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.102] - 2026-04-26
+
+### Changed — Receipts: Status row keeps full taxonomy, but only Completed + Processing are clickable by default
+
+Refines v3.16.101's behaviour. The full status list (Cancelled, Completed, Draft, Failed, On hold, Pending payment, POS – Open, POS – Partial Payment, Processing, Refunded, …) stays visible — staff still see counts for every status at a glance — but only **Completed** and **Processing** are clickable by default. Other pills render disabled (using the same `is-zero` styling: 45% opacity, `pointer-events: none`, `disabled` on the input).
+
+A status that is already selected via URL (`?status[]=cancelled`) stays clickable so the chip can be unchecked. This keeps the row informative without adding noise to the 99% workflow.
+
 ## [3.16.101] - 2026-04-26
 
 ### Changed — Receipts: Status row defaults to Completed + Processing only

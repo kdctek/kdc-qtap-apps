@@ -2,6 +2,41 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.91] - 2026-04-26
+
+### Changed — Block Editor class split into 8 traits (refactor only, zero behaviour changes)
+
+`includes/class-kdc-qtap-finance-block-editor.php` was a **4,538-LOC monolith** through v3.16.90 — every Staff Console tab render, the user-facing Fees + Report blocks, the WC search infrastructure, the order classifiers, and 7 AJAX handlers all in one class. The rest of the plugin already follows a one-trait-per-domain convention (the Admin class composes from 30 traits) — Block Editor was the lone outlier, and a contributor opening it had to scroll through 1,000+ lines just to find a single tab's render method.
+
+This release moves the methods **verbatim** into 8 cohesive traits under `includes/traits/`. The host class (`KDC_qTap_Finance_Block_Editor`) shrinks from 4,538 LOC to **301 LOC** — class declaration, the four static properties (`$instance`, `$search_cache`, `$user_search_cache`, `$last_search_truncated`), `get_instance()`, `__construct()`, `init_hooks()`, `register_block()`, and 8 `use` statements.
+
+New trait files (under `includes/traits/`):
+
+| Trait file | Trait | Methods | Approx LOC |
+|------------|-------|---------|------------|
+| `trait-kdc-qtap-finance-block-editor-search.php` | `KDC_qTap_Finance_Block_Editor_Search` | `search_max_results`, `is_hpos_active`, `find_user_ids_for_token`, `find_order_ids_by_meta_keys`, `find_order_ids_by_billing`, `find_order_ids_by_item_name`, `finalize_search_ids`, `search_orders_by_token`, `search_orders_by_field`, `search_orders_by_items` | ~505 |
+| `trait-kdc-qtap-finance-block-editor-classifiers.php` | `KDC_qTap_Finance_Block_Editor_Classifiers` | `get_payment_method_buckets`, `classify_paywith_method`, `get_via_channels`, `detect_order_via_channel`, `order_has_fee_item`, `detect_pos_order` | ~278 |
+| `trait-kdc-qtap-finance-block-editor-staff-console.php` | `KDC_qTap_Finance_Block_Editor_Staff_Console` | `ajax_backfill_order_enrollment`, `ajax_staff_order_items`, `render_staff_console_block`, `render_staff_console_menu` | ~340 |
+| `trait-kdc-qtap-finance-block-editor-fee-stats.php` | `KDC_qTap_Finance_Block_Editor_Fee_Stats` | `register_fee_stats_lucide_icons`, `ajax_fee_stats_data`, `render_staff_console_fee_stats`, `render_fee_stats_filter_row` | ~404 |
+| `trait-kdc-qtap-finance-block-editor-receipts.php` | `KDC_qTap_Finance_Block_Editor_Receipts` | `render_staff_console_receipts` | ~1,015 |
+| `trait-kdc-qtap-finance-block-editor-overview.php` | `KDC_qTap_Finance_Block_Editor_Overview` | `render_staff_console_landing`, `render_dashboard_search_bar`, `render_dashboard_stats`, `render_dashboard_pending_verifications`, `render_staff_console_orders_table`, `render_staff_console_find_panel` | ~522 |
+| `trait-kdc-qtap-finance-block-editor-fees-block.php` | `KDC_qTap_Finance_Block_Editor_Fees_Block` | `render_block`, `render_report_block`, `render_fees_block_associated_users_bar`, `shortcode_fees` | ~648 |
+| `trait-kdc-qtap-finance-block-editor-frontend-ajax.php` | `KDC_qTap_Finance_Block_Editor_Frontend_AJAX` | `ajax_get_fees`, `ajax_search_users`, `ajax_get_users_by_grade`, `format_user_for_response` | ~716 |
+
+### Why this is safe
+
+- **Static state stays on the host class.** `$search_cache`, `$user_search_cache`, `$last_search_truncated` keep their declarations on `KDC_qTap_Finance_Block_Editor` — declaring them on a trait would give each using class its own copy. Trait static methods reference `self::$cache` and resolve correctly to the using class's storage.
+- **Cross-trait `self::` and `$this->` calls just work.** PHP resolves both at the using-class scope. `Search` trait's `search_orders_by_token()` calling `self::find_user_ids_for_token()` (also in Search), or `Fee_Stats` trait's `ajax_fee_stats_data()` calling `self::detect_order_via_channel()` (in Classifiers), both resolve on `KDC_qTap_Finance_Block_Editor` — same as before.
+- **Visibility preserved.** `private` methods in a trait are private *to the using class*, so they remain callable from any other trait the same class composes. No method had to be widened to `protected` or `public`.
+- **`init_hooks()` and `register_block()` stay on the host class.** They're the wiring tables (AJAX hooks + Lucide filter; asset enqueue + `register_block_type()` calls) — keeping them on the host means the wiring is visible in one place when you open the class file. The handler methods themselves now live in their respective traits, but `array( $this, 'ajax_fee_stats_data' )` resolves through `$this` to the trait method.
+- **External callers unchanged.** `KDC_qTap_Finance_Block_Editor::classify_paywith_method()`, `::get_payment_method_buckets()`, `::detect_order_via_channel()`, `::get_via_channels()`, `::order_has_fee_item()`, `::detect_pos_order()`, and the public static `::$last_search_truncated` are all called from `trait-kdc-qtap-finance-admin-tab-receipts.php` and `class-kdc-qtap-finance-wc-orders-admin.php`. Every one continues to resolve through the host class — trait methods are accessible by the host class name exactly like methods declared inline.
+
+### File-size sanity
+
+- Host class: **301 LOC** (down from 4,538).
+- Largest trait: Receipts at ~1,015 LOC (single 1,000-LOC `render_staff_console_receipts()` method — kept whole; subdividing it would be a code refactor, not a structural split).
+- Total LOC across the 9 final files (1 host + 8 traits): ~4,729, accounting for trait headers + closing braces.
+
 ## [3.16.90] - 2026-04-26
 
 ### Changed — Reminder Queue + Schedule merged into one tab

@@ -2,6 +2,14 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.14.4] - 2026-04-26
+
+### Fixed — Contact variables (`{{contact_name}}` etc.) now actually resolve
+
+The v2.14.3 contact variables didn't resolve in real notifications — `{{contact_name}}` came through unchanged. Cause: registration ran inside the singleton constructor, which only fires at `init` priority 0. If anything in the request triggered the parent's `KDC_qTap_Notification_Variables` singleton to build itself before that point (any early notification dispatch), the `kdc_qtap_register_notification_variables` action had already fired and our hook missed it.
+
+Hooks are now registered at file-load time (during `plugins_loaded` 10 when `load_dependencies()` runs), so they're in place before any notification path can trigger the parent's singleton. Variable resolution itself is unchanged.
+
 ## [2.14.3] - 2026-04-26
 
 ### Added — Notification template variables for mobile contacts

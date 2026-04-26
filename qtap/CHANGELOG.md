@@ -2,6 +2,48 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [2.7.15] - 2026-04-26
+
+### Fixed — WhatsApp template params reject newlines
+
+The WhatsApp Business API rejects template variable values containing `\n`, `\r`, `\r\n`, or `\t` ("Param text cannot have new-line/tab characters"). Textarea-collected user inputs (notes, addresses, line-item lists) routinely contain those characters and would silently fail at send-time.
+
+The WhatsApp channel now flattens every parsed template parameter — header, each body line, footer, each button — through a new helper. All forms of line break collapse to `; ` (semicolon + space); tabs collapse to a single space; consecutive runs are deduplicated. Trim happens last.
+
+### Added — Two new public helpers
+
+```php
+// Flatten one value (any newline → "; ", tab → " ").
+$safe = kdc_qtap_normalize_whatsapp_value( $multiline_value );
+
+// Substitute variables AFTER pre-flattening every value in $data —
+// the architecturally-correct path when a single template line uses a
+// variable whose value may itself contain newlines (otherwise the
+// substituted result would be over-split into multiple body params by
+// parse_whatsapp_data()).
+$body = kdc_qtap_replace_variables_for_whatsapp(
+    $template_string,
+    array(
+        'name'  => 'John',
+        'items' => "Apple\nBanana\nCherry",  // becomes "Apple; Banana; Cherry"
+    )
+);
+```
+
+### Added — `kdc_qtap_whatsapp_template_value` filter
+
+Each parsed component (header / body line / footer / button) passes through this filter after newline flattening, so site owners can swap `; ` for ` | `, strip emoji, enforce a max length, etc. without touching the channel code.
+
+```php
+add_filter( 'kdc_qtap_whatsapp_template_value', function( $value, $original ) {
+    return str_replace( '; ', ' | ', $value );
+}, 10, 2 );
+```
+
+### Compatibility
+
+The defensive flatten in `parse_whatsapp_data` handles the common case where a template line is a pure variable substitution (`{{notes}}` on its own line). For the trickier case where a multi-line value is injected mid-line (`Hi {{name}}, your {{items}} are ready`), child plugins should use `kdc_qtap_replace_variables_for_whatsapp()` so the value is flattened *before* substitution — otherwise `parse_whatsapp_data()` will over-split the result into too many body params.
+
 ## [2.7.14] - 2026-04-26
 
 ### Added — Deferred pause with auto-resume timer

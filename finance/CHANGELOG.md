@@ -2,6 +2,11 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.88] - 2026-04-26
+
+### Added
+- **Fee Stats — percentages alongside count and amount.** The donut tooltip and the legend chips now show each segment's share of the ring total next to the raw numbers, so you can read the mix at a glance without doing the division in your head. Tooltip body becomes `Method: 12 orders (15.4%) · ₹45,000 (12.3%)`; legend rows become `12 (15.4%) · ₹45,000 (12.3%)`. Each percentage is computed against the totals from the active filter set (date range + Created Via chips), so it always matches the "Total orders / Total amount" pills above the chart. Percentages are suppressed when the ring total is zero (no `NaN%` artefacts on empty ranges).
+
 ## [3.16.87] - 2026-04-26
 
 ### Removed — Duplicate Notifications tab

@@ -2,6 +2,17 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.55] — 2026-04-26
+
+### Changed
+- **Sibling chip remove button uses the qTap error color.** Previously the X read as neutral and could be missed; now it's a red filled badge so the destructive action is unmistakable.
+- **Email provider rule is now the single source of truth for domain locking.** Picking `Manual` keeps the Email domain field editable even when the Google Workspace integration is enabled+verified. Picking `Google Workspace` (and only then, with the integration active) forces the Email domain to the integration's primary domain. Provider value wins.
+- **`general_email_domain()` resolver matches the new rule.** When the chosen provider is Manual, we honor the saved `general[email_domain]` (or the WP site host as fallback). When the chosen provider is Google Workspace and GWS is active+verified, we use `gws[domain]`. This keeps the Create-form preview, the WP user_email build, and the locked settings field perfectly aligned.
+- **GWS Setup-guide instructions are collapsed by default.** First-run admins still see the trigger; returning admins don't have a wall of steps in their face every time they tweak a credential. Summary copy updated from "click to collapse" → "click to expand".
+
+### Added
+- **Inline hint when an integration is enabled but Manual is selected.** A non-blocking notice ("Google Workspace integration is enabled. Select it as the Email provider…") points the admin at the better choice without overriding their setting. The Email-provider value still wins; this is just a suggestion.
+
 ## [1.0.54] — 2026-04-26
 
 ### Added

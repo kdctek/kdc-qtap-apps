@@ -2,6 +2,22 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.104] - 2026-04-26
+
+### Added — Fee Stats: Payment Method filter row
+
+A new row of chips between Created Via and Measure: one chip per method bucket (Card, Cash, Cheque, IMPS, NEFT, Net Banking, Online, Others, RTGS, UPI, Wallet), sorted alphabetically. Chips ship pre-pressed (all methods active), click to toggle. At least one chip must stay on. Active chips tint to match the donut slice color so the filter and the chart speak the same palette.
+
+### Fixed — Fee Stats: RTGS / NEFT / IMPS / Cheque / Cash no longer attributable to Checkout
+
+A receipt with `_created_via=checkout` (or `store-api`) but a payment method bucket of RTGS, NEFT, IMPS, Cheque, or Cash is now reattributed to the Admin channel everywhere — Fee Stats inner ring, Receipts "By" pill counts, Receipts row filter, and click-throughs. None of those payment methods can be processed through a Woo checkout gateway, so an order tagged that way is necessarily admin-recorded reconciliation against an order that was originally opened from the storefront. Without this rule, an RTGS receipt would render under "Checkout" in the chart, which is impossible in real life.
+
+The reattribution lives in a new helper `KDC_qTap_Finance_Block_Editor::reattribute_via_for_offline_payment( $origin, $bucket )` that all three surfaces call after their respective `detect_order_via_channel()` + `classify_paywith_method()` calls. Receipts pill counts (SQL aggregator) also apply the rule so the "By Admin" badge includes these reattributed orders.
+
+### Fixed — Fee Stats click-through emits literal `[]` in URLs
+
+`URLSearchParams.append('payment_method[]', value)` always percent-encodes the brackets to `%5B%5D` because the spec forces it. We were depending on the address bar to decode them, which Chrome does but Safari often doesn't — sharing or bookmarking a chart drill-through URL produced an ugly `?payment_method%5B%5D=card&via_channel%5B%5D=admin` in some browsers. Now the array params are hand-built with literal `[]`, matching the v3.16.99 fix in PHP `build_receipts_url()`.
+
 ## [3.16.103] - 2026-04-26
 
 ### Changed — Receipts: real-time pill + date filtering

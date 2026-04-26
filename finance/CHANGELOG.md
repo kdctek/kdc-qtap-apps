@@ -2,6 +2,20 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.17.4] - 2026-04-26
+
+### Fixed — "Open uploaded document" link 404 in the Verify modal
+
+The receipt link in the Verify modal returned a 404 for a slice of pending verifications submitted under v3.16.107+. Root cause: `KDC_qTap_Finance_Payment_Transaction::get_receipt_url()` was written when `receipt_file` held the actual uploaded filename, but v3.16.107 repurposed that column to hold the **UTR / reference text** the parent enters on the form (e.g. `1234567890`, `REJCTN`) — the screenshot itself is now stored as a media-library attachment via `attachment_id`, with the `media_handle_upload()` call deferred until after the JSON response is flushed (5+ thumbnail sizes per upload was the dominant request-cost). When the modal opens during that deferred-upload window, or when no screenshot was attached at all, `attachment_id` is NULL — and the legacy fallback path was building bogus URLs like `https://…/wp-content/uploads/kdc-qtap-finance/receipts/REJCTN`, where `REJCTN` is just the UTR text being concatenated as if it were a file path.
+
+`get_receipt_url()` rewritten with three-tier resolution:
+
+1. **`attachment_id` on the txn row** — happy path, post-deferred-upload state. `wp_get_attachment_url()` returns the media-library URL.
+2. **`_kdc_qtap_finance_receipt_attachment_id` meta on the linked WC order** — covers the brief window where the deferred upload has finished writing the order meta but the txn row hasn't been re-read yet, plus any txn whose row update lost the attachment_id but the order meta survived.
+3. **Legacy filename fallback** — only honoured when `receipt_file` actually looks like a filename (`preg_match( '/\.[A-Za-z0-9]{2,5}$/', $candidate )`) AND the file exists on disk. Plain UTR text no longer triggers a path-build, so the bogus URL can't be generated.
+
+Returns `null` cleanly when no resolvable receipt exists; the modal already hides the "Open uploaded document" link when `receipt_url` is empty, so unresolvable rows now correctly omit the link instead of showing a 404 trap.
+
 ## [3.17.3] - 2026-04-26
 
 ### Added — `{{payment_url}}` exposed in the Templates variable picker

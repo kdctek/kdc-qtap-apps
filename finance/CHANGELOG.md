@@ -2,6 +2,33 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.17.3] - 2026-04-26
+
+### Added — `{{payment_url}}` exposed in the Templates variable picker
+
+The `{{payment_url}}` token has worked at send-time since v2.x (set on the notification context by `KDC_qTap_Finance_Notifications::send()` via `get_payment_url($payment_id)` → `KDC_qTap_Finance_Direct_Payment::get_payment_url()`) but was never registered with the parent's variable picker UI — so admins editing a notification template only saw it documented in the class header docblock and the default fee-reminder bodies, not in the "available variables" panel alongside `{{user_name}}`, `{{amount_due}}`, etc. Now registered under the `finance` group with a preview callback so the picker can render an example value, and so it appears in the suggestions list when typing `{{` in the template editor. The token name is unchanged (still `{{payment_url}}`, not `{{payment_link}}`) — existing customised templates that already use it keep working.
+
+### Changed — All "Offline Payment" notification labels renamed to "DirectPay"
+
+Brand consistency pass over the qTap Notifications UI. The three offline-payment notification types and the matching default email subject/body text now follow the **DirectPay** naming the rest of the verification flow already uses (verify modal, rejection notification label, reject reason copy, etc.):
+
+| Internal type ID | Old display label | New display label |
+|---|---|---|
+| `finance_payment_verified` | Offline Payment Verified | DirectPay - Verified |
+| `finance_payment_rejected` | DirectPay - Rejection *(already renamed in v3.17.1)* | DirectPay - Rejection |
+| `finance_offline_submitted` | Offline Payment Submitted | DirectPay - Submitted |
+
+The internal type IDs are unchanged, so existing per-channel toggles, customised message templates, and per-user opt-outs continue to work — only the human-facing label and description text changed.
+
+Default email subject/body templates updated for prose consistency:
+
+- **`finance_offline_submitted`** subject: `New Offline Payment Submitted - {{institute_name}}` → `New DirectPay Submitted - {{institute_name}}`
+- **Verified email body**: "Your offline payment has been verified..." → "Your DirectPay payment has been verified..."
+- **Rejected email body**: "your offline payment submission could not be verified" → "your DirectPay submission could not be verified"
+- **Submitted email body**: "A new offline payment has been submitted..." → "A new DirectPay payment has been submitted..."
+
+If admins have already customised any of these templates via the parent plugin's Templates editor, their custom text wins — only the unmodified defaults change.
+
 ## [3.17.1] - 2026-04-26
 
 ### Added — DirectPay Verification modal (Pending Verifications card)

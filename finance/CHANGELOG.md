@@ -2,6 +2,36 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.93] - 2026-04-26
+
+### Fixed — Fee Stats: hover-blue-on-blue on the new tables (3rd report)
+
+Block themes apply default `button { background: #2271b1; color: #fff }` styles on `:hover` / `:focus` / `:active`. v3.16.85 hardened this for the Fee Stats Created Via chips, but v3.16.92 reintroduced the same problem on the new table-cell `<button>` row links: hovering a row painted the entire cell solid blue with white text, clobbering the swatch + label. Same root cause, same fix — `!important` on background / background-color / background-image / border / box-shadow / padding / margin across the link's `:hover` / `:focus` / `:focus-visible` / `:focus-within` / `:active` states. Plus a defensive reset on `tr:hover` / `td` background to neutralize any block-theme data-table tinting.
+
+### Added — Receipts: subtle count badge inside each filter pill
+
+Each Status / Source / Payment Method pill now shows the number of matching orders in the current date range as a small muted-grey number after the label. Counts are computed independently of the user's pill selections — i.e. the Status pill for "Completed" shows how many completed orders exist in the date range *regardless* of which Status / Source / Payment pills are currently checked. This makes the pills useful for exploration ("how many UPI orders are there this month?") not just filtering.
+
+Pills with **0** matches in the current scope render at 55% opacity (a soft `is-zero` muted state) so staff can spot empty buckets at a glance and avoid clicking pills that won't change the result.
+
+Counts are computed via direct SQL (one `GROUP BY status` query against `wp_wc_orders` / `wp_posts`, plus one bulk `meta_key IN (…)` scan against the order-meta table) — no per-order WC_Order hydration. Capped at 500 IDs (`search_max_results()` filter) to bound cost on huge ranges. HPOS-aware.
+
+### Fixed — Receipts: `[0]` / `[1]` indices in URLs (`%5B0%5D` encoding)
+
+Pagination links, chip-removal links, and the Reset All link were going through `add_query_arg()` / `remove_query_arg()`, which re-serializes `$_GET['status'] = ['completed', 'processing']` as `status%5B0%5D=completed&status%5B1%5D=processing` (numeric-indexed). Browsers display this as `status[0]=completed` in the address bar — ugly and not what the form sent.
+
+New helper `KDC_qTap_Finance_Block_Editor_Receipts::build_receipts_url( array $set, array $remove )` hand-rolls the query string with literal empty brackets (`status%5B%5D=completed&status%5B%5D=processing` → renders as `status[]=completed&status[]=processing`), matching the form's natural serialization. Both formats parse to the same `array<int,string>` server-side, so it's purely cosmetic — but the cosmetic matters when sharing URLs with colleagues.
+
+### Fixed — Receipts: empty-value query pollution
+
+Empty filter inputs (`q=`, `date_from=`, `date_to=`) were being dragged into the URL by `add_query_arg`, then carried forward through pagination clicks and chip-removals — every URL grew a tail of `&q=&date_from=&date_to=` even when no filter was active.
+
+Two layers of fix:
+- The new `build_receipts_url()` helper strips empty values at build time (covers PHP-built URLs — pagination, chips, reset).
+- A small inline `<script>` in the filter form's render disables empty text/date inputs right before native form submit so they don't appear in the GET URL at all (covers user-driven submits).
+
+The script re-enables disabled controls on the next tick, so Cancel / Back navigation doesn't leave the form in a half-disabled state.
+
 ## [3.16.92] - 2026-04-26
 
 ### Added — Fee Stats: tabular view below the chart

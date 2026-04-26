@@ -2,6 +2,11 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.52] — 2026-04-26
+
+### Changed
+- **Provider-neutral warning text on the Create New Student form.** The "special characters will be stripped" warning previously read `Characters not supported by Google Workspace will be stripped.` — this leaked Google-specific framing even on Manual-provider deployments where Google has no role. New text: `Characters not supported for user email will be stripped.` Same fallback applied in view.js so admins on stale localizations also see the neutral text.
+
 ## [1.0.51] — 2026-04-26
 
 ### Changed

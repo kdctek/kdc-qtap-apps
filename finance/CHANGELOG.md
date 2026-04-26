@@ -2,6 +2,18 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.101] - 2026-04-26
+
+### Changed — Receipts: Status row defaults to Completed + Processing only
+
+Previously the Status pill row rendered every WooCommerce order status (Cancelled, Draft, Failed, On hold, Pending payment, POS – Open, POS – Partial Payment, Refunded, …) — eleven pills wrapping into two rows by default. The 99% case is staff filtering by Completed and Processing; the rest is noise.
+
+Now only **Completed** and **Processing** render by default. Other statuses still appear in the row when they're explicitly selected via URL (e.g. `?status[]=cancelled` or a chip-removed deep link), so power users and bookmarks keep working — but the row is visually quiet on first load.
+
+### Changed — Receipts: pagination spacing
+
+Bumped the breathing room between the *Showing N–M of T* summary, the page-number block, and the *Go to* jump form from 12 px to 28 px. Page-number buttons grew from 32×32 to 34×34 with a 6 px gap (was 4 px), and the jump input/button match. The whole pagination bar reads less cramped on a wide table without changing the layout on mobile (still stacks vertically ≤600 px).
+
 ## [3.16.100] - 2026-04-26
 
 ### Changed — Receipts: 0-count pills are no longer clickable

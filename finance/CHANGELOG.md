@@ -2,6 +2,23 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.111] - 2026-04-26
+
+### Added — DirectPay duplicate-submission prevention
+
+A payment that already has a Direct-Pay verification awaiting admin review is now guarded across both the offline and online entry points so parents can't accidentally submit two parallel claims for the same fee:
+
+- **DirectPay (offline) re-click** → an inline info card replaces the form: *"There is already a pending verification for this payment."* The user dismisses with the same `OK, Got it` button shown after the original submission. No second transaction record is created.
+- **Pay (online) click** → a confirmation modal: *"A Direct Payment verification is already pending for this fee. Are you sure you want to also pay online now?"* with two buttons — `Still continue` (proceeds with the online checkout, sending `override_pending_verification=1` so the server skips its parallel guard) and `Cancel` (closes the modal, no action).
+
+The guard is wired across all entry points: single-fee online (`ajax_create_fee_order`), multi-fee online (`ajax_create_multi_fee_order`), term-grouped online (`ajax_create_term_order`), and the offline submit (`ajax_submit_offline_payment`). The latter is hard-blocked — re-submission while one is pending is never the right outcome, so there's no override path for it.
+
+A new helper `KDC_qTap_Finance_Payment_Transaction::has_pending_verification( $payment_id )` runs a single `COUNT(*) WHERE verification_status='pending'` query and is also exposed in the fees AJAX response (per-fee + per-term) so the frontend can branch into the warning / modal path on click without an extra round-trip. Server-side enforcement remains the durable line of defence — clients with stale flags still hit the same modal via the `pending_verification_exists` error code.
+
+### Changed — Server response shape: `pending_verification_exists` error code
+
+When a parallel-pay rejection fires server-side, the JSON response carries `code: 'pending_verification_exists'` alongside the user-facing message, so the frontend can upgrade the rejection from a generic `alert()` to the same confirmation modal shown on click.
+
 ## [3.16.110] - 2026-04-26
 
 ### Fixed — Cart/checkout breakup recomputes against advances and partial payments

@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.16.106] - 2026-04-26
+
+### Changed — Staff Console: `tab=` is always the first query key
+
+Every URL the staff console renders — menu links (Overview / Receipts / Report / Stats), the Receipts filter form on submit (Apply click + v3.16.103 auto-submit), every chip-removal / pagination / reset URL, and the Fee Stats → Receipts click-through — now reads `?tab=receipts&date_from=…` regardless of where the click originated. Previously the position of `tab` depended on the page URL's existing key order, so shared / bookmarked URLs were inconsistent.
+
+The reorder lives in a new shared helper `KDC_qTap_Finance_Block_Editor::url_with_tab_first( $url )` (hand-rolls the rebuild with literal `[]` brackets, same convention as `build_receipts_url()`), called from the four URL build sites: the staff-console menu, the Fee Stats base URL, `build_receipts_url()`, and the Receipts filter form (which now emits `tab` as its first hidden input so native form submission preserves the order).
+
 ## [3.16.105] - 2026-04-26
 
 ### Changed — Fee Stats: "Admin" channel renders as "Direct Pay"

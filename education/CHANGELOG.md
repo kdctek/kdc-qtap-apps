@@ -2,6 +2,13 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.50] — 2026-04-26
+
+### Changed
+- **Create New Student preview rows now follow the Allow Parent / Allow Student gates.** Previously the form always rendered both "Parent Account" and "Student Account" preview rows (using the "Will create / Will skip" badge to differentiate). Now the row is omitted entirely when its corresponding Allow flag is off in Education > Settings > General > Email. The rationale: when an admin disables an account type, even seeing the preview is noise.
+- **Active row carries a "→ WP user email" tag** so staff knows which preview row drives the WordPress `user_email` field. Tag placement mirrors `wp_user_email_source()` resolver semantics (active side when one Allow is on, saved radio value when both are on).
+- **Both-Allow-disabled now drops the suffix entirely.** When neither Parent nor Student account is allowed, the WP `user_email` is just a placeholder for WP's required field — there's no parent/student semantic in that mode. Address shape changes from `{login}_parent@{domain}` to `{login}@{domain}`.
+
 ## [1.0.49] — 2026-04-26
 
 ### Changed

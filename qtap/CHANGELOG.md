@@ -2,6 +2,33 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.0.3] - 2026-04-27
+
+### Fixed — JSON import counter stuck at zero
+
+After v3.0.2 the import actually ran end-to-end, but the Jobs detail page reported `Imported: 0` even when child plugins (Finance, Education, Mobile, etc.) wrote rows successfully — confusing for admins who couldn't tell whether the import had silently failed.
+
+Root cause in [`KDC_qTap_Job_Processor::process_json_import()`](includes/class-kdc-qtap-job-processor.php): the section-iteration loop only incremented `$results['imported']` when the section key was the parent's `qtap_settings` / `kdc_qtap_settings`. Every child-plugin section (`qtap_finance`, `qtap_education`, `qtap_mobile`, …) fell through silently. The post-loop `do_action( 'kdc_qtap_process_import', … )` does fire and child plugins do import their rows — but nothing was capturing their per-section results back into the counters.
+
+**Fix:**
+
+1. The loop now increments `imported` for **every non-empty section** (whether it's the parent's `qtap_settings` or a child plugin's data block). Sites that were stuck at `0 / 3 imported` will now show `3 / 3 imported` with no further code change anywhere.
+2. New filter `kdc_qtap_process_import_results` runs after the action and lets child plugins that want **real per-record counts** (rather than the section-based fallback) replace `imported` / `updated` / `skipped` / `errors` with what they actually wrote:
+
+   ```php
+   add_filter( 'kdc_qtap_process_import_results', function ( $results, $import_data ) {
+       if ( empty( $import_data['qtap_finance']['data']['payments'] ) ) {
+           return $results;
+       }
+       // …count what your section actually wrote…
+       $results['imported'] += $written;
+       $results['skipped']  += $skipped;
+       return $results;
+   }, 10, 2 );
+   ```
+
+The CSV import path (`process_csv_import`) was already correct — it already accumulates per-row counts via `kdc_qtap_process_csv_import`. JSON now has parity.
+
 ## [3.0.2] - 2026-04-27
 
 ### Fixed — JSON settings import "Invalid session." error

@@ -2,6 +2,48 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.1] - 2026-04-27
+
+### Payments & transactions audit — three flows unified, labels go fully live, fee-matrix edits auto-cascade
+
+This release closes a payments/transactions audit covering the three coexisting flows (WooCommerce, DirectPay-with-pending-verification, qTap-Checkout) and the relationship between fee matrix, enrollments, payments, and transactions. Five concrete fixes ship together because their consequences overlap — qTap-Checkout silently leaving payments at `pending`, fee-matrix edits never reaching existing enrollments, label snapshots going stale on rename, DirectPay rejection ignoring already-allocated transactions, and the three flows recording money through three slightly different code paths.
+
+#### qTap-Checkout flow now updates the parent payment
+
+Pre-3.22, `KDC_qTap_Finance_Dashboard_Integration::on_cart_paid()` (the `kdc_qtap_checkout_paid` listener) called `Payment_Transaction::create()` directly — which inserted a transaction row but never touched `payments.amount_paid`, `payments.status`, or `payment_items`. A successful qTap gateway capture left the parent payment stuck on `pending` forever. Every UI and export read from `amount_paid` (i.e., all of them) showed the fee as still owing, even though the gateway had collected and the transaction row was on disk.
+
+The listener now routes through `KDC_qTap_Finance_Payment::record_transaction()` — the same entry point WooCommerce uses — so the transaction insert, parent-payment update, item allocation, trickle-forward, and auto-credit consumption all happen atomically, identical to the Woo path. A defensive 24-hour transient lock keyed on `cart_token + txn_id` adds a second layer of idempotency on top of the parent checkout plugin's own per-cart lock.
+
+#### Fee-matrix edits auto-cascade to existing enrollments
+
+`kdc_qtap_finance_fee_matrix_saved` previously fired only the lightweight `sync_due_dates_on_fee_matrix_save()` listener, which updated `payments.due_date` and nothing else. Renaming a slab, changing an amount, or shifting a term's months left every existing enrollment frozen at its create-time amount — staff had to remember to click "Sync Payments" on the Fee Matrix page after each edit, which doesn't scale across an institute with hundreds of enrollments.
+
+A new `auto_cascade_on_fee_matrix_save()` listener (priority 20, after the due-date sync) schedules a debounced Action Scheduler job 60 seconds out — additional matrix saves within that window collapse via `as_has_scheduled_action()` so a burst of grade-by-grade edits triggers a single sync. The job calls a new `start_sync_payments_job()` helper, extracted from the existing manual button's AJAX handler so both surfaces share one code path. The per-row eligibility filter (`amount_paid = 0`) is unchanged and is exactly what gives the user the "unpaid + future installments of partial" behaviour: a paid Term 1 row stays frozen for the audit trail, while an unpaid Term 3 row of the same plan rebuilds with the current matrix amount. Manual sync button stays put as an escape hatch for force-resets.
+
+The listener yields to a manual sync that's already in progress (it'd be reading the live matrix anyway, so the auto-cascade would be redundant).
+
+#### Label_Renderer goes fully live
+
+`label_stem`, `label_period`, and `label_grade` were introduced in v3.21.0 as snapshot columns on `payments` and `payment_items` so the Show Range toggle could be evaluated live at render time. But the underlying parts (term name, period range) themselves were still snapshots — renaming "Term 1" to "Quarter 1" left every existing row showing the old name until staff hit Sync Payments. Same for boundary shifts (changing which months belong to a term).
+
+The renderer now calls a new `resolve_live_term_parts($year, $term_key)` helper that reads the year's `kdc_qtap_finance_terms_{year}` option directly, pulls the current term name as the stem, and recomputes the period range from the term's months via the now-public `KDC_qTap_Finance_Installment_Generator::make_range()`. Memoized per request on `{year}|{term_key}` so a list view with N rows on the same term performs one option read, not N. Both `render_payment_title()` (always) and `render_item_label()` (gated on `fee_type === 'per_term'`, since per_month / per_cycle / per_tenure items don't correspond to a single term row) consume the live values, falling back to snapshot columns when the term has been deleted or the academic year archived. `flush_cache()` clears the new memo alongside the existing show_range cache, so existing AJAX save handlers get fresh values within the same request.
+
+Per_month items keep their snapshot — the stem is the month name itself ("Apr 2026"), not a renameable label. Per_cycle and per_tenure items also keep their snapshot — they span the whole academic year and aren't keyed against a single term option entry.
+
+#### DirectPay rejection now reverses verified transactions cleanly
+
+`Payment_Transaction::reject()` previously refused any transaction that wasn't in `verification_status = 'pending'`. The cheque-bounce / charge-back scenario — verify a cheque, then weeks later it bounces — had no clean reversal path; admins had to delete the transaction (which does reverse correctly, but loses the rejection audit trail).
+
+`reject()` now accepts already-verified transactions and applies a financial reversal before stamping the row rejected: cascade-delete trickle children, refund any `credit_parked` to the user's `kdc_qtap_finance_credit` meta, decrement `amount_paid` on the parent, recompute `status`, and re-run `allocate_payment_to_items()`. The transaction row itself is preserved so the audit trail survives. A new private `apply_financial_reversal()` helper centralises the reversal math; `delete()`'s existing inline reversal logic is left untouched (zero-risk superset). Already-rejected rows return `true` so a double-click on the Reject button is a no-op rather than an error.
+
+#### Three flows now share one record-payment entry point
+
+The audit's "no shared abstraction" finding effectively resolves with the qTap-Checkout fix above: WooCommerce, DirectPay-verify, and qTap-Checkout all now route through `Payment::record_transaction()` for the actual money capture, leaving the parent payment in identical state regardless of which flow was used. Idempotency strategies remain flow-specific (Woo: order-meta guard, DirectPay: `verification_status` state machine, qTap: cart-token transient + parent-plugin lock) — each fits its flow's transport semantics — but the recording semantics are now uniform.
+
+#### Migration / back-compat
+
+Zero schema changes. Zero data migrations. The label snapshot columns introduced in v3.21.0 stay populated (writers continue dual-writing) so any old reader that hasn't swapped to the renderer keeps working with v3.21.0's stale-after-rename behaviour rather than fataling. The legacy `installment_label` deprecation planned for the next minor release (v3.22.0) is unaffected — this is a patch release on top of v3.21.0 with no schema delta.
+
 ## [3.21.0] - 2026-04-27
 
 ### Architecture — Per-(slab, grade) Show Range, run-time label rendering, migrations split out of the bootstrap

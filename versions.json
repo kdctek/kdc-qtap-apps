@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-04-27T19:10:00Z",
+  "updated_at": "2026-04-27T20:00:00Z",
   "plugins": {
     "kdc-qtap": {
       "version": "3.0.2",
@@ -43,8 +43,20 @@
       "description": "WhatsApp number management with OTP verification for WooCommerce.",
       "updated_at": "2026-04-27T18:30:00Z"
     },
+    "kdc-qtap-checkout": {
+      "version": "1.0.0",
+      "name": "qTap Checkout",
+      "slug": "kdc-qtap-checkout",
+      "requires_php": "7.4",
+      "requires_wp": "5.8",
+      "status": "stable",
+      "is_premium": false,
+      "subscription": false,
+      "description": "Lightweight cart, checkout, and payment-gateway infrastructure (Razorpay, Zaakpay) for the qTap suite. Drop-in alternative to WooCommerce checkout.",
+      "updated_at": "2026-04-27T20:00:00Z"
+    },
     "kdc-qtap-finance": {
-      "version": "3.19.0",
+      "version": "3.20.0",
       "name": "qTap Finance",
       "slug": "kdc-qtap-finance",
       "requires_php": "7.4",

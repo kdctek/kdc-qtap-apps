@@ -12,6 +12,17 @@ Root cause: the upload AJAX endpoint was rewritten to use the background **Jobs*
 
 The Import page JS now redirects to the Jobs detail page (`?ietab=jobs&job=…`) using the `redirect_url` returned by the upload. The detail page already auto-clicks **Process Now** when it lands on a `pending` job, so the import runs immediately and the user sees live progress + final counters with no extra clicks. The dead `ajax_process_json_import_batch` handler, its `wp_ajax_kdc_qtap_json_import_batch` registration, and the now-unreachable `startProcessingPhase` / `processNextBatch` / `updateProcessingProgress` JS helpers were removed.
 
+### Changed — Cart/checkout/gateway lives in qTap Checkout (sibling plugin)
+
+The cart / checkout / payment-gateway code that briefly transited through `kdc-qtap-finance` v3.19.0 has now landed in its proper home: a new standalone sibling plugin **`kdc-qtap-checkout`** (qTap Checkout). Any qTap child plugin can opt in by subscribing to `kdc_qtap_checkout_paid` — no longer requires Finance as a dependency.
+
+Cosmetic changes in the parent:
+
+- `class-kdc-qtap-user-dashboard-admin.php` — the legacy `?tab=gateways` redirect now points to `admin.php?page=kdc-qtap-checkout` (was `…page=kdc-qtap-finance&tab=gateways`).
+- Priority tab description updated to reference **qTap App > Checkout** instead of qTap Finance.
+
+No functional changes for sites that don't use the qTap cart backend.
+
 ## [3.0.1] - 2026-04-27
 
 ### Changed — Cart, checkout, and payment gateways moved to qTap Finance

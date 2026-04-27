@@ -2,6 +2,29 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.20.0] - 2026-04-27
+
+### Changed — Cart, checkout, and payment gateways moved to qTap Checkout (sibling plugin)
+
+The cart / checkout / payment-gateway code that briefly lived in Finance v3.19.0 (released earlier today) has moved out into a new standalone sibling plugin: **`kdc-qtap-checkout`** (qTap Checkout). Same domain-neutral code, but no longer tied to Finance — Events and any future child plugin can opt in by subscribing to `kdc_qtap_checkout_paid`.
+
+**Removed from Finance:**
+
+- `KDC_qTap_Finance_Cart`, `KDC_qTap_Finance_Checkout`, `KDC_qTap_Finance_Payment_Gateway` (abstract), `KDC_qTap_Finance_Payment_Gateways`, `KDC_qTap_Finance_Payment_Completion`
+- `KDC_qTap_Finance_Gateway_Razorpay`, `KDC_qTap_Finance_Gateway_Zaakpay`
+- `Payment Gateways` admin tab (was added in v3.18.1, removed here — moved to **qTap App > Checkout**)
+- helpers `kdc_qtap_finance_cart()`, `kdc_qtap_finance_payment_gateways()`, `kdc_qtap_finance_register_payment_gateway()`, `kdc_qtap_finance_payment_completion()`, `kdc_qtap_finance_checkout()`
+- options `kdc_qtap_finance_payment_backend`, `kdc_qtap_finance_gateway_{id}` (data is migrated automatically when qTap Checkout is activated)
+
+**Updated in Finance:**
+
+- `KDC_qTap_Finance_Direct_Payment` — reads `kdc_qtap_checkout_backend` + calls `kdc_qtap_checkout_cart()`. Guarded with `function_exists()` so finance still loads gracefully when qTap Checkout is not installed.
+- `KDC_qTap_Finance_Dashboard_Integration` — subscribes to the renamed `kdc_qtap_checkout_paid` action (was `kdc_qtap_cart_paid`).
+
+### Required dependency
+
+If your site uses the `kdc_qtap_checkout_backend = qtap` mode, install **qTap Checkout v1.0.0+** alongside this release. Sites still on the WooCommerce backend are unaffected. The qTap Checkout plugin's activation hook copies any pre-existing `kdc_qtap_finance_gateway_*` options to the new key namespace, so admins who configured a gateway during the v3.19.0 window do not lose credentials.
+
 ## [3.19.0] - 2026-04-27
 
 ### Added — Cart, checkout, payment gateways (moved from parent)

@@ -2,6 +2,34 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.17.8] - 2026-04-27
+
+### Fixed — `{{balance}}`, `{{due_date}}`, `{{days_until_due}}`, `{{days_overdue}}` now resolve correctly inside DirectPay notifications
+
+A single `payment_id` (the underlying fee record — *the original payment*) can carry many `transaction_id`s (each DirectPay submission, credit application, or trickle event linked back via `transaction.payment_id`). Templates need to clearly distinguish "this is the original payment" from "this is the specific submission" — phrasing like *"Original payment X is due ₹{{amount_due}} for {{fee_category}} (due {{due_date}}). You submitted ₹{{transaction_amount}} via {{payment_method}} on {{payment_date}} (UTR: {{reference_number}}). Verified ✓ — remaining balance: {{balance}}."* is the canonical pattern.
+
+For that pattern to work, the *payment-record* variables had to actually resolve from `payment_id`. v3.17.6/3.17.7 forwarded both `payment_id` and `transaction_id` into every DirectPay notification context, but four resolvers were silently broken in this flow:
+
+- **`resolve_balance()`** checked `$context['amount']` *before* `payment_id`. In DirectPay flows `amount` is the transaction amount (what the parent typed), not the remaining balance — so `{{balance}}` rendered as the txn amount in the verified/rejected emails (e.g. "balance: ₹5,000" right after the parent paid ₹5,000 of ₹50,000 due). **Fix:** payment-record lookup now wins; `$context['amount']` becomes the final fallback for legacy contexts where no payment_id is available.
+- **`{{due_date}}`** only read `$context['due_date']`, with no `payment_id` fallback — empty in every DirectPay notification.
+- **`{{days_until_due}}` / `{{days_overdue}}`** had the same blind spot — both rendered as empty / `0` when they should have surfaced the original payment record's overdue-ness.
+
+All three date-derived variables now share a single `$resolve_due_date_iso` closure that prefers `$context['due_date']` (when explicitly forwarded) and falls back to looking up the payment record by `payment_id` and reading `$payment->due_date`. Existing fee-reminder notifications that already forward `due_date` directly are unaffected — the fallback is purely additive for the DirectPay flows.
+
+### Resulting variable contract (post-3.17.8)
+
+DirectPay verified / rejected / submitted notifications now carry both IDs and resolve correctly across both records:
+
+**Original payment record** (resolves via `{{payment_id}}` lookup):
+- `{{payment_id}}`, `{{amount_due}}`, `{{amount_paid}}`, `{{balance}}`, `{{due_date}}`, `{{days_until_due}}`, `{{days_overdue}}`, `{{fee_category}}`, `{{academic_year}}`, `{{grade}}`, `{{division}}`, `{{payment_status}}`
+
+**Submitted transaction** (resolves from forwarded context):
+- `{{transaction_id}}`, `{{transaction_amount}}`, `{{payment_method}}`, `{{payment_date}}`, `{{reference_number}}`, `{{payee_name}}`
+
+**Other** (rejection-only): `{{rejection_reason}}`
+
+Templates can freely mix the two sets — staff editing a notification can grab the right token off the modal's `meta_data` panel (each row carries its `{{var}}` chip).
+
 ## [3.17.7] - 2026-04-27
 
 ### Added — `{{payee_name}}` notification template variable

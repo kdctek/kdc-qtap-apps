@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.17.9] - 2026-04-27
+
+### Added — `{{directpay_url}}` template variable
+
+A new template variable that produces a deeplink to the user’s Fees Block with the DirectPay form auto-opened for the specific payment row. Drop `{{directpay_url}}` into any DirectPay-related notification template (submitted, rejected, reminder) and the recipient lands on a page where the academic year is preselected, the matching fee card is scrolled into view, and the inline transaction-details form is already open — no hunting through years or rows.
+
+The frontend Fees Block already supported the underlying URL contract (`?year=YYYY-YYYY&payment_id=X&action=offline`); this release just registers the variable in the picker and pre-resolves it on every notification context that carries a `payment_id`. The academic year is looked up automatically from the payment record, so templates only need the variable name. Returns empty when no Fees Block page exists or no payment_id is present in the context.
+
 ## [3.17.8] - 2026-04-27
 
 ### Fixed — `{{balance}}`, `{{due_date}}`, `{{days_until_due}}`, `{{days_overdue}}` now resolve correctly inside DirectPay notifications

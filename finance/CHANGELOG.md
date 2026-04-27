@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.20.3] - 2026-04-27
+
+### Fixed — Per-term Show Range was re-ticking on refresh (storage layer drop)
+
+v3.20.2 wired the new per-term Show Range checkbox through the admin UI, the JS serialiser, the AJAX save handler (`ajax_save_terms`), and the title-build call site — but missed `KDC_qTap_Finance_Fee_Matrix::sanitize_terms()`, the storage-layer sanitiser. That function rebuilds each term as a fresh array containing only its whitelisted fields (`name`, `months`, `due_date`, `order`, `payment_cycle`, `cycle`), so the `show_range` flag was silently dropped before `update_option()` saw it. Result: staff would untick the box, click Save Terms, refresh, and find the box re-ticked because the saved record had no flag and the hydrate path defaults to true.
+
+`sanitize_terms()` now preserves `show_range` (default true for pre-feature rows). The bug was end-to-end the same shape as the per-grade `isset()` slip in v3.20.2 — different cause but identical "looks saved, isn't saved" symptom.
+
 ## [3.20.2] - 2026-04-27
 
 ### Fixed — Per-grade Show Range save was silently re-ticking on refresh

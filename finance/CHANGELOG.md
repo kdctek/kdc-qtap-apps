@@ -2,6 +2,29 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.20.1] - 2026-04-27
+
+### Fixed — Fee breakup honours the per-grade `Show Range` toggle
+
+The Show Range toggle in Fee Matrix (per-grade, default on) was originally added to suppress the `{range}` portion of payment titles for grades that don't want monthly/term spans cluttering their receipts. The cart / checkout / order-creation breakup builders ignored the setting, so a grade with Show Range disabled still rendered:
+
+```
+Tuition Fee   Dec-2025 to May-2026 @ ₹15,510
+```
+
+instead of just:
+
+```
+Tuition Fee   ₹15,510
+```
+
+Both breakup paths now check `kdc_qtap_finance_get_show_range( $grade )` before deciding whether to prepend the period span:
+
+- **`KDC_qTap_Finance_WooCommerce::build_payment_item_breakup_rows()`** — the v3.16.110 helper used by `create_fee_order`, `create_multi_fee_order`, and `ajax_create_term_order` (cart / checkout cells).
+- **`KDC_qTap_Finance_WooCommerce::apply_allocation_breakup()`** — the post-payment receipt rewrite that re-emits per-period delta rows (collapsed-by-slab orders already skipped the period prefix; the new gate is for the non-collapsed branch).
+
+Both helpers fetch the underlying Payment to read `$payment->grade`. Default (no setting saved for a grade) still shows the range — this only takes effect when staff explicitly disable it.
+
 ## [3.20.0] - 2026-04-27
 
 ### Changed — Cart, checkout, and payment gateways moved to qTap Checkout (sibling plugin)

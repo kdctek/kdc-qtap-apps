@@ -2,6 +2,20 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.20.4] - 2026-04-27
+
+### Fixed — Per-grade Show Range was being silently dropped by the settings whitelist
+
+The fee-matrix tab's per-grade Show Range column writes through `ajax_save_fee_matrix`, `ajax_save_fee_slab`, and the autosave handler — all three end with `update_option( 'kdc_qtap_finance_settings', $settings )`. WordPress runs the `register_setting` sanitize callback (`sanitize_settings()` in the Admin Settings trait) on every such call, and that function is a strict whitelist sanitiser that rebuilds the array from a fixed set of keys. `show_range` wasn't on the list, so it was silently stripped on save — the option ended up with no `show_range` key at all, and the rendering path then defaulted every checkbox back to ticked. Three release attempts (v3.20.1 → v3.20.2 → v3.20.3) had patched the visible save handlers without seeing that the storage-layer filter one level lower was eating the field.
+
+`sanitize_settings()` now preserves `show_range` (coerced to a `grade => bool` map). Same shape of bug as v3.20.3's `sanitize_terms()` drop — the storage layer was throwing away what every upstream writer was sending.
+
+### Fixed — Bulk-form Save was overwriting unticked grades with ticked duplicates
+
+The Show Range column is rendered once per slab card (PTA Contribution, Term Fee, Tuition Fee, …), so each grade ends up with N HTML checkboxes that all share the same `name="kdc_qtap_finance_show_range[<grade>]"`. When staff unticked AS&A in the PTA card and clicked "Save Fee Matrix", PHP's last-wins POST parsing read whichever duplicate the form serialiser sent last — typically still ticked in Tuition Fee — and the unticked PTA state was silently overwritten back to true.
+
+The fee-matrix JS now syncs all `.kdc-qtap-finance-show-range-cb` checkboxes for the same grade across slab cards on every change, so unticking once unticks everywhere. The autosave + bulk-form serialiser then see a consistent value, and the per-slab Save buttons keep working for incremental saves.
+
 ## [3.20.3] - 2026-04-27
 
 ### Fixed — Per-term Show Range was re-ticking on refresh (storage layer drop)

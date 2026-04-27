@@ -2,6 +2,18 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.14.6] - 2026-04-27
+
+### Fixed — v2.14.5 backfill froze pageloads on large sites
+
+The v2.14.5 WhatsApp backfill ran synchronously on `plugins_loaded` for every request (including admin-ajax) until completion. On sites with 1200+ users this blocked each request for ~15 seconds while the migration walked all user meta — visible to users as a "frozen" page when toggling the WhatsApp checkbox or hitting Send OTP. The freeze re-occurred on every subsequent pageload until the backfill ran to completion within a single request, which on large sites could exceed PHP timeouts.
+
+The backfill is now deferred via `wp_schedule_single_event()` to a non-blocking cron tick (30 seconds after first eligible pageload). The completion flag is also set up front, so even if the cron handler dies mid-run, subsequent pageloads aren't penalized — any contacts left without the `whatsapp` key still default to `true` via the helper functions.
+
+### Added — Page loader on every block submission
+
+Every Mobile block submission (Send OTP, Verify OTP, Save name, Send/Verify removal OTP) now wraps its AJAX call in `KdcQtapUI.showPageLoader()` from the parent plugin. The full-page overlay blocks the rest of the UI during the request, prevents accidental double-submits, and gives clear "Sending..." / "Verifying..." / "Removing..." feedback that survives slow server responses. The block frontend script now declares `kdc-qtap-frontend-helpers` as an explicit dependency.
+
 ## [2.14.5] - 2026-04-27
 
 ### Fixed — Per-contact "Send WhatsApp" toggle now actually persists

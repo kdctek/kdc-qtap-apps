@@ -2,6 +2,20 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.14.5] - 2026-04-27
+
+### Fixed — Per-contact "Send WhatsApp" toggle now actually persists
+
+The block UI shipped a "Send WhatsApp notification" checkbox per contact, but the storage layer (`KDC_qTap_Mobile_User_Mobile::normalize_mobile_data()` and `save_user_mobile_numbers()`) silently stripped the `whatsapp` key on every read/write. Helper functions like `kdc_qtap_get_whatsapp_enabled_numbers()` then defaulted everything to `true`, so the checkbox change never reached the notification system.
+
+Both the read path (normalize) and the write path (save) now preserve the `whatsapp` boolean, and `get_user_contacts()` exposes it. Default is `true` for legacy contacts that don't have the key, matching the previous fallback behavior.
+
+### Added — One-time backfill for existing users
+
+On upgrade, every existing contact across all users gets `whatsapp = true` written explicitly, **except** numbers that start with `+9122` (Indian landline area code 022 / Mumbai), which get `whatsapp = false` since landlines won't reach WhatsApp. Contacts that already have the field set are left untouched. The migration is gated by the `kdc_qtap_mobile_whatsapp_backfilled` option flag and runs once.
+
+If a user has a non-Mumbai landline they'd rather not message via WhatsApp, they can untick it in the block UI per contact (the live form already auto-unticks for `+91[2-5]` while typing).
+
 ## [2.14.4] - 2026-04-26
 
 ### Fixed — Contact variables (`{{contact_name}}` etc.) now actually resolve

@@ -2,6 +2,22 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.20.2] - 2026-04-27
+
+### Fixed — Per-grade Show Range save was silently re-ticking on refresh
+
+The per-slab "Save PTA Contribution" / "Save Tuition Fee" buttons run `ajax_save_fee_slab`, which serialises every checkbox in the card — including unchecked ones, sent as `show_range[grade]=0`. The save handler previously used `isset( $sr_input[ $grade ] )` to decide each grade's flag, which returned `true` for `'0'` because the array key was present. Result: staff would untick the checkbox, see the green ✓ "Slab saved." status, refresh the page, and find the box re-ticked.
+
+Now the handler uses `! empty( $sr_input[ $grade ] )`, which correctly reads `'0'` as off. The autosave path (used when the checkbox is toggled without a Save click) was already using `! empty()` and was unaffected.
+
+### Added — Per-term Show Range checkbox
+
+Settings → General → Academic Terms now has a **Show Range in title** checkbox per term row, alongside the Months grid. When unchecked, the `{range}` placeholder in that term's payment title is replaced with an empty string regardless of what the per-grade Show Range is set to. Common case: a "Full Tenure" PTA Contribution term that should print as just "PTA Contribution" rather than "PTA Contribution (Apr 2026 to Mar 2027)".
+
+The two toggles compose with logical AND — the range renders only if BOTH the term's flag and the grade's flag are on. Pre-3.20.2 term rows have no flag stored; they default to true so behaviour is unchanged unless staff explicitly disable it.
+
+The checkbox is hydrated by `ajax_get_terms` (returning the saved `show_range` per term) and persisted by `ajax_save_terms` (sanitising via `! empty()`). The title-build call site at `KDC_qTap_Finance_Enrollment::add_payments_for_year` reads the term flag, ANDs it with the grade flag, and only then substitutes `{range}`.
+
 ## [3.20.1] - 2026-04-27
 
 ### Fixed — Fee breakup honours the per-grade `Show Range` toggle

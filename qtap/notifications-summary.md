@@ -166,7 +166,63 @@ When designing your child plugin's admin UI:
 - Templates → parent (centralized, deep-link via the card)
 - Channel enable/disable per type → can stay on your child plugin admin (use a simple settings page)
 - Domain timing/scheduling/batch logic → stay with your child plugin
-- Variables → register once via `kdc_qtap_register_notification_variables`, parent surfaces them in editor
+- Variables → register once via `kdc_qtap_register_notification_variables`, parent surfaces them in editor (see pitfall below — register at file-load, not from a constructor)
+
+---
+
+## ⚠️ Common Pitfalls
+
+### Registering `{{variables}}` too late (silent fallthrough)
+
+**Symptom:** Your registered variable (e.g. `{{contact_name}}`) survives untouched in the final message — admins see the literal `{{contact_name}}` in emails / WhatsApp / SMS instead of the resolved value. No PHP error, no log warning, just the placeholder echoing through.
+
+**Cause:** The parent's `KDC_qTap_Notification_Variables` singleton is built **lazily**. The first call to `kdc_qtap_notification_variables()` / `kdc_qtap_process_notification_template()` / `kdc_qtap_replace_variables()` in a request constructs it, and the constructor fires the `kdc_qtap_register_notification_variables` action **once** and never again.
+
+If your hook is registered inside a singleton constructor that only runs at `init` (or later), any earlier code path that triggers the parent's singleton — an OTP dispatch from another plugin on `plugins_loaded`, an admin page that calls the variables manager during `admin_init`, etc. — fires the registration action before your hook is in place. Your `register_variable()` call never runs, so the resolver returns the original `{{matches[0]}}` placeholder verbatim.
+
+**Wrong — hook lives inside the constructor:**
+
+```php
+class My_Plugin_Notification_Variables {
+    private function __construct() {
+        // Runs only when get_instance() is first called.
+        add_action( 'kdc_qtap_register_notification_variables',
+            array( $this, 'register' ) );
+    }
+    public function register( $variables ) { /* register_variable() calls */ }
+}
+
+// Constructed at init priority 0 — too late if anything triggered the
+// parent's singleton during plugins_loaded.
+add_action( 'init', function() {
+    My_Plugin_Notification_Variables::get_instance();
+}, 0 );
+```
+
+**Right — register at file-load time, outside the class:**
+
+```php
+class My_Plugin_Notification_Variables {
+    private function __construct() {
+        // Hooks live below — keep the constructor empty (or strictly local).
+    }
+    public function register( $variables ) { /* register_variable() calls */ }
+}
+
+// At the bottom of the file (loaded during plugins_loaded 10 from your
+// load_dependencies()), so the hook is in place before any notification
+// path can build the parent's singleton.
+add_action(
+    'kdc_qtap_register_notification_variables',
+    array( My_Plugin_Notification_Variables::get_instance(), 'register' )
+);
+```
+
+`get_instance()` here just constructs an empty singleton — the actual `register()` work runs only when the parent's action fires, so there's no startup cost.
+
+**The same rule applies to** `kdc_qtap_notification_template_processed` filter handlers (used for dynamic post-resolution of indexed variables like `{{contact_name_8}}`). Both must be hooked at file-load, not from a constructor.
+
+**Quick check after deploy:** open any notification template editor in wp-admin — your variables should appear in the variable picker grid. If they don't appear there, they won't resolve in sent messages either.
 
 ---
 

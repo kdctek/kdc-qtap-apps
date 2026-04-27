@@ -2,6 +2,16 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.0.2] - 2026-04-27
+
+### Fixed — JSON settings import "Invalid session." error
+
+Uploading a qTap export JSON from **qTap > Import/Export > Import** failed with the error *"Import failed: Invalid session."* immediately after the upload completed — the importer ran no actions and produced no outcome.
+
+Root cause: the upload AJAX endpoint was rewritten to use the background **Jobs** system (it now creates a row in `wp_kdc_qtap_jobs` and returns `{ job_id, redirect_url }`), but the frontend JS on the Import page still drove the old transient-session batch protocol, calling `kdc_qtap_json_import_batch` with an empty `session_id`. The legacy session handler had been left in place and bailed with *"Invalid session."*, so the upload always died at the processing step with the job stranded as a `pending` row no one ever ran.
+
+The Import page JS now redirects to the Jobs detail page (`?ietab=jobs&job=…`) using the `redirect_url` returned by the upload. The detail page already auto-clicks **Process Now** when it lands on a `pending` job, so the import runs immediately and the user sees live progress + final counters with no extra clicks. The dead `ajax_process_json_import_batch` handler, its `wp_ajax_kdc_qtap_json_import_batch` registration, and the now-unreachable `startProcessingPhase` / `processNextBatch` / `updateProcessingProgress` JS helpers were removed.
+
 ## [3.0.1] - 2026-04-27
 
 ### Changed — Cart, checkout, and payment gateways moved to qTap Finance

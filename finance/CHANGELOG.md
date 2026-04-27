@@ -2,6 +2,29 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.17.7] - 2026-04-27
+
+### Added — `{{payee_name}}` notification template variable
+
+The Verify modal has been editing and persisting `payee_name` since v3.17.1, and the underlying column has carried the student-submitted Payee Name since v3.17.0 (mirrored from the DirectPay form alongside the existing WC order meta write). Until now the value was readable only from the modal — there was no way to reference it inside a notification template.
+
+`{{payee_name}}` is now registered with the parent's variable picker (Finance group, alongside `{{user_name}}`, `{{reference_number}}`, etc.) and resolves through a four-step fallback chain — same chain the modal already uses to pre-populate the editable input — so legacy transactions submitted before the v3.17.1 column existed still surface a meaningful name:
+
+1. `$context['payee_name']` (forwarded by the notification handlers below)
+2. Fall back to looking up the txn by `transaction_id`: prefer `txn.payee_name`, then `_kdc_qtap_finance_payee_name` order meta, then `billing_first_name`
+3. Final fallback: the user's `display_name` (so even pre-DirectPay records resolve to *something*)
+4. Empty string if no matchable user
+
+### Changed — `payee_name` forwarded into all DirectPay notification contexts
+
+Both `on_transaction_verified()` / `on_transaction_rejected()` (customer-facing) and `on_transaction_created()` (admin-facing "DirectPay - Submitted") now include `payee_name` in the context they pass to `send()`, alongside the v3.17.6 additions (`payment_method`, `payment_date`, `reference`, `transaction_amount`). This means `{{payee_name}}` resolves directly from the context — fast path — without the variable callback having to re-fetch the txn row.
+
+The admin's "DirectPay - Submitted" notification additionally gets `payment_date`, `payment_method`, `transaction_amount` and `user_id` which were missing from the v3.17.6 verified/rejected fix — so admin templates can also reference the form-submitted values.
+
+### Added — Payee Name row in the Verify modal's `meta_data` panel
+
+The collapsible `meta_data` panel now exposes Payee Name as a separate row with its `{{payee_name}}` click-to-copy chip, slotted right below Payment Method. Same value the modal's editable Payee Name input is pre-populated with — staff can see exactly which value `{{payee_name}}` will resolve to in any template that references it.
+
 ## [3.17.6] - 2026-04-26
 
 ### Fixed — DirectPay verified / rejected emails now resolve `{{payment_method}}`, `{{payment_date}}`, `{{reference_number}}`

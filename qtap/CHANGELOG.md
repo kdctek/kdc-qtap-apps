@@ -2,6 +2,34 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.0.1] - 2026-04-27
+
+### Changed — Cart, checkout, and payment gateways moved to qTap Finance
+
+The lightweight cart (`KDC_qTap_Cart`), checkout panel (`KDC_qTap_Checkout`), payment-gateway base + registry (`KDC_qTap_Payment_Gateway`, `KDC_qTap_Payment_Gateways`), payment-completion module (`KDC_qTap_Payment_Completion`), and the two built-in gateways (Razorpay, Zaakpay) have moved to **qTap Finance v3.19.0**. They were briefly hosted in the parent during v3.0.0 but the right home is the plugin that owns the fee/payment domain.
+
+What stays in the parent:
+
+- The dashboard host page + panel registry (`kdc_qtap_register_user_dashboard_panel()`)
+- The notification dispatcher + notification preferences
+- The FAB registry
+- The Profile panel
+- All notification + URL helpers (`kdc_qtap_user_destination_url()`, etc.)
+
+What moved to qTap Finance:
+
+- Cart line-item store
+- Checkout reserved-panel renderer
+- Gateway abstract base + registry
+- Razorpay + Zaakpay implementations
+- Server-to-server webhook interception (still at the same fixed `/qtap-pay/webhook/{id}/` URL — no merchant-dashboard reconfiguration needed)
+- The "Payment Gateways" admin tab (now under **qTap Finance > Payment Gateways**)
+- The `payment_backend` setting (now `kdc_qtap_finance_payment_backend`)
+
+The User Dashboard admin tab's old `/?tab=gateways` URL 302-redirects to the new home so existing bookmarks keep working. The Priority tab no longer renders a "Payment backend" radio — only the canonical-destination radio remains, with a pointer to qTap Finance > Payment Gateways for the backend choice.
+
+Site impact: **requires qTap Finance v3.19.0+ if you were using the qTap cart/gateway backend**. If you stayed on the WooCommerce backend, nothing changes.
+
 ## [3.0.0] - 2026-04-27
 
 ### Added — User Dashboard

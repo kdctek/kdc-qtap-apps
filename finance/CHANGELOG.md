@@ -2,6 +2,53 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.19.0] - 2026-04-27
+
+### Added — Cart, checkout, payment gateways (moved from parent)
+
+The lightweight cart, checkout panel, payment gateway base + registry, payment completion module, and the Razorpay + Zaakpay implementations now live in qTap Finance. They were briefly hosted in qTap App v3.0.0 (released earlier today) but the right home is the plugin that owns the fee/payment domain.
+
+New finance modules:
+
+- `KDC_qTap_Finance_Cart` — line-item store keyed by `source + source_id` in user_meta. Helper: `kdc_qtap_finance_cart()`. Fires `kdc_qtap_cart_item_added`, `kdc_qtap_cart_item_removed`, `kdc_qtap_cart_cleared`.
+- `KDC_qTap_Finance_Checkout` — reserves the dashboard's `checkout` panel, routes `/checkout/`, `/checkout/pay/{token}/`, `/checkout/return/{token}/`. Constant `KDC_qTap_Finance_Checkout::WEBHOOK_PATH = 'qtap-pay/webhook/'` keeps the server-to-server webhook URL stable across dashboard slug changes.
+- `KDC_qTap_Finance_Payment_Gateway` — abstract gateway base. Concrete gateways implement `process()`, `handle_return()`, `handle_webhook()`.
+- `KDC_qTap_Finance_Payment_Gateways` — registry. Filter `kdc_qtap_finance_payment_gateways`. Helpers: `kdc_qtap_finance_payment_gateways()`, `kdc_qtap_finance_register_payment_gateway()`.
+- `KDC_qTap_Finance_Payment_Completion` — token + idempotency for `kdc_qtap_cart_paid` action.
+- `KDC_qTap_Finance_Gateway_Razorpay` — Standard Checkout JS modal, HMAC-SHA256 return signature, `X-Razorpay-Signature` webhook.
+- `KDC_qTap_Finance_Gateway_Zaakpay` — hosted-checkout auto-submit form, alpha-sorted-pipe-concat HMAC-SHA256 checksum.
+
+### Added — Payment Gateways admin tab
+
+New tab at **qTap Finance > Payment Gateways** with:
+
+- "Payment backend" radio (WooCommerce vs qTap Cart + Gateway) — replaces the old radio that briefly lived under qTap Dashboard > User Dashboard > Priority. Option renamed `kdc_qtap_payment_backend` → `kdc_qtap_finance_payment_backend`.
+- One accordion per registered gateway with the gateway's own fields (Razorpay key id / secret / webhook secret; Zaakpay merchant identifier / secret key, etc.).
+- Sandbox + Enabled toggles per gateway.
+- The fixed S2S webhook URL (`/qtap-pay/webhook/{gateway_id}/`) shown read-only with copy-friendly markup.
+
+### Stable webhook URL
+
+Server-to-server webhook URL stays at `/qtap-pay/webhook/{gateway_id}/` — independent of the dashboard host slug. Admins who configured Razorpay/Zaakpay on parent v3.0.0 do **not** need to reconfigure their merchant dashboards.
+
+### Renamed options + helpers
+
+- Option `kdc_qtap_payment_backend` → `kdc_qtap_finance_payment_backend` (defaults to `woocommerce`).
+- Option `kdc_qtap_gateway_{id}` → `kdc_qtap_finance_gateway_{id}`.
+- User-meta `kdc_qtap_cart` → `kdc_qtap_finance_cart`.
+- Helper `kdc_qtap_cart()` → `kdc_qtap_finance_cart()`.
+- Helper `kdc_qtap_checkout()` → `kdc_qtap_finance_checkout()`.
+- Helper `kdc_qtap_payment_gateways()` → `kdc_qtap_finance_payment_gateways()`.
+- Helper `kdc_qtap_register_payment_gateway()` → `kdc_qtap_finance_register_payment_gateway()`.
+- Helper `kdc_qtap_payment_completion()` → `kdc_qtap_finance_payment_completion()`.
+- Filter `kdc_qtap_payment_gateways` → `kdc_qtap_finance_payment_gateways`.
+
+Public hook names that fire downstream stay unchanged (`kdc_qtap_cart_paid`, `kdc_qtap_cart_item_added`, etc.) so existing subscribers keep working.
+
+### Site impact
+
+Requires **qTap App v3.0.1+**. Sites still on parent v3.0.0 will keep loading the old in-parent classes; once they upgrade parent to v3.0.1 (which removes them) they must be on finance v3.19.0+ for the cart/checkout/gateway flow to keep working.
+
 ## [3.18.0] - 2026-04-27
 
 ### Added — User Dashboard integration (parent v3.0.0+)

@@ -2,6 +2,23 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.14.7] - 2026-04-27
+
+### Fixed — Send OTP no longer feels frozen on slow WhatsApp API responses
+
+The v2.14.6 page loader was applied indiscriminately to every block submission, including the "Send OTP" buttons. When the WhatsApp Cloud API was slow or the recipient number wasn't reachable, the server held the request for the full 30-second wp_remote_post timeout while a full-screen blocking overlay covered the whole page — the user couldn't scroll, couldn't cancel, and reasonably described it as a frozen page.
+
+Two changes:
+- The full-page loader is now reserved for **commit** actions (Verify OTP and Save Name in the add/edit flow, Confirm Removal in the delete flow). For "fire-and-forget" send-OTP buttons, only `KdcQtapUI.setButtonLoading()` is used — the button disables (no double-submit), but the rest of the page stays usable.
+- The WhatsApp Cloud API `wp_remote_post` timeout dropped from 30s to 10s. The API normally responds in well under a second; 10s already covers the long tail. Past that, fail fast and let the user retry rather than holding the request open.
+- The Send OTP AJAX calls now declare a 15s client-side `timeout` and surface a clear "OTP send timed out" message if the server stalls — the loader/button always recovers.
+
+### Changed — Disabling "Send WhatsApp" no longer requires an OTP
+
+Toggling the per-contact WhatsApp checkbox **off** now saves directly via the existing no-OTP `kdc_qtap_update_contact_name` endpoint. The reason a user disables WhatsApp on a number is precisely that the number can't receive WhatsApp — so demanding a WhatsApp OTP to confirm that disable is a chicken-and-egg trap.
+
+Toggling **on** still triggers the Send OTP flow as before, since enabling WhatsApp is an opt-in claim that the number actually receives messages and the OTP proves it.
+
 ## [2.14.6] - 2026-04-27
 
 ### Fixed — v2.14.5 backfill froze pageloads on large sites

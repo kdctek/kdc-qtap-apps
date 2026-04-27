@@ -2,6 +2,67 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.0.0] - 2026-04-27
+
+### Added — User Dashboard
+
+Parent now hosts a unified user-facing dashboard at `/dashboard/` (admin-configurable host page). Any child plugin registers panels via `kdc_qtap_register_user_dashboard_panel()`, mirroring the existing `kdc_qtap_register_plugin()` admin-card pattern. v1 ships with four panels:
+
+- **Fees & Payments** (registered by `kdc-qtap-finance`)
+- **Mobile Numbers** (registered by `kdc-qtap-mobile`)
+- **Notification Preferences** (parent — opt-in/out per type × channel)
+- **Profile & Account** (parent — name + email + student/child switcher; password change intentionally omitted, WhatsApp OTP is canonical)
+
+Routing supports three resolution paths simultaneously: pretty endpoints (`/dashboard/{panel}/`), deep links (`/dashboard/fees/pay/{id}/`, `/dashboard/profile/switch/{user_id}/`), and query fallback (`/dashboard/?tab=fees`). Logged-out hits render the configured login form **inline** — never a redirect — and post-login restores the user to the originally-targeted panel/subpath.
+
+### Added — `qtap/dashboard` block
+
+New Gutenberg block in the parent. Width attribute (default / narrow / medium / wide / full), side-menu preview in the editor, Lucide-icon nav, separators between panels and REST-API-eligible Staff/Admin links, and a bottom session-links section (Logout + Switch back). Auto-created on first activation if the dashboard host page doesn't exist.
+
+### Added — User Dashboard admin tab
+
+New tab under qTap Dashboard with sections for: Host page (with auto-create + Staff page selector + Admin page selector), Panels (drag-to-reorder + per-panel visibility toggle), Login UI (`wp_login_form` vs `qtap/mobile-login` block), FABs, Gateways, and Dashboard priority (qTap dashboard primary vs WC My Account primary).
+
+### Added — Notification Preferences
+
+Per-user matrix of notification types × channels stored in `kdc_qtap_notification_preferences` user_meta. The dispatcher (`KDC_qTap_Notifications::send()`) now filters `$args['channels']` against the recipient's prefs before each channel send. Mandatory types (e.g., OTP) bypass the gate via `'mandatory' => true` on registration. New helper: `kdc_qtap_user_can_receive( $user_id, $type, $channel )`.
+
+### Added — FAB registry
+
+New `kdc_qtap_register_fab( $args )` API. Cart FAB and qTap FAB Menu (mobile plugin) now register through the parent instead of rendering directly. Admin reorders, retitles, repositions (4 anchors with automatic stack-offset between FABs sharing an anchor), restricts render scope (dashboard / WC My Account / sitewide-when-logged-in / sitewide-always / cart-has-items), and overrides color through the User Dashboard admin tab's FAB section.
+
+### Added — Woo-less checkout
+
+New parent modules:
+
+- `KDC_qTap_Cart` — line-item store keyed by `source + source_id` in user_meta (no WooCommerce dependency)
+- `KDC_qTap_Checkout` — reserved `checkout` panel rendering cart review + gateway picker; routes `/checkout/`, `/checkout/pay/{token}/`, `/checkout/return/{token}/`
+- `KDC_qTap_Payment_Gateways` — gateway registry, exposed via filter `kdc_qtap_payment_gateways` and helper `kdc_qtap_register_payment_gateway()`
+- `KDC_qTap_Payment_Completion` — single source of truth for "this cart was paid"; idempotent against `cart_token + transaction_id` so duplicate webhook deliveries don't double-fire `kdc_qtap_cart_paid`
+
+New `kdc_qtap_payment_backend` setting flips checkout between WooCommerce orders (default for upgrades) and qTap gateways (default for fresh installs).
+
+### Added — Razorpay + Zaakpay gateways
+
+Two built-in gateways ship in the registry:
+
+- **Razorpay** — Standard Checkout JS modal (`process()`), HMAC-SHA256 over `payment_id|order_id` for return verification, `X-Razorpay-Signature` HMAC for webhook events
+- **Zaakpay** — auto-submitted form to hosted-checkout endpoint, alpha-sorted-pipe-concat HMAC-SHA256 checksum on initiate / return / webhook, INR amounts in paise
+
+Both are toggleable independently in the Gateways admin tab.
+
+### Added — Stable webhook URL
+
+Server-to-server gateway webhook lives at fixed `/qtap-pay/webhook/{gateway_id}/` (constant `KDC_qTap_Checkout::WEBHOOK_PATH`) — independent of the dashboard host page. Admins paste the URL into the gateway's merchant dashboard once, and it stays valid even if the dashboard slug is later reassigned.
+
+### Added — Helper APIs
+
+`kdc_qtap_dashboard_url()`, `kdc_qtap_user_destination_url()`, `kdc_qtap_is_dashboard_page()`, `kdc_qtap_register_user_dashboard_panel()`, `kdc_qtap_register_fab()`, `kdc_qtap_register_payment_gateway()`, `kdc_qtap_user_can_receive()`, `kdc_qtap_payment_completion()`, `kdc_qtap_get_associated_users()`.
+
+### Co-existence with WooCommerce
+
+WC My Account `/fees/`, `/switch/`, `/mobile/` endpoint registrations remain. Notification template helpers route fee/profile/mobile placeholders through `kdc_qtap_user_destination_url()` — the dashboard URL is preferred when configured, the WC URL stays as fallback. Set `kdc_qtap_dashboard_priority=wc` to reverse the preference. No bookmarks broken, no 301s.
+
 ## [2.7.16] - 2026-04-26
 
 ### Added — Conditional blocks in templates

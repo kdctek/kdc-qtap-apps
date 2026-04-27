@@ -2,6 +2,20 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.0] - 2026-04-27
+
+### Added — User Dashboard panel
+
+Mobile Numbers registers as a panel against the parent's User Dashboard registry (qTap App v3.0+). The same `kdc-qtap/mobile-editor` block renders both inside the dashboard (`/dashboard/mobile/`) and at the existing WC My Account `/mobile/` endpoint — no UI duplication, single shared renderer.
+
+### Changed — FAB rendering migrated to parent's FAB registry
+
+Cart FAB and qTap FAB Menu now register via `kdc_qtap_register_fab()` instead of rendering directly through `wp_footer`. Admin reorders, retitles, repositions (4 anchors with automatic stack-offset), restricts render scope (dashboard / WC My Account / sitewide-when-logged-in / sitewide-always / cart-has-items), and overrides color through the parent's User Dashboard admin tab — no more hard-coded `is_account_page()` gate.
+
+### Compatibility
+
+Falls back to the legacy direct-render `wp_footer` path when running against parent < 3.0.0. Older sites continue to render FABs exactly as before.
+
 ## [2.14.7] - 2026-04-27
 
 ### Fixed — Send OTP no longer feels frozen on slow WhatsApp API responses

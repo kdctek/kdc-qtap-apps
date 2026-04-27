@@ -2,6 +2,15 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.56] — 2026-04-27
+
+### Added — User Dashboard Admin-block contributor
+
+Education wires itself into the parent's User Dashboard (qTap App v3.0+) as the default contributor for the **Admin block**:
+
+- Declares `qtap/education-dashboard` as the block name to embed when an admin clicks **+ Create new** next to the Admin page selector in qTap Dashboard > User Dashboard > Host Page (via the `kdc_qtap_dashboard_admin_block_name` filter).
+- Auto-detects an existing page hosting the block and feeds its id back via `kdc_qtap_dashboard_admin_auto_page_id`. Result is cached in the `kdc_qtap_education_admin_dashboard_page_id` transient (1 hour TTL) and busted on `save_post_page` / `deleted_post`.
+
 ## [1.0.55] — 2026-04-26
 
 ### Changed

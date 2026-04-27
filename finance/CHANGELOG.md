@@ -2,6 +2,35 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.2] - 2026-04-27
+
+### Refactor — bootstrap file slimmed; activation, dependency check, and labels lifted into helper classes
+
+No behaviour change. Pure structural refactor in service of the qTap convention that the main plugin file (the one WordPress loads on every request) holds only the plugin header, constants, hook registrations, and class wiring — never business logic, UI rendering, or installation code.
+
+The bootstrap file [`kdc-qtap-finance.php`](kdc-qtap-finance.php) shrank from **675 → 473 lines** as the following 200 lines moved into three new helper classes:
+
+| New file | Lifted from `kdc-qtap-finance.php` | Purpose |
+|---|---|---|
+| [`includes/class-kdc-qtap-finance-installer.php`](includes/class-kdc-qtap-finance-installer.php) | `activate()`, `deactivate()`, `sync_custom_roles()` (~95 lines) | Activation/deactivation hooks: legacy-cron cleanup, default-options seeding, custom-role sync, `kdc_qtap_finance_activated` / `kdc_qtap_finance_deactivated` action firing, rewrite-rules flush. Wired via `register_activation_hook( …, [ 'KDC_qTap_Finance_Installer', 'activate' ] )`. |
+| [`includes/class-kdc-qtap-finance-dependency-checker.php`](includes/class-kdc-qtap-finance-dependency-checker.php) | `is_parent_active()`, `dependency_notice()` (~50 lines) | Detects whether qTap App parent is active; renders the "qTap Finance requires qTap App" admin notice with activate/install link. The bootstrap class still exposes `is_parent_active()` as a thin proxy so external code calling `kdc_qtap_finance()->is_parent_active()` keeps working. |
+| [`includes/class-kdc-qtap-finance-labels.php`](includes/class-kdc-qtap-finance-labels.php) | `register_labels()` (~45 lines) | The seven customizable label triples (Enrollment, Fee, Grade, Division, Academic Year, Student, Fee Category). Definitions exposed via `KDC_qTap_Finance_Labels::get_definitions()` so onboarding wizards, tests, and debug tools can read the config without triggering the registration side-effect. |
+
+All three helper classes are static-utility shells (no state, no `get_instance()`) — they're called via `KDC_qTap_Finance_Installer::activate()`, `KDC_qTap_Finance_Dependency_Checker::is_parent_active()`, `KDC_qTap_Finance_Labels::register()`. Loaded eagerly at the top of the bootstrap file (alongside the migrations trait) so they're available before `register_activation_hook` and the early `plugins_loaded` priority-15 dependency check fire.
+
+### What's still in the bootstrap file
+
+After the lift, `kdc-qtap-finance.php` contains:
+
+- Plugin header + `KDC_QTAP_FINANCE_*` constants
+- The migrations trait + the three new helper classes (eager `require_once`)
+- `KDC_qTap_Finance_Plugin` singleton — `__construct` → `init_hooks` → activation/deactivation registration + dependency check
+- `load_dependencies()` — the manifest of every class file the plugin requires (~60 lines of `require_once` lines, kept inline because this is the plugin's "what's in here" overview and benefits from being a single readable list)
+- `init_components()` — the manifest of every singleton the plugin instantiates (~58 lines, same rationale)
+- Thin proxies: `is_parent_active()`, `register_with_qtap_app()`, `add_plugin_action_links()`, `maybe_enqueue_accessibility_css()`, `register_onboarding_wizard()`, `remove_data_on_parent_request()`
+
+Anything new that grows beyond ~5 lines should default to its own class or trait under `includes/`, not back into the bootstrap.
+
 ## [3.21.1] - 2026-04-27
 
 ### Payments & transactions audit — three flows unified, labels go fully live, fee-matrix edits auto-cascade

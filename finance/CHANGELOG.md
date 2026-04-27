@@ -2,6 +2,32 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.18.0] - 2026-04-27
+
+### Added — User Dashboard integration (parent v3.0.0+)
+
+Finance now plugs into the parent's User Dashboard. The "Fees" panel at `/{dashboard}/fees/` delegates to the existing fees-block render so a single renderer powers `/fees/`, `/my-account/fees/`, and the dashboard panel — no template fork. The dashboard's Profile-panel switcher receives finance-associated users via the `kdc_qtap_associated_users` filter, and `/{dashboard}/profile/switch/{id}/` deep-links perform the same auth-cookie swap as the existing AJAX switch flow (and remain compatible with the existing Switch-back transient path). The Staff-console page is auto-detected — any published page hosting `kdc-qtap/staff-console` is fed to the parent via `kdc_qtap_dashboard_staff_auto_page_id`, cached for an hour and busted on `save_post_page` / `deleted_post`.
+
+### Added — DirectPay routes through the qTap cart when configured
+
+DirectPay (the `/fees/pay/{id}/` notification-link flow) now branches on the new `kdc_qtap_payment_backend` setting: when set to `qtap`, the fee is staged in the parent cart and the user is redirected to `/{dashboard}/checkout/` for gateway selection. The default `woocommerce` value preserves the existing WC-order path so nothing changes for sites that haven't opted into the qTap cart. Payments that complete via the qTap cart are recorded back into Finance through a new `kdc_qtap_cart_paid` subscriber that writes a `KDC_qTap_Finance_Payment_Transaction` for every finance-sourced line item — idempotent because the parent locks per `cart_token`.
+
+### Added — "Pay all outstanding fees" call-to-action
+
+When `payment_backend=qtap` and the user has at least one outstanding payment, the Fees panel now shows a one-click banner above the standard fees-block. Click bulk-adds every payment with `balance > 0` to the parent cart and redirects to `/{dashboard}/checkout/`. Lets users exercise the multi-item cart flow without a per-row checkbox UI on the fees-block itself.
+
+### Added — Switch-back URL contributor
+
+`filter_switch_back_url()` now contributes the URL for the dashboard's bottom-section "Switch back" link when the current user is in a switched session (transient `kdc_qtap_finance_switched_from_*`). `handle_switch_back()` processes the click — clears the auth cookie and re-authenticates the original user.
+
+### Changed — `{{fees_page_url}}` resolves through the dashboard helper
+
+The `fees_page_url` notification variable now goes through `kdc_qtap_user_destination_url('fees')` when the parent helper is available — so notification templates get the qTap-dashboard URL when the dashboard is configured with `priority='qtap'`, and fall back to scanning for a standalone fees-block page otherwise. The fallback scan also now matches the renamed block name `kdc-qtap/finance-fees` (the legacy-only scan was missing pages that used the renamed block).
+
+### Fixed — Staff Console block respects wide / full alignment
+
+The Staff Console block declared `align: ['wide', 'full']` support but the server-side render hardcoded the wrapper class without reading the `align` attribute, so wide/full settings from the editor were silently dropped on the frontend. The render callback now appends `alignwide` / `alignfull` to the wrapper, matching how the Report block already handled this.
+
 ## [3.17.9] - 2026-04-27
 
 ### Added — `{{directpay_url}}` template variable

@@ -2,6 +2,65 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.0] - 2026-04-27
+
+### Architecture — Per-(slab, grade) Show Range, run-time label rendering, migrations split out of the bootstrap
+
+This release rewires the Show Range save / render pipeline end-to-end so the toggle behaves the way staff expect (immediate, persistent, granular), and slims the main plugin file down from 3,146 LOC to ~670 by moving every migration into a dedicated trait. Five distinct things changed at once because they're entangled — patching any one in isolation would have left the others broken.
+
+#### Storage shape — Show Range moved from `settings.show_range[grade]` to `fee_matrix[year][slab].show_range[grade]`
+
+Until v3.20.x the flag was a single global per-grade map shared across every slab in every year. The user's reporting requirement — "PTA's range can be off for AS&A while Term Fee's range stays on for the same AS&A" — couldn't fit that shape. The setting now lives on the slab entry inside the year's fee-matrix option, one bool per (slab, grade) pair.
+
+The matrix sanitiser (`sanitize_matrix()` in `KDC_qTap_Finance_Fee_Matrix`) preserves the new `show_range` subarray on every save. The fee-matrix admin tab markup now writes through `name="fee_matrix[<slab>][show_range][<grade>]"` so the bulk-form serialiser naturally per-slabs the value — no duplicate `name` attributes across cards, no last-wins overwrite risk, and the v3.20.4 cross-card JS sync that worked around the old duplicate-input symptom is removed (no longer needed).
+
+The legacy `kdc_qtap_finance_settings.show_range[grade]` map stays in place as a read-time fallback for any matrix that hasn't been migrated yet (e.g. a CSV import that lands on disk before this release loads). The v3.21.0 upgrade migration (`migrate_per_slab_show_range_3_21_0`) walks every `kdc_qtap_finance_fee_matrix_*` option and seeds each standard slab's `show_range[grade]` map from the legacy global value, so existing installs land with their pre-v3.21.0 behaviour preserved exactly.
+
+`kdc_qtap_finance_get_show_range()` gained optional `$year`, `$slab`, `$term_key` arguments. Callers that pass them get the per-(slab, grade) AND per-term AND-merge through the new renderer; legacy single-arg callers still resolve through the global fallback so nothing breaks.
+
+#### Run-time label rendering — `installment_label` is now composed at read time
+
+A new `KDC_qTap_Finance_Label_Renderer` class (`includes/class-kdc-qtap-finance-label-renderer.php`) assembles the title from three stable, range-free parts (`label_stem`, `label_period`, `label_grade`) and evaluates Show Range live against the current settings on every read. Toggling the flag now reflects everywhere on the next page load — admin enrollment view, frontend Fees block, WC My Account fees endpoint, REST API, notification template `{{installment_label}}` variable, cart/checkout breakup, allocation breakup. The per-grade memo cache makes N reads of the same (year, slab, grade) trivial.
+
+Schema migration (DB version 2.4.0, gated by the existing `KDC_qTap_Finance_Database::run_migrations` ladder) adds three columns to both `payments` and `payment_items`:
+- `label_stem` — term/cycle name with year tag, no range (e.g. `XI [2026-2027]`)
+- `label_period` — pre-formatted range string (e.g. `Apr-Sep 2026`)
+- `label_grade` — grade context for `payment_items` so Show Range can be evaluated without a JOIN back to `payments`
+
+A second one-time migration (`migrate_split_label_columns_3_21_0`) reverse-parses every existing `installment_label` row and back-fills the three columns. Two label flavours are recognised — `<stem> (<period>)` for `payment_items` and the format-derived flavour (e.g. `<stem>: <period>` for the user's `{term} [{year}]: {range}` payment_title_format) for `payments`. Rows that don't match (per-month labels with no separable range, custom slab names with parens in them, …) get `label_stem = installment_label` and `label_period = ''`, which renders identically to the legacy cooked label.
+
+Legacy `installment_label` is **kept as a fallback** on both tables — every writer dual-writes the cooked legacy value alongside the split columns, and the renderer falls back to it whenever `label_stem` is NULL. This means a reader site that wasn't swapped in this release still produces correct output (just with the old "stale-after-toggle" behaviour), instead of fataling. The legacy column is scheduled for removal in v3.22.0 after a soak.
+
+Nine reader sites swapped to the renderer:
+- `class-kdc-qtap-finance-rest-api.php` (`installment_label` field on REST responses, both list + detail)
+- `class-kdc-qtap-finance-notifications.php` (template variable + scheduling context, 3 sites)
+- `traits/trait-kdc-qtap-finance-wc-orders.php` (`build_payment_item_breakup_rows` cart/checkout + `apply_allocation_breakup` receipt)
+- `class-kdc-qtap-finance-enrollment.php` (parent payment title build — now AND-s per-term flag with the legacy global per-grade flag)
+- `kdc-qtap-finance-helper-functions.php` (`kdc_qtap_finance_get_show_range` helper now accepts slab + term args)
+
+User-fee slabs (`_user_fee_*`) keep their existing `installment_label` resolver — those labels are one-off custom names with no range tail to gate.
+
+#### Save-path consolidation — bulk + per-slab + autosave all route through the matrix
+
+`ajax_save_fee_matrix` no longer writes to `settings.show_range[grade]` (the v3.20.2 inline workaround is gone). The slab-scoped form name does the work — `sanitize_matrix()` reads `show_range` off each slab entry directly. `ajax_save_fee_slab` writes per-slab into `matrix[<slug>].show_range` and flushes the renderer cache before responding. `ajax_autosave_fee_field` recognises the per-slab show_range field (sent with both `slug` and `grade`), writes into the matrix option, falls back to the legacy global setting only when `slug` is missing.
+
+#### Code organisation — migrations moved out of the bootstrap
+
+Per the user's "core file should call appropriate files, not be code heavy" feedback, every `migrate_*()` method (~1,500 LOC) and `maybe_upgrade()` (~600 LOC) moved verbatim into a new `KDC_qTap_Finance_Migrations` trait at `includes/traits/trait-kdc-qtap-finance-migrations.php`. The main `kdc-qtap-finance.php` file shrunk from 3,146 LOC to ~670 — now focused on dependency loading, singleton wiring, dependency check, and component initialisation. Behavioural delta: zero.
+
+#### Database
+
+DB version bumped from 2.3.0 to 2.4.0. Migration adds 5 new columns total (`label_stem`, `label_period` on `payments`; `label_stem`, `label_period`, `label_grade` on `payment_items`). All additive — no destructive schema change. CREATE TABLE statements updated so fresh installs land with the same shape. Migration is idempotent and gated by version comparison.
+
+#### Files added
+
+- `includes/class-kdc-qtap-finance-label-renderer.php` — new renderer class
+- `includes/traits/trait-kdc-qtap-finance-migrations.php` — extracted migrations trait
+
+#### Files removed
+
+None — this release is purely additive at the file level.
+
 ## [3.20.4] - 2026-04-27
 
 ### Fixed — Per-grade Show Range was being silently dropped by the settings whitelist

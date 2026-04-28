@@ -2,6 +2,65 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.1.7] - 2026-04-28
+
+### Refined — qTap.buzz SMS settings: lean form, conditional fields, read-only DLR URL, in-place test sender
+
+The SMS channel UI in v3.1.6 exposed the full plumbing — API URL, Bearer token, API secret, the inbound DLR callback URL — even though the qTap.buzz path doesn't need any of them. This release reorganises the form around a single mental model: **admin picks a route; the plugin handles the rest.**
+
+### What admins now see (qTap.buzz path)
+
+| Field | Visibility |
+|-------|------------|
+| **Sender ID** | Always |
+| **Route** (`auto` / `tfsc` / `dlt` / `global` / `skbiz` / `intl`) | Always |
+| **DLT Principal Entity ID** | Only when Route = `dlt` |
+| **SKBIZ API Key** | Only when Route = `skbiz` (stored in the existing `api_key` slot, sent as `skbiz-key` header) |
+| **DLR Webhook URL** | Always — read-only `<input>` with a Copy button. Generated from `rest_url('kdc/v1/qtap/sms-dlr')` for paste-into-platform. |
+
+What disappeared from the qTap.buzz path: API URL, API Token (Bearer), API Secret, the writable Default DLR Callback URL field. The plugin owns those — endpoint constants live in `class-kdc-qtap-channel-sms.php` (`QTAPBUZZ_DEFAULT_ENDPOINT`), and the DLR target is auto-generated per request.
+
+The Custom (legacy) gateway path still surfaces API URL + API Token (Bearer) for sites that haven't migrated.
+
+### New — Send Test SMS button on the channel card
+
+Right under the channel settings, a **Test Send** section lets admins fire a real test SMS without enabling the channel or routing through the full notification system:
+
+- Phone-number input + **Send Test SMS** button.
+- Runs `KDC_qTap_Channel_SMS::send()` directly with the saved settings (bypasses the channel-enabled flag — useful for verifying config before going live).
+- Inline result panel shows the **endpoint hit, the exact payload sent, HTTP code, and response body** — so the admin can see whether the n8n flow accepted the call without grepping the notification log.
+
+### New — `/wp-json/kdc/v1/qtap/sms-dlr` DLR receiver stub
+
+A new REST endpoint receives normalised DLR JSON forwarded by the qTap.buzz platform. The 3.1.7 implementation is a stub:
+
+- Accepts the POST permissively (auth/HMAC verification arrives in 3.2.0 with the log-row mapping).
+- Logs the payload via `kdc_qtap_debug_log()` when debug mode is on.
+- Fires `do_action( 'kdc_qtap_sms_dlr_received', $payload, $request )` so downstream code can correlate provider message IDs to notification log rows today, ahead of the typed columns.
+
+The qTap.buzz channel's `send()` method now auto-fills `dlr_url` in the outgoing payload, pointing at this REST endpoint. Per-call (`data['sms_dlr_url']`) and per-channel (`default_dlr_url`) overrides still take precedence.
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `includes/traits/trait-kdc-qtap-admin-channels.php` | SMS section restructured into Gateway-only table + qTap.buzz fields table (with route-conditional rows) + Custom fields table + Test Send section. New JS handlers: gateway/route toggles, DLR-URL copy, Send Test SMS. New `ajax_send_test_sms()` method. |
+| `includes/class-kdc-qtap-admin.php` | Registered `wp_ajax_kdc_qtap_test_sms`. |
+| `includes/class-kdc-qtap-rest-api.php` | Registered `POST /kdc/v1/qtap/sms-dlr` + `receive_sms_dlr()` stub firing `kdc_qtap_sms_dlr_received`. |
+| `includes/notifications/class-kdc-qtap-channel-sms.php` | qTap.buzz `send()` now auto-fills `dlr_url` to the WP REST endpoint when no override is configured. |
+
+### Hooks
+
+- **New action** `kdc_qtap_sms_dlr_received` — `( array $payload, WP_REST_Request $request )`. Fires when qTap.buzz forwards a DLR. Use it to update your own ledger or correlate to log rows ahead of the v3.2.0 schema migration.
+
+### Back-compat
+
+- `default_dlr_url` setting still respected — sites that previously typed a custom DLR URL keep their behaviour. The form just no longer surfaces it for editing.
+- `data['sms_dlr_url']` per-notification override still wins over the channel default.
+- Custom (legacy) gateway path unchanged — same fields, same payload shape, same Bearer auth.
+
+---
+
 ## [3.1.6] - 2026-04-28
 
 ### Cleanup — Removed dead form handlers from `KDC_qTap_Notification_Preferences`

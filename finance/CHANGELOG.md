@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.6] - 2026-04-28
+
+### Fixed — Fee Breakup modal silently failed for users without WooCommerce orders
+
+The Fee Breakup launcher (list-view icon next to each Payment History row) opened nothing when clicked on profiles that had no WooCommerce orders or on sites where WooCommerce was inactive. Root cause: when v3.21.3 introduced the launcher, it moved the items-modal CSS/JS enqueueing out of `render_user_wc_orders_section()` to the user-meta `admin_enqueue_scripts` hook, but the modal *markup* itself was left inside the `else` branch of `render_user_wc_orders_section()` — so the `<div id="kdc-qtap-finance-items-modal">` element only reached the page when the user had ≥1 WC order. JS handler fired, jQuery selector found nothing, modal never appeared.
+
+Fix: items-modal markup moved into `render_profile_modals()` so it renders unconditionally on every user profile (admin user-edit.php and Staff Console block alike), and removed from `render_user_wc_orders_section()` to avoid duplicate IDs.
+
 ## [3.21.5] - 2026-04-28
 
 ### Fixed — Second billing period silently dropped when payment title exceeded 50 chars

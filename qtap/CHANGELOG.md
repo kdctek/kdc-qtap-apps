@@ -2,6 +2,91 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.2.0] - 2026-04-28
+
+### New — Passkeys (WebAuthn) login alongside OTP
+
+qTap now supports passwordless sign-in using WebAuthn — Touch ID, Face ID, Windows Hello, Android biometrics, or any FIDO2 hardware key. It lives **alongside** the existing mobile-OTP flow, not as a replacement. A user with no passkey enrolled keeps logging in exactly as today; a user who has enrolled one or more passkeys gets a one-tap sign-in option that's strictly more secure than any OTP channel — the credential never leaves the device, and replay is blocked by a sign-counter.
+
+### Where the "Touch / Face ID (Passkey)" button shows up
+
+| Surface | Hook | Position |
+|---|---|---|
+| `wp-login.php` (core WP login) | `login_form` action | Bottom of the form, just before the footer links |
+| Theme `wp_login_form()` placements | `login_form_bottom` filter | Last element inside the form (the "before footer" slot) |
+| The qTap mobile-login block | direct edit (kdc-qtap-mobile v2.15.6+) | Sibling of the existing "Send OTP" button |
+
+All three placements call into the same `KDC_qTap_WebAuthn_Login_Form::render_button()` markup and gate on a single `KDC_qTap_WebAuthn::should_advertise_button()` helper — so the button is hidden everywhere if the admin disables passkeys site-wide, or if no user has enrolled a credential yet (avoids account enumeration).
+
+### Where users manage their passkeys
+
+In **My Account → Profile**, a new **Passkeys** section renders below the existing account-details form:
+
+- Lists each enrolled credential with a user-given label, the date it was added, and how recently it was last used
+- "Add a passkey" prompts for a **required** name (e.g. "Work MacBook", "iPhone 15", "YubiKey 5C") before running the browser registration ceremony — empty names are blocked client-side and server-side
+- Inline rename + delete per credential
+- Multiple credentials per account supported (laptop Touch ID + phone + hardware key)
+
+The section is rendered through a new `kdc_qtap_profile_panel_sections` action that any plugin can hook into to contribute its own Profile-panel section.
+
+### Library
+
+Bundles `lbuchs/WebAuthn` v2.2.0 — pure-PHP, no Composer, no third-party deps. Lives under `includes/lib/lbuchs-webauthn/` (~150 KB, 14 PHP files). Same drop-in pattern qTap already uses for `intl-tel-input`.
+
+### REST endpoints (kdc/v1)
+
+```
+POST   /qtap/webauthn/register/start        Logged in    body: { name }            — issues PublicKeyCredentialCreationOptions
+POST   /qtap/webauthn/register/finish       Logged in    body: { token, clientDataJSON, attestationObject, transports[] }
+GET    /qtap/webauthn/credentials           Logged in    — list current user's credentials
+PATCH  /qtap/webauthn/credentials/{id}      Logged in    body: { name }            — rename
+DELETE /qtap/webauthn/credentials/{id}      Logged in    — delete
+POST   /qtap/webauthn/auth/start            Public       body: { identity }        — issues PublicKeyCredentialRequestOptions
+POST   /qtap/webauthn/auth/finish           Public       body: { token, id, clientDataJSON, authenticatorData, signature, userHandle }
+```
+
+`auth/finish` runs the same three-line session establishment the existing mobile-OTP path runs (`wp_set_current_user`, `wp_set_auth_cookie( $id, true )`, `do_action( 'wp_login', … )`) so WooCommerce, BeaverBuilder, `login_redirect`, and every other consumer of the WP login lifecycle behave identically whether the user came in via OTP or passkey.
+
+### Storage
+
+Per-user list in `kdc_qtap_webauthn_credentials` user_meta. Each record holds the credential id, COSE public key, sign-counter, user-supplied name, transports hint, AAGUID, and created/last-used timestamps. A site-wide `kdc_qtap_webauthn_total_credentials` option caches the total count so the login-button gate stays O(1).
+
+### Hooks added
+
+| Hook | Type | Purpose |
+|---|---|---|
+| `kdc_qtap_webauthn_relying_party` | filter `(array $rp)` | Override RP id / name / icon at runtime |
+| `kdc_qtap_webauthn_credential_registered` | action `(int $user_id, array $credential)` | Audit log / notify on enrol |
+| `kdc_qtap_webauthn_login_succeeded` | action `(int $user_id, string $credential_id)` | Audit log / notify on login |
+| `kdc_qtap_webauthn_login_failed` | action `(string $identity, string $reason)` | Rate-limit / alert |
+| `kdc_qtap_webauthn_button_label` | filter `(string $label)` | Override the default *"Touch / Face ID (Passkey)"* label per locale or context |
+| `kdc_qtap_webauthn_login_redirect` | filter `(string $url, WP_User $user)` | Override the post-passkey-login redirect URL |
+| `kdc_qtap_profile_panel_sections` | action `(int $user_id)` | Contribute a section to the User Dashboard Profile panel; passkeys is the first consumer |
+
+### Files added
+
+- `includes/lib/lbuchs-webauthn/` — the library (14 PHP files, 152 KB)
+- `includes/class-kdc-qtap-webauthn.php` — wrapper class (RP config, credential CRUD, registration + authentication ceremonies, identity resolution)
+- `includes/class-kdc-qtap-webauthn-rest.php` — `kdc/v1` REST routes per the table above
+- `includes/class-kdc-qtap-webauthn-login-form.php` — `login_form` action + `login_form_bottom` filter + `login_enqueue_scripts` enqueue, plus the single-source-of-truth `render_button()` template
+- `includes/user-dashboard/class-kdc-qtap-webauthn-profile-section.php` — Passkeys section inside Profile panel, hooks `kdc_qtap_profile_panel_sections`
+- `assets/js/kdc-qtap-passkeys.js` — browser ceremony helpers (base64url encoding, `navigator.credentials.create/get` wrappers, REST POSTs, inline list re-render after enrol/rename/delete, friendly error mapping, smart name suggestion based on UA sniff)
+- `assets/css/kdc-qtap-passkeys.css` — login button + Profile section styles, mobile-friendly
+
+### Files modified
+
+- `kdc-qtap.php` — `require_once` the four new classes; init them in `init_notifications()` alongside `KDC_qTap_REST_API::init()`
+- `includes/kdc-qtap-frontend-helpers.php` — new `kdc_qtap_enqueue_passkey_assets()` helper (idempotent registration + enqueue + nonce localisation)
+- `includes/user-dashboard/class-kdc-qtap-profile-panel.php` — fires `kdc_qtap_profile_panel_sections` action between the account-details form and the panel close
+
+### Size impact
+
+| Artefact | Uncompressed | ZIP'd |
+|---|---|---|
+| lbuchs/WebAuthn library | ~152 KB | ~50 KB |
+| Integration code (5 PHP classes + JS + CSS) | ~80 KB | ~25 KB |
+| **Total added** | **~232 KB** | **~75 KB** |
+
 ## [3.1.8] - 2026-04-28
 
 ### Fixed — Send Test SMS now writes to the notification log

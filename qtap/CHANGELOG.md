@@ -14,6 +14,20 @@ This release deletes them. Pure cleanup, no behaviour change.
 
 - `includes/notifications/class-kdc-qtap-notification-preferences.php` — `handle_save()` + `handle_save_nopriv()` removed along with the `Form handling` section comment. Class is now ~40 lines lighter.
 
+### Added — `Default DLR Callback URL` field in the SMS channel settings form
+
+v3.1.5 introduced the `default_dlr_url` setting in the SMS channel but never surfaced it in the admin UI — sites had no way to configure a site-wide DLR callback without writing PHP. This release adds the matching form field to **qTap App → Settings → Channels → SMS** (after the DLT Principal Entity ID), with a `placeholder` showing the expected URL shape and a description explaining the per-notification override path (`data["sms_dlr_url"]`).
+
+### Removed — `LLM.md` is now local-only
+
+The qTap SMS platform integration guide added in v3.1.5 was meant for local AI-agent context, not for distribution. v3.1.6 removes it from the published artifacts:
+
+- Added to `.gitignore` so it is no longer tracked in the plugin repo.
+- Excluded from the `/qtap-zip` build pipeline so the distributable ZIP does not contain it.
+- Deleted from `tridha.edu.in` via the diff-only SFTP push (the file is git-removed in this commit, so the deploy script removes it from the live site automatically).
+
+The file remains on local working copies as developer reference. The SMS-platform contract itself is unchanged — see the v3.1.5 entry for the runtime behaviour.
+
 ## [3.1.5] - 2026-04-28
 
 ### Added — qTap SMS Platform integration in the SMS notification channel

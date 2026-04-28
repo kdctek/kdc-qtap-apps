@@ -2,6 +2,13 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.11] - 2026-04-28
+
+### Changed — Receipts filter micro-polish
+
+- Per-row "All / None" toolbars now stack vertically (one button per line) instead of inline with a `|` separator. Less horizontal noise, separator removed.
+- "Reset all" button moved to the LEFT of the "Filter" button in the form footer so the Filter button always sits at the same right-anchored position whether or not any filter is active. Previously the Filter button shifted left whenever Reset appeared.
+
 ## [3.21.10] - 2026-04-28
 
 ### Changed — Receipts filter URL hygiene + layout polish

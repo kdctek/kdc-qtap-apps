@@ -2,6 +2,44 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.1.3] - 2026-04-28
+
+### Improved — Notification preferences only show channels the site actually delivers on
+
+The user-facing **My Account > Notifications** matrix used to render every registered channel (minus webhook/log) regardless of whether the admin had enabled it under **qTap > Notifications > Channels**. That collected meaningless opt-ins for channels the site couldn't actually send through.
+
+`KDC_qTap_Notification_Preferences::get_channels()` now consults `KDC_qTap_Notifications::is_channel_enabled()` and drops any channel that is off at the site level. Disable SMS in admin → the SMS column disappears from every user's preferences table. Enable a new channel later → the column appears, with a sensible default already ticked.
+
+### New — Smart per-channel default for users who haven't set a preference
+
+Previously the implicit default was *opt-in for every channel*. That works for Email and WhatsApp but is wrong for SMS, where carrier costs and spam-aversion mean users should opt **in** rather than opt **out**.
+
+A new `default_for_channel( $channel )` helper on the preferences class returns:
+
+- `false` for `sms`
+- `true` for every other channel
+
+It's filterable via `kdc_qtap_notification_preference_default` so a child plugin can override the policy per channel. Both `can_receive()` (the dispatcher gate) and the panel render now route through this helper instead of the hardcoded `true`.
+
+### How it behaves
+
+| Scenario | Before | After |
+|---|---|---|
+| Admin disables WhatsApp at site level | WhatsApp column still rendered for every user | WhatsApp column hidden everywhere |
+| Admin enables Push (future channel) | User must opt in manually | Default ON, surfaces immediately |
+| Admin enables SMS | Default ON — users get SMS without consent | Default OFF — users opt in explicitly |
+| User had previously toggled SMS ON | Saved preference honoured | Saved preference honoured (unchanged) |
+
+### Files changed
+
+- `includes/notifications/class-kdc-qtap-notification-preferences.php` — `get_channels()` filters by site-level `is_channel_enabled()`. New `default_for_channel()` helper. `can_receive()` and `render_panel()` use it instead of hardcoded `true`.
+
+### Hooks added
+
+| Hook | Type | Signature | Purpose |
+|------|------|-----------|---------|
+| `kdc_qtap_notification_preference_default` | filter | `(bool $default, string $channel)` | Override the implicit per-channel default for users with no saved preference. |
+
 ## [3.1.2] - 2026-04-28
 
 ### New — qTap.buzz SMS gateway: SMS channel now speaks to the n8n SMS flow natively

@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.12] - 2026-04-28
+
+### Changed — Tone down All / None toolbar buttons
+
+The per-row All / None links were rendering in WP-blue (#2271b1) at 10px / 600 weight, which read as primary actions on top of the already blue-tinted Receipts panel — visually heavier than the labels they sat under. Pulled them back to muted grey (#8c8f94), 9px, 400 weight; hover transitions to WP-blue so the affordance is still discoverable.
+
 ## [3.21.11] - 2026-04-28
 
 ### Changed — Receipts filter micro-polish

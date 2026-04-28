@@ -2,6 +2,18 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.1] - 2026-04-28
+
+### Fixed — qTap FAB Menu opened empty after login
+
+After v2.15.0 wired the FAB through the parent's FAB-registry (parent v3.0.0+), the floating qTap menu showed up correctly on `/dashboard/`, `/mobile/`, and other logged-in surfaces — but clicking it opened an **empty dropdown** with no Staff/Admin/Mobile/Logout shortcuts.
+
+Root cause: the FAB script (`kdc-qtap-mobile-fab-menu.js`) and its localized `kdcQtapFab` data (which carries the menu items array) were being enqueued from inside the render callback that the parent's FAB registry calls at `wp_footer` priority **30**. WordPress prints all queued footer scripts at `wp_footer` priority **20** via `wp_print_footer_scripts` — so by the time we tried to enqueue, the footer-script print had already happened. The script tag and its `wp_localize_script` payload never made it onto the page, leaving the menu's `<nav>` empty (the JS that fills it couldn't run).
+
+The pre-v2.15.0 fallback path (legacy direct `add_action( 'wp_footer', … )` at default priority **10**) avoided this because priority 10 runs before priority 20. The v2.15.0 migration to the parent's FAB registry inadvertently shifted the render to too late in the footer cycle.
+
+**Fix in [class-kdc-qtap-mobile-woocommerce-myaccount.php](includes/integrations/class-kdc-qtap-mobile-woocommerce-myaccount.php):** added a new `maybe_enqueue_fab_menu_assets()` callback hooked to `wp_enqueue_scripts` (which fires during page-build, well before `wp_print_footer_scripts`). It runs the same gating checks (`is_user_logged_in()`, `is_fab_menu_enabled()`, non-empty `get_qtap_fab_menu_items()`) and does the `wp_enqueue_script` + `wp_enqueue_style( 'dashicons' )` + `wp_localize_script` calls. The `render_qtap_fab_menu()` callback at `wp_footer:30` now only emits the FAB HTML + inline CSS as it always should have. No effect on the legacy fallback path that still runs against parents older than v3.0.0.
+
 ## [2.15.0] - 2026-04-27
 
 ### Added — User Dashboard panel

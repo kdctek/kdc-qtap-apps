@@ -2,6 +2,22 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.58] — 2026-04-28
+
+### New — Federation endpoints for api.qtap.app
+
+Adds two HMAC-authed REST routes that let the central qTap API at `api.qtap.app` look up parents in this WP install without using a logged-in user, nonce, or Application Password. Routes:
+
+- `POST /wp-json/kdc/v1/qtap/education/federation/handshake` — one-time bootstrap. Body: `{"secret":"<32–128 char hex>"}`. Stores the per-tenant shared secret encrypted at-rest via `KDC_qTap_Education_Secret` (autoload=no). Subsequent rotation requires `?rotate=1` AND a valid HMAC signature with the current secret.
+- `POST /wp-json/kdc/v1/qtap/education/federation/lookup-by-phone` — body: `{"phone":"+E164"}`. Walks `kdc_qtap_mobile_numbers` user_meta for a parent match, then enumerates linked students via `kdc_qtap_finance_associated_users`. Returns `{found, wp_user_id, display_name, role, children:[{wp_user_id, display_name, grade, division, academic_year}]}`.
+
+**Auth contract:**
+- `X-Qtap-Timestamp: <unix seconds>`
+- `X-Qtap-Signature: hex(hmac_sha256(secret, "${timestamp}.${rawBody}"))`
+- 5-minute skew window, constant-time comparison via `hash_equals()`.
+
+**New file:** [`includes/class-kdc-qtap-education-federation.php`](includes/class-kdc-qtap-education-federation.php). Wired into the bootstrap in [`kdc-qtap-education.php`](kdc-qtap-education.php) `init_components()`.
+
 ## [1.0.57] — 2026-04-28
 
 ### New — Education registers with the parent's frontend-pages registry

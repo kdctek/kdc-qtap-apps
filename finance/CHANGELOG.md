@@ -2,6 +2,76 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.16] - 2026-04-28
+
+### Fixed — `/staff/report/` 301-redirected to `/reports/`
+
+After v3.21.15 landed and the rewrite rules flushed, three of the four staff console clean URLs worked (overview / receipts / stats → 200), but `/staff/report/` 301-redirected to a same-named top-level WP page at `/reports/`. Cause: WP's `redirect_canonical()` runs after our rewrite rule fires and second-guesses the resolution by fuzzy-matching the trailing path segment against existing page slugs — it sees `report` and concludes the user "really meant" `/reports/`.
+
+Added a `redirect_canonical` filter that returns `false` (suppressing the redirect) only when our `tab` query var is set to one of the whitelisted tab slugs. Narrow scope keeps every other canonical redirect on staff pages working normally.
+
+## [3.21.15] - 2026-04-28
+
+### Fixed — v3.21.14 rewrite rules didn't take effect on existing installs
+
+v3.21.14 registered the path-style rewrite rules at `init` priority 11 but didn't trigger a `flush_rewrite_rules()` outside of the activation hook — so on an existing install (no deactivate/reactivate), the cached rule map kept serving 404s for `/staff/receipts/`, `/staff/overview/`, etc.
+
+Added a one-time, version-stamped auto-flush inside `register_rewrite_rules()`: a `RULES_VERSION` constant (`'1'`) is compared against the `kdc_qtap_finance_rewrites_version` option; on mismatch (or first-ever load) the rules flush exactly once and the option is updated. Subsequent requests are no-ops. Bumping `RULES_VERSION` is the canonical way to roll out rewrite-rule changes in future releases.
+
+## [3.21.14] - 2026-04-28
+
+### Added — Staff Console clean-URL routing
+
+Each Staff Console tab is now reachable via a clean path-style URL in addition to the existing `?tab=` query string. The legacy form keeps working — both URL styles route to the same tab dispatch.
+
+| Old | New |
+|-----|-----|
+| `/staff/?tab=receipts` | `/staff/receipts/` |
+| `/staff/?tab=overview&user=12345` | `/staff/overview/12345/` |
+| `/staff/?tab=stats` | `/staff/stats/` |
+
+Implementation:
+
+- **New class** `KDC_qTap_Finance_Staff_Rewrites` — registers `^staff/(overview\|receipts\|report\|stats)/(?:(\d+)/)?$` rewrite rules at `init` priority 11. Resolves the staff page id from the parent's `kdc_qtap_user_dashboard()->get_staff_page_id()` helper (parent v3.0+); silently no-ops when the parent isn't loaded or no staff page is configured.
+- **Tab whitelist** in the regex stops random child pages of `/staff/` (e.g. `/staff/some-cms-page/`) from accidentally routing into the console.
+- **Plain-permalink fallback** — when `permalink_structure` is empty, the menu builder skips clean URLs and emits the legacy `?tab=` style instead, since rewrite rules need pretty permalinks to fire.
+- **Auto-flush** when the parent's staff-page setting changes (`update_option_kdc_qtap_dashboard_staff_page_id` / `add_option_…`), and on plugin activation, so the cached rewrite map stays current with the configured slug.
+- **Read both query var and `$_GET`** for `tab` and `user` in the staff-console dispatch, so clean URLs (where the rewrite produces a query var) and legacy URLs (where the value lands in `$_GET`) both resolve correctly.
+
+The Receipts filter form, JS URL builder, pagination URLs, and Reset all link all already use `window.location.pathname` and `$_SERVER['REQUEST_URI']`, so they automatically pick up the new path style with no changes.
+
+## [3.21.13] - 2026-04-28
+
+### New — Finance registers with the parent's frontend-pages registry
+
+Parent v3.1.1 introduced `kdc_qtap_frontend_pages` — a single filter where every child plugin declares its frontend-facing pages and gets the User Dashboard admin row + dashboard nav link + qTap Menu FAB item for free. Finance migrates its two frontend pages (Staff console + Fees) to this contract.
+
+**Updated:** [`includes/class-kdc-qtap-finance-dashboard-integration.php`](includes/class-kdc-qtap-finance-dashboard-integration.php) — new `register_frontend_pages()` static contributor hooked at `kdc_qtap_frontend_pages`. Two entries added:
+
+| Page id | Block | Visibility | Priority |
+|---|---|---|---|
+| `staff` | `kdc-qtap/staff-console` | `rest_api` | 80 |
+| `fees`  | `kdc-qtap-finance/fees` | `logged_in` | 20 |
+
+The pre-v3.1.1 `kdc_qtap_dashboard_staff_auto_page_id` filter is **kept for one transition release** as a back-compat shim — it only fires when running against parent < v3.1.1, so sites that haven't yet upgraded the parent keep working.
+
+**End-user visible changes (after upgrading parent + Finance):**
+
+- The User Dashboard admin form's "Elevated-user shortcuts" section is now titled **"Frontend pages"** and groups entries by visibility (Public / Logged-in / Elevated). The Fees row appears under Logged-in users; the Staff row under Elevated.
+- The qTap Menu FAB picks the Fees URL up automatically from the registry — Finance no longer hardcodes anything FAB-related (per the v3.0.5 single-home rule).
+
+**No data migration:** existing admin selections for `kdc_qtap_dashboard_staff_page_id` survive verbatim — the parent's registry preserves that legacy option key for back-compat. Sites that have a Staff page picked stay picked. Sites that don't have a Fees page picked will see "— Auto-detect —" until they pick one or click Create new.
+
+See [`CHILD-PLUGIN_FRONTEND-PAGES.md`](../kdc-qtap/docs/CHILD-PLUGIN_FRONTEND-PAGES.md) in the parent for the full registration contract.
+
+### Coordinated companion releases
+
+- **kdc-qtap v3.1.1** — introduces the `kdc_qtap_frontend_pages` filter + parent-side wiring.
+- **kdc-qtap-mobile v2.15.5** — registers `mobile` (logged_in).
+- **kdc-qtap-education v1.0.57** — registers `admin` (rest_api).
+
+Deploy parent first.
+
 ## [3.21.12] - 2026-04-28
 
 ### Changed — Tone down All / None toolbar buttons

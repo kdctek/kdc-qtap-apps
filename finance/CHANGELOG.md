@@ -2,6 +2,20 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.9] - 2026-04-28
+
+### Changed — Removed auto-submit on Receipts filter; added per-row All / None toolbars
+
+The v3.16.103 auto-submit behaviour (every pill / date / select change fires a fetch) was creating real friction: narrowing 1 of 15 grades meant 14 manual unticks AND 14 round-trips, each rebuilding the URL with all the still-checked defaults. The Filter button is now the single commit trigger — toggle pills freely, click Filter once.
+
+Each multi-select pill row (Status / Source / Grade / Payment / By) gains an "All / None" link toolbar at the right edge. One click clears or fills that row's pills (skipping disabled / is-zero entries), so "show me only AS & A Grade" is now: click "None" on Grade row → click the "AS & A" pill → click Filter. Three clicks, one fetch.
+
+Side-effect win: the strip-empty-fields submit handler now runs on every commit (it was previously skipped because programmatic `form.submit()` doesn't fire submit-event listeners). Empty `q=`, `date_from=`, `date_to=` no longer pollute the URL.
+
+### Known follow-up — URL bracket encoding & default-pills bloat
+
+Browsers natively encode `[]` as `%5B%5D` on form GET submit, and every checked default pill still serializes into the URL even though "all selected" semantically means "no constraint". Cleaning these up requires a JS-driven URL builder plus a server-side semantics flip (absent multi-select key = default, not "user cleared all"); deferred to a follow-up.
+
 ## [3.21.8] - 2026-04-28
 
 ### Fixed — Receipts filter panel disappeared on desktop

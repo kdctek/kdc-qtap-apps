@@ -2,6 +2,53 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.1.0] - 2026-04-28
+
+### Refactor — `includes/` reorganised into feature subfolders
+
+No behaviour change. Pure structural cleanup. The 40-file-flat `includes/` directory was hard to navigate — adding any new class meant scanning a long list of `class-kdc-qtap-*.php` siblings to figure out where related code already lives. Reorganised into feature subfolders so the folder layout *describes the plugin's responsibilities* rather than just collecting every file at one level.
+
+### New layout
+
+| Subfolder | Count | Files |
+|---|---:|---|
+| [`includes/fab/`](includes/fab/) | 3 | `class-kdc-qtap-fabs.php` (registry), `class-kdc-qtap-fab-menu.php` (Menu FAB), `class-kdc-qtap-cart-fab.php` (Cart FAB) |
+| [`includes/notifications/`](includes/notifications/) | 11 | Channel base + 5 channel implementations, log, variables, manager, preferences, helper functions |
+| [`includes/jobs/`](includes/jobs/) | 2 | `class-kdc-qtap-job.php`, `class-kdc-qtap-job-processor.php` (background import/export) |
+| [`includes/user-dashboard/`](includes/user-dashboard/) | 4 | `class-kdc-qtap-user-dashboard.php`, `class-kdc-qtap-user-dashboard-admin.php`, `class-kdc-qtap-profile-panel.php`, `class-kdc-qtap-onboarding-wizard.php` |
+| [`includes/whatsapp/`](includes/whatsapp/) | 3 | WA admin extras: messages tracking, inbound webhook, helpers |
+| [`includes/traits/`](includes/traits/) | 12 | All `trait-kdc-qtap-admin-*.php` admin tab traits |
+| `includes/` (top-level) | 7 | Things that don't fit a single feature: admin shell, REST router, WC orders admin, frontend helpers, labels, phone helpers/countries |
+
+**File count:** 35 files moved (3 + 11 + 2 + 4 + 3 + 12), 7 stayed at top level. Total `includes/` content unchanged.
+
+### Behaviour change scope
+
+**None.** Every PHP class name, function name, hook name, and option name is identical to v3.0.5. The only thing that changed is the path WordPress's `require_once` calls point to. Third-party code that hooks any qTap action/filter or instantiates any qTap class is completely unaffected.
+
+### Updated `require_once` paths
+
+Two files needed path updates:
+
+1. [`kdc-qtap.php::load_dependencies()`](kdc-qtap.php) — 28 require_once lines now reference the new subfolder paths (`includes/fab/...`, `includes/notifications/...`, etc.).
+2. [`includes/class-kdc-qtap-admin.php`](includes/class-kdc-qtap-admin.php) — the 12 admin trait `require_once` lines now point at `includes/traits/`.
+
+No other file in the qTap suite (parent, finance, mobile, education, events, checkout, kyc, wa) requires anything from parent's `includes/` by path — child plugins use the parent's public functions/classes by name, so they're path-agnostic and need no changes.
+
+### Why the minor bump
+
+Pure refactors usually go to a patch version (CORE MEMORY: "default to patch bumps"). This one earns a minor (3.0.5 → 3.1.0) because:
+
+- It's a structural change worth flagging in the version history. Future-self looking at `git log` should immediately see *something organisationally different happened here*.
+- 35 file moves is large enough that a future debugger should know which version introduced the new layout.
+- The `git mv` history is cleanest if it sits on a clearly-named tag (`v3.1.0`) rather than buried inside a patch.
+
+Behaviour is still 100% backwards compatible — the bump signals "structure changed" not "API changed".
+
+### Deploy
+
+Single SFTP push: 35 file moves (each = 1 add at new path + 1 delete at old path) + 2 modified files (the bootstrap + `class-kdc-qtap-admin.php`) = ~72 file operations on tridha. Diff-only deploy script handles `D` filter automatically. Risk surface: any `require_once` path I mistyped → 500 on live. Mitigated by the lint pass before commit.
+
 ## [3.0.5] - 2026-04-28
 
 ### Refactor — all FAB rendering now lives in the parent (single home rule)

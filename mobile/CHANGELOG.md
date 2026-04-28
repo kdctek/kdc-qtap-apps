@@ -2,6 +2,20 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.4] - 2026-04-28
+
+### Removed — last `fab`-named filter call (the only FAB-adjacent reference left in mobile)
+
+`get_accent_color()` (which colors the WC My Account bottom-nav, **not** a FAB) was still applying `apply_filters( 'kdc_qtap_mobile_cart_fab_color', '' )` as a back-compat shim. The filter's name is a leftover from when this method colored the now-relocated cart FAB. With the cart FAB living in the parent since v3.0.5, the filter call inside mobile only affected the bottom-nav — confusing semantics for a misleadingly-named hook.
+
+Audit: tridha (the only live qTap deployment) doesn't hook this filter, so removing the back-compat is safe.
+
+**Updated:** [`includes/integrations/class-kdc-qtap-mobile-woocommerce-myaccount.php`](includes/integrations/class-kdc-qtap-mobile-woocommerce-myaccount.php) — `get_accent_color()` now resolves directly from `woocommerce_checkout_button_color` → `woocommerce_email_base_color` → `#2271b1`. Filter call + filter docblock removed; the parent docblock no longer references "FAB".
+
+**Sites that hooked the filter:** the canonical hook for the cart FAB is now `kdc_qtap_cart_fab_color` (parent v3.0.5+). The bottom-nav has no override filter going forward — adjust WC theme settings instead.
+
+**End state:** `grep -rE 'fab|enable_fab' kdc-qtap-mobile/` returns zero hits. Mobile is fully free of FAB-related code.
+
 ## [2.15.3] - 2026-04-28
 
 ### Removed — last FAB-adjacent code in mobile

@@ -2,6 +2,23 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.4] - 2026-04-28
+
+### Added — Fee Matrix yearly-rollover polish (4 phases)
+
+The Fee Matrix admin tab is now optimized for the yearly rollover workflow (copy last year, bump by inflation, tweak a few cells). Four phases shipped together; data model unchanged.
+
+**Phase 1 — render polish.** Per-cell "Enable" checkbox is hidden — the amount input alone drives enabled state (any value incl. 0 = enabled, blank = disabled). Slab summary now reads "X/Y grades configured" instead of just "N grades configured". The year selector becomes a sticky toolbar with a global save-status pill (idle / Saving… / Saved 4:32 PM / Save failed — retry).
+
+**Phase 2 — save reliability.** Cells flash green on autosave success, red with an inline ↻ retry button on failure. Toolbar gains an "Undo" button that reverts the most recent autosaved cell. Each slab's Show-Range column header now has an "all grades" master toggle that propagates to (and reflects) the per-grade map (with proper indeterminate state). New "Re-sanitize all" toolbar button surfaces the bulk-save fallback for the rare case admins want to force a clean rewrite. `max_input_vars` truncation telemetry now logs year + user_id via `kdc_qtap_debug_log()`.
+
+**Phase 3 — rollover features.** Each grade row gets a hover-revealed `⋯` menu with Bump this row by % / Copy this row to all grades / Clear this row. Each fee_type column header gets a `⋯` menu with Bump column by % / Set all grades to…. All ops chain the existing per-cell autosave path. Bumps skip blank cells (no `0 × 1.075` noise). New "Compare with: [Off / 2025-2026 / …]" toolbar select fetches the prior year via a new read-only `ajax_get_fee_matrix_for_compare` endpoint, then decorates every cell with `was ₹4,000 (+7.5%)` ghost subtext. Edge cases surface as banners rather than silent reconciliation: slab not in prev year → "New this year" badge; slab only in prev year → top banner listing them; `collection_mode` differs → "Mode changed: X → Y" badge AND per-cell ghosts hidden for that slab; terms count differs → top banner explaining annual deltas reflect rate AND structure changes. Custom slabs matched by sanitized name (lower-cased, comma-stripped) with index fallback.
+
+**Phase 4 — dockable preview pane.** The existing Preview Installments modal now toggles between centered modal and right-docked side panel (420px wide; full-width below the admin bar on mobile). Docked mode makes the backdrop click-through so admins can keep editing the matrix while the schedule stays in view. A small amber stale indicator appears next to the Generate / Refresh button whenever any matrix input changes after a preview has been rendered. Auto-refresh on every keystroke is deliberately not done — admin clicks Refresh to update.
+
+### Changed
+- `ajax_save_fee_matrix` truncation error message now reassures admins that per-cell autosave still works ("Form data too large… Per-cell autosave still works — keep editing.").
+
 ## [3.21.3] - 2026-04-27
 
 ### Added — Fee Breakup modal in the user-edit Payment History row

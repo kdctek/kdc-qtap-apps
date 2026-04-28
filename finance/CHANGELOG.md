@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.17] - 2026-04-28
+
+### Added — Loud signal when `Payment::create` silently fails during enrollment regen
+
+`create_term_payments_on_enrollment()` previously branched on `if ( $payment_id )` and silently did nothing when the insert failed — exactly the failure mode that took live debugging on tridha to find during the v3.21.5 VARCHAR(50) overflow incident. The loop just skipped that billing period and moved on to the next, leaving an enrollment with one term assigned instead of two and no signal anywhere.
+
+Now branches the other way: when `Payment::create()` returns false, we capture `$wpdb->last_error` plus the term context (user_id, year, grade, term_key, payment_title, title length, due_date, amount_due) and write it to the qTap debug log. The successful path is unchanged. Any future schema-drift / column-overflow / collation-mismatch will surface immediately in `wp-content/debug.log` with enough context to diagnose without having to upload a one-shot mu-plugin.
+
 ## [3.21.16] - 2026-04-28
 
 ### Fixed — `/staff/report/` 301-redirected to `/reports/`

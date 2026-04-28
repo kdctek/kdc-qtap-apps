@@ -2,6 +2,20 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.7] - 2026-04-28
+
+### Added — Grade filter pill row in Staff Console Receipts tab
+
+The Receipts filter panel gains a "Grade" row that mirrors the existing Status / Source / Payment / By rows: one toggleable pill per grade configured in settings, each carrying a Lucide graduation-cap icon and an unbiased count badge. Selecting one or more grades narrows the table to receipts whose linked Payment row matches one of those grades — POS sales (no payment link) are naturally excluded by a non-default grade selection. The grade-resolution map is built once per request from the `payments.wc_order_ids` JSON column, so the filter and the count aggregator share a single source of truth without per-order hydration.
+
+### Changed — "Apply" button renamed to "Filter"
+
+The submit button at the top of the filter form (and the noscript fallback) now reads "Filter" instead of "Apply". Matches what users actually do with it.
+
+### Changed — Filter panel defaults to collapsed
+
+The `<details class="kdc-qtap-rx-wrap">` filter container now starts closed on every viewport (previously the v3.16.54 sync script force-opened on desktop ≥721px). Auto-opens only when active filters are present, so staff land on a quiet header until they explicitly want to filter.
+
 ## [3.21.6] - 2026-04-28
 
 ### Fixed — Fee Breakup modal silently failed for users without WooCommerce orders

@@ -2,6 +2,32 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.1.4] - 2026-04-28
+
+### Improved — Notification preferences UI: card-and-chip layout replaces the raw HTML table
+
+The user-facing **My Account > Notifications** matrix used to render as a bare `<table>` with native checkboxes — no styling, no icons, table-hostile on mobile. v3.1.4 ships a card-and-chip redesign that matches the pattern used elsewhere in the qTap suite.
+
+### What it looks like now
+
+- **One card per notification type.** White card, light border, 12px rounded corners, gentle hover. Card title sits on the left; a "Mandatory" pill sits on the right for OTP-class types whose chips lock in the ON state.
+- **Channel toggles render as pills.** Each chip carries an 18×18 SVG icon (mail / smartphone / whatsapp), the channel label, and a tiny status dot. ON chips fill with the site's primary colour and turn the text white; OFF chips stay grey-on-white.
+- **Mandatory cards** get a dashed border + soft grey wash so they're visually distinct from the toggles you can actually change.
+- **Saved-status banner** appears at the top after a successful submit (replaces the previous silent redirect).
+- **Group headers** are now smaller, uppercased, letter-spaced labels — they recede so the cards are the focus.
+
+### How it works under the hood
+
+- Pure CSS toggle state via `:has(input:checked)` — no JavaScript required. Older browsers without `:has` support get a flat fallback via `@supports not selector(:has(*))`.
+- The hidden checkbox sits inside the chip label, so clicking anywhere on the chip toggles it. Keyboard `:focus-visible` paints the ring on the visible chip, not the invisible input.
+- Inline SVGs rather than icon-font dependencies — `currentColor` stroke means the icon recolours automatically with the chip's text colour.
+- Mobile (≤600px): chips re-flow, card padding tightens, the Save button stretches to full width.
+
+### Files changed
+
+- `includes/notifications/class-kdc-qtap-notification-preferences.php` — `render_panel()` rewritten from `<table>` to `<article>`-card layout. New private `channel_icon( $key )` helper returning inline SVG markup for `email` / `sms` / `whatsapp` / `lock`. Render now auto-enqueues `kdc-qtap-frontend-components` so the panel works outside the dashboard block too.
+- `assets/css/kdc-qtap-frontend-components.css` — appended ~250 lines of `.kdc-qtap-prefs__*` rules covering header, card, chip, lock badge, save banner, focus ring, mobile reflow, and the `:has` fallback.
+
 ## [3.1.3] - 2026-04-28
 
 ### Improved — Notification preferences only show channels the site actually delivers on

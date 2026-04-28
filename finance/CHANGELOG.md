@@ -2,6 +2,20 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.8] - 2026-04-28
+
+### Fixed — Receipts filter panel disappeared on desktop
+
+v3.21.7 removed the v3.16.54 desktop force-open script so the filter panel could default to collapsed, but the legacy CSS still kept `.kdc-qtap-rx-wrap__summary { display: none }` outside the mobile breakpoint — which meant desktop users saw nothing where the filter used to be (no Filters disclosure, no toggle, no form). Summary is now `display: flex` on every viewport.
+
+### Fixed — Grade pill changes didn't auto-submit
+
+The v3.21.7 grade pill row was wired into the form but `grade[]` was missing from the auto-submit names list, so toggling a grade pill on desktop did nothing until the user clicked Filter. `grade[]` now triggers the same instant re-fetch as Status/Source/Payment/By.
+
+### Changed — Receipts filter + pagination spacing tightened
+
+UI density polish: filter container padding 14/16 → 10/12, label column 72 → 64px, pill padding 5/12 → 3/10, pill font 12 → 11px, label font 11 → 10px. Pagination buttons 34px → 28px height, jump input 60 → 48px, gap 12/28 → 8/18, font 13 → 12px (buttons) and 12 → 11px (summary/jump label). Net effect: the same controls take meaningfully less vertical real estate without losing legibility.
+
 ## [3.21.7] - 2026-04-28
 
 ### Added — Grade filter pill row in Staff Console Receipts tab

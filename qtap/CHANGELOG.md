@@ -2,6 +2,92 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.0.5] - 2026-04-28
+
+### Refactor — all FAB rendering now lives in the parent (single home rule)
+
+v3.0.4 split the FABs across two plugins (Menu FAB → parent, Cart FAB → checkout). v3.0.5 finalizes the consolidation: **every FAB renderer in the qTap suite now lives in `kdc-qtap`**. No exceptions, no per-domain split. The FAB registry (`KDC_qTap_FABs`) and every FAB class (`KDC_qTap_FAB_Menu`, `KDC_qTap_Cart_FAB`) sit side by side in the parent's `includes/` — one place to find them, one plugin to update when adding a new floating button.
+
+**New file:**
+
+| File | Role |
+|---|---|
+| [`includes/class-kdc-qtap-cart-fab.php`](includes/class-kdc-qtap-cart-fab.php) | `KDC_qTap_Cart_FAB` singleton — registers the WC cart shortcut FAB. WooCommerce-guarded via `class_exists('WooCommerce')`. |
+
+**Migration path so far:**
+
+```
+v2.15.x mobile        → v3.0.4 split            → v3.0.5 unified
+─────────────────       ─────────────────────       ─────────────────
+Menu FAB in mobile      Menu FAB → parent          Menu FAB stays in parent
+Cart FAB in mobile      Cart FAB → checkout        Cart FAB → parent (final)
+```
+
+**Filter chain for the cart FAB color** (each falls through to the next when empty):
+
+1. `kdc_qtap_cart_fab_color` ← canonical, v3.0.5+
+2. `kdc_qtap_checkout_cart_fab_color` ← v1.0.1 alias, kept for sites that hooked it
+3. `kdc_qtap_mobile_cart_fab_color` ← v2.x alias, kept for sites that hooked it
+4. WC checkout button color
+5. WC email base color
+6. `#2271b1` (WP-admin blue)
+
+### Coordinated companion release
+
+- **kdc-qtap-checkout v1.0.2** — removes the short-lived `KDC_qTap_Checkout_Cart_FAB` class + its `init_components()` line + the `require_once`. Deploy parent v3.0.5 first so the new home is in place before checkout drops the old one.
+
+### Architectural rule (locked in)
+
+The FAB registry/dispatcher AND every FAB renderer live in `kdc-qtap`. Child plugins contribute *content* via filters (e.g., `kdc_qtap_fab_menu_items` lets Events add a "My Tickets" entry) but do not own FAB classes. Single home, single source of truth.
+
+## [3.0.4] - 2026-04-28
+
+### Refactor — qTap Menu FAB consolidated into the parent
+
+Coordinated multi-plugin release that lifts the floating dashboard menu out of `kdc-qtap-mobile` and into its rightful home — the parent. The Menu FAB aggregates per-plugin contributions (Staff/Admin shortcuts, Fees, Mobile numbers, WooCommerce Dashboard, Switch Student, Logout) and isn't a mobile-plugin feature; it's a dashboard concern.
+
+**New in this plugin:**
+
+| File | Role |
+|---|---|
+| [`includes/class-kdc-qtap-fab-menu.php`](includes/class-kdc-qtap-fab-menu.php) | `KDC_qTap_FAB_Menu` singleton — registers `qtap-menu` with the FAB registry, computes contextual menu items, owns rendering + asset enqueueing. |
+| [`assets/js/kdc-qtap-fab-menu.js`](assets/js/kdc-qtap-fab-menu.js) | Draggable + viewport-aware FAB script (moved from `kdc-qtap-mobile/assets/js/kdc-qtap-mobile-fab-menu.js`; identical behaviour, same `kdcQtapFab` localize handle). |
+
+**Option migration (one-time, idempotent):**
+
+The legacy `kdc_qtap_mobile_enable_fab_menu` option is copied to the new parent-namespaced `kdc_qtap_fab_menu_enabled` on first load after upgrade. Guarded by a `kdc_qtap_fab_menu_migrated` flag so it runs at most once. Sites that had the menu off stay off; sites that had it on stay on. No admin action needed.
+
+**New filter for child plugins:**
+
+```php
+add_filter( 'kdc_qtap_fab_menu_items', function ( $items, $user_id ) {
+    if ( class_exists( 'KDC_qTap_Events_Plugin' ) ) {
+        $items[] = array(
+            'label' => __( 'My Tickets', 'kdc-qtap-events' ),
+            'icon'  => '<svg …></svg>',
+            'url'   => home_url( '/dashboard/tickets/' ),
+            'type'  => 'link',
+        );
+    }
+    return $items;
+}, 10, 2 );
+```
+
+Each item is `array( 'label', 'icon', 'url', 'type' => 'link' )` for plain links, or `array( 'label', 'icon', 'type' => 'submenu', 'children', 'switch_back' )` for nested groups.
+
+### Coordinated companion releases
+
+This release ships in lockstep with:
+
+- **qTap Checkout v1.0.1** — adds `KDC_qTap_Checkout_Cart_FAB` (the cart FAB moves to checkout where the cart code already lives).
+- **qTap Mobile v2.15.2** — removes both FAB renderers, helpers, the JS file, and the legacy `wp_footer` fallbacks. Mobile becomes pure mobile-numbers/OTP again.
+
+**Deploy order:** parent first → checkout → mobile, so the new FABs exist before mobile drops the old ones.
+
+### Architectural rule going forward
+
+The FAB **registry/dispatcher** stays in the parent; individual FAB **renderers** live with the plugin that owns the related domain (Cart FAB → checkout, Menu FAB → parent because it aggregates dashboard nav). Mobile no longer owns any FAB.
+
 ## [3.0.3] - 2026-04-27
 
 ### Fixed — JSON import counter stuck at zero

@@ -2,6 +2,56 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.3] - 2026-04-28
+
+### Removed — last FAB-adjacent code in mobile
+
+v2.15.2 removed the FAB *renderers*. v2.15.3 removes the **admin toggle UI** that wrote to `kdc_qtap_mobile_enable_fab_menu` — the legacy option key the parent's `KDC_qTap_FAB_Menu` migrated once in v3.0.4. After migration, the parent reads the new `kdc_qtap_fab_menu_enabled` key only; mobile's UI was writing to a key nothing reads anymore.
+
+**Removed from [`includes/class-kdc-qtap-mobile-admin-settings.php`](includes/class-kdc-qtap-mobile-admin-settings.php):**
+
+- The "qTap Menu (FAB)" form field under **Settings > UI Enhancements**
+- The `register_setting( ..., 'kdc_qtap_mobile_enable_fab_menu', ... )` call
+- The `update_option( 'kdc_qtap_mobile_enable_fab_menu', ... )` line in the General-tab form-save handler
+
+**How site admins toggle the menu now:** **qTap App > User Dashboard > Floating Buttons** (the parent's existing FAB admin UI, which manages enable/disable per registered FAB).
+
+**No data loss:** the legacy option stays in the DB. Parent's one-time migration ran on v3.0.4 install and copied whatever value was there to the new key. After that, the legacy option is dormant — removing the UI just stops writing to a dead key.
+
+Mobile is now **completely free of FAB code**: no renderers, no JS, no CSS, no admin toggle, no constants. The integration class still has the `kdc_qtap_mobile_cart_fab_color` filter call inside `get_accent_color()` because that method still colors the WC My Account bottom-nav (a separate UI element from the cart FAB) — the filter name is a back-compat artifact and is honoured by the parent's `KDC_qTap_Cart_FAB` too.
+
+## [2.15.2] - 2026-04-28
+
+### Refactor — Mobile no longer owns any FAB
+
+Both floating-action buttons that lived in the WooCommerce My Account integration class have moved out of mobile to plugins where they belong by domain. Mobile is now pure mobile-numbers / OTP / Login-with-OTP again.
+
+| FAB | Was here | Now lives in | New class |
+|---|---|---|---|
+| **qTap Menu FAB** (Staff/Admin/Fees/Mobile/Logout dashboard menu) | `class-kdc-qtap-mobile-woocommerce-myaccount.php` | parent `kdc-qtap` v3.0.4+ | `KDC_qTap_FAB_Menu` ([class-kdc-qtap-fab-menu.php](../kdc-qtap/includes/class-kdc-qtap-fab-menu.php)) |
+| **WC Cart FAB** (floating shortcut to checkout) | `class-kdc-qtap-mobile-woocommerce-myaccount.php` | `kdc-qtap-checkout` v1.0.1+ | `KDC_qTap_Checkout_Cart_FAB` ([class-kdc-qtap-checkout-cart-fab.php](../kdc-qtap-checkout/includes/class-kdc-qtap-checkout-cart-fab.php)) |
+
+**Why:** the Menu FAB is a parent-dashboard concern that aggregates contributions from every active child plugin — it had no business in a mobile-numbers plugin. The Cart FAB belongs with cart code, which moved to `kdc-qtap-checkout` in v1.0.0. Mobile owned both for incidental reasons (the WC My Account integration happened to live here).
+
+**Removed from `class-kdc-qtap-mobile-woocommerce-myaccount.php`** (~450 lines):
+
+- `register_fabs()`, `render_floating_cart()`, `render_qtap_fab_menu()`, `maybe_enqueue_fab_menu_assets()`, `is_fab_menu_enabled()`, `get_qtap_fab_menu_items()`
+- The legacy `add_action( 'wp_footer', ... )` direct fallbacks for parents older than v3.0.0 (the parent dependency is already v3.0.0+)
+
+**Removed file:**
+
+- `assets/js/kdc-qtap-mobile-fab-menu.js` — moved to parent as [`assets/js/kdc-qtap-fab-menu.js`](../kdc-qtap/assets/js/kdc-qtap-fab-menu.js); behaviour identical, same `kdcQtapFab` localize handle.
+
+**Migration (one-time, idempotent):** the parent's `KDC_qTap_FAB_Menu` reads the legacy `kdc_qtap_mobile_enable_fab_menu` option once and copies it to `kdc_qtap_fab_menu_enabled` (guarded by a `kdc_qtap_fab_menu_migrated` flag). No site action required.
+
+**What stays in mobile:**
+
+- `render_myaccount_nav()` — the WC My Account bottom-nav bar (this is a navigation chrome, not a FAB).
+- `get_accent_color()` — still used by the bottom-nav.
+- `is_dashboard_or_account_page()` — kept private since it's still referenced by the bottom-nav helpers.
+
+**Coordinated release:** ship parent v3.0.4 → checkout v1.0.1 → mobile v2.15.2 in that order so the new FABs land before mobile drops the old ones.
+
 ## [2.15.1] - 2026-04-28
 
 ### Fixed — qTap FAB Menu opened empty after login

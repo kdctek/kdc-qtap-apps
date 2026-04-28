@@ -2,6 +2,24 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.10] - 2026-04-28
+
+### Changed — Receipts filter URL hygiene + layout polish
+
+The Receipts filter form previously serialized every checked default checkbox into the URL on submit, producing 30+ param URLs that bloated the address bar and made shared/bookmarked links unreadable (~`?status%5B%5D=completed&status%5B%5D=processing&source%5B%5D=fee&source%5B%5D=pos&source%5B%5D=other&...`). Two coordinated changes shrink the URL to just what the user actually narrowed:
+
+- **Server**: each multi-select param parser (status / source / grade / payment_method / via_channel) now treats absent OR empty as "default", and only narrows when explicit non-empty values are present. Functionally equivalent to the old behaviour (no narrowing applied) since "all selected" and "none selected" both produced empty constraint, but it lets the URL omit defaults entirely.
+- **JS**: form submit is hijacked to build a clean URL — multi-select rows where all enabled pills are checked (= default) are omitted entirely, single-value selects at default (q_field=all, date_type=receipt) are omitted, empty inputs (q, date_from, date_to) are omitted. Brackets emit as literal `[]` rather than `%5B%5D`.
+
+Net effect: "Show me only AS & A Grade" lands at `?tab=receipts&filter_submitted=1&grade[]=AS+%26+A` — a single grade param, nothing else. Down from 30+ params.
+
+Active-filter chip rendering also dropped its `filter_submitted` dependency — chips now compare current selection against the canonical default for that row, so a bookmarked URL with explicit values shows chips on first landing, and a default-state submit doesn't spuriously render chips for unchanged rows.
+
+### Changed — Receipts filter layout polish
+
+- "Filter" + "Reset all" buttons moved out of the Search In row into a dedicated form footer at the bottom of the `<details>` panel — clear commit area separated from the input rows.
+- Per-row "All / None" toolbars moved from the right edge of each pill row into the left label cell, stacked below the row label — easier to scan, frees up the right edge for visual breathing room.
+
 ## [3.21.9] - 2026-04-28
 
 ### Changed — Removed auto-submit on Receipts filter; added per-row All / None toolbars

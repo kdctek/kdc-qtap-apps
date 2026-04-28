@@ -1,10 +1,10 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-04-28T15:10:28Z",
+  "updated_at": "2026-04-28T15:35:00Z",
   "plugins": {
     "kdc-qtap": {
-      "version": "3.2.1",
-      "updated_at": "2026-04-28T15:10:28Z",
+      "version": "3.2.2",
+      "updated_at": "2026-04-28T15:35:00Z",
       "name": "qTap App",
       "slug": "kdc-qtap",
       "requires_php": "7.4",

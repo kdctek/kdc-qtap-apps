@@ -2,6 +2,68 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.1.2] - 2026-04-28
+
+### New — qTap.buzz SMS gateway: SMS channel now speaks to the n8n SMS flow natively
+
+The SMS channel UI has shipped a `qTap.buzz` option in the Gateway dropdown for some time, but the `send()` method ignored it and always emitted the generic `{to,message,subject,type,data}` JSON. v3.1.2 wires that option to the actual n8n flow at `https://flow.kdc.in/webhook/sms` (workflow `9ZcKA2qzOBYii7qb`), which routes to RML Connect (TFSC / DLT / Global) for India and MSG91 for international.
+
+### How it works
+
+When `gateway = qtapbuzz` on the SMS channel:
+
+- **Endpoint** — uses the configured API URL, or falls back to `https://flow.kdc.in/webhook/sms` when blank.
+- **Payload contract** matches the n8n flow:
+  ```json
+  { "from": "…", "to": "+91…", "message": "…", "route": "dlt", "peid": "…", "tid": "…" }
+  ```
+- **Optional fields** (`route`, `peid`, `tid`) are stripped when empty so the flow's auto-router can take over.
+- **Auth header** is `skbiz-key: …` (the only header the n8n flow consumes) instead of `Authorization: Bearer …`.
+
+### New channel settings (qTap > Notifications > Channels > SMS)
+
+| Field | Purpose |
+|-------|---------|
+| **Sender ID** | Now also used as `from` when calling qTap.buzz. |
+| **Default Route** | `tfsc` / `dlt` / `global` / `skbiz` / `intl`, or *Auto* (let the flow route by country code). |
+| **DLT Principal Entity ID** | Default `peid` for all DLT messages from this site. |
+
+### Per-notification overrides
+
+Callers can override channel defaults via `notification['data']`:
+
+```php
+kdc_qtap_send_notification( array(
+    'channels'  => array( 'sms' ),
+    'recipient' => array( 'phone' => '+919876543210' ),
+    'message'   => 'Your OTP is 123456',
+    'data'      => array(
+        'sms_from'  => 'KDCAPP',     // optional; default = Sender ID
+        'sms_route' => 'dlt',         // optional; default = Default Route
+        'sms_peid'  => '1101…',       // optional; default = DLT PEID
+        'sms_tid'   => '170100…',     // required for DLT, no channel default
+    ),
+) );
+```
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `includes/notifications/class-kdc-qtap-channel-sms.php` | `send()` branches on `gateway === 'qtapbuzz'` to build the n8n payload; default settings expanded. |
+| `includes/traits/trait-kdc-qtap-admin-channels.php` | Added **Default Route** + **DLT PEID** fields and a qTap.buzz hint on the SMS card. |
+| `includes/traits/trait-kdc-qtap-admin-logs.php` | Save handler whitelists `default_route` (validated against the route enum) and `default_peid`. |
+
+### Caveat — n8n flow auto-route is partial
+
+The flow's auto-route (when `route` is omitted) only currently handles **IN + sender-prefix `55757` → tfsc**. The IF false branch and the country-switch fallback for non-IN are unconnected. For reliable delivery, set a Default Route or pass `data['sms_route']` per call. See the workflow at `https://flow.kdc.in/workflow/9ZcKA2qzOBYii7qb`.
+
+### Back-compat
+
+The generic gateway path is unchanged — sites that left Gateway blank or set it to `Custom` still receive the `{to,message,subject,type,data}` JSON with a Bearer token, exactly as before.
+
+---
+
 ## [3.1.1] - 2026-04-28
 
 ### New — `kdc_qtap_frontend_pages` registry: one filter for child-plugin frontend pages

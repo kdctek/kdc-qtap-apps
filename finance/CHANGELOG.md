@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.3] - 2026-04-27
+
+### Added — Fee Breakup modal in the user-edit Payment History row
+
+Each Payment History row in the admin user-edit screen now carries a list-view icon next to Edit / Expand. Clicking it opens the same `kdc-qtap-finance-items-modal` the Staff Console uses for WC orders, but populated from `payment_items` for that specific Payment row — student / academic year / grade meta on top, then the per-installment breakdown ("Tuition Fee — Apr 2026 — ₹57,750", etc.), totals row at the bottom. Matches the existing modal pattern visually so staff don't have to learn a second layout.
+
+New AJAX endpoint `kdc_qtap_finance_payment_breakup` returns the same JSON shape the modal renderer already consumes (`items[].name + total + meta[]` with `period @ amount` rows), so the renderer is shared between the order-items and payment-breakup paths via an extracted `renderItemsResponse()` function inside `blocks/staff-console/kdc-qtap-finance-staff-receipts-ajax.js`.
+
+The items-modal CSS / JS that previously only enqueued inside `render_user_wc_orders_section` now enqueues at the user-meta `admin_enqueue_scripts` hook so the modal works on profiles that have payments but no WC orders.
+
 ## [3.21.2] - 2026-04-27
 
 ### Refactor — bootstrap file slimmed; activation, dependency check, and labels lifted into helper classes

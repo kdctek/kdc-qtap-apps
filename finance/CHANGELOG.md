@@ -2,6 +2,18 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.5] - 2026-04-28
+
+### Fixed — Second billing period silently dropped when payment title exceeded 50 chars
+
+`KDC_qTap_Finance_Payment::create` was failing on `wpdb->insert` for any payment whose rendered title (used as the `slab` column value, set in `enrollment.php:640`) exceeded the column's `VARCHAR(50)` cap. WordPress logs the error but the calling loop in `create_term_payments_on_enrollment` doesn't check `$wpdb->last_error` after `Payment::create` returns `false` — it just skips that billing period and moves on. End-to-end symptom: a multi-year enrollment with a `{term} [{year}]: {range}` title format and a cross-year range (e.g. "A-Level [2027-2028] [2026-2028]: Oct 2026 to Mar 2027" = 53 chars) generated only the first BP's Payment, never the second.
+
+The first BP's title fit (e.g. "AS-Level [2026-2027] [2026-2028]: Apr-Sep 2026" = 46 chars) so the regression looked like a "second term not assigned" bug rather than a column-size bug. Diagnosed live on tridha against a real enrollment that was missing its second-half Payment.
+
+DB version 2.5.0 widens `slab` on both `payments` and `payment_items` from `VARCHAR(50)` → `VARCHAR(191)`. CREATE TABLE statements updated for fresh installs; existing installs hit a one-shot `ALTER TABLE … MODIFY` migration on next page load. Idempotent (re-running on already-widened columns is a no-op). 191 was picked because that's the InnoDB-utf8mb4 sweet spot for indexed columns — leaves headroom for any reasonable title format permutation without forcing utf8mb4_unicode_ci index-length grief.
+
+After this lands, re-saving any affected enrollment regenerates the missing billing period; existing partial Payments are retained intact. Tridha was patched live + verified end-to-end before the release was tagged.
+
 ## [3.21.4] - 2026-04-28
 
 ### Added — Fee Matrix yearly-rollover polish (4 phases)

@@ -2,6 +2,18 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.1.6] - 2026-04-28
+
+### Cleanup — Removed dead form handlers from `KDC_qTap_Notification_Preferences`
+
+The notification preferences panel went autosave-only in v3.1.5: the `<form>`, the Save button, and the `admin_post_*` hooks that backed them were all removed. Two methods — `handle_save()` and `handle_save_nopriv()` — were left behind in the class, sitting as ~40 lines of unreachable code.
+
+This release deletes them. Pure cleanup, no behaviour change.
+
+### Files changed
+
+- `includes/notifications/class-kdc-qtap-notification-preferences.php` — `handle_save()` + `handle_save_nopriv()` removed along with the `Form handling` section comment. Class is now ~40 lines lighter.
+
 ## [3.1.5] - 2026-04-28
 
 ### Added — qTap SMS Platform integration in the SMS notification channel

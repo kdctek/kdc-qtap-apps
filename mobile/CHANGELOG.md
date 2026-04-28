@@ -2,6 +2,24 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.6] - 2026-04-28
+
+### New — Per-contact SMS opt-in toggle alongside WhatsApp
+
+Each saved contact now has its own SMS notification preference, separate from the existing WhatsApp toggle. A contact can be set to receive WhatsApp only, SMS only, both, or neither — finer-grained than the previous "WhatsApp on/off" single switch.
+
+- **Default:** SMS off, WhatsApp on (matching the existing per-contact default). SMS is opt-in because it's typically a paid channel.
+- **Toggling SMS in either direction never requires an OTP** — the plugin doesn't operate an SMS-OTP gateway, and the same chicken-egg argument that protects WhatsApp-disable applies (a number opting out of SMS shouldn't have to receive an SMS to do so).
+- **Toggling WhatsApp on still requires OTP** — the OTP travels via WhatsApp itself, which proves the channel reaches the number.
+- **New helper functions** mirror the existing WhatsApp helpers: `kdc_qtap_get_sms_enabled_numbers( $user_id )` and `kdc_qtap_is_sms_enabled( $user_id, $number )` for use by other qTap plugins that need to filter per-channel recipient lists.
+- The `kdc_qtap_mobile_numbers` user-meta payload gains a new `sms` boolean alongside the existing `whatsapp` field. Legacy contacts without the key default to `false` via the storage layer (matching the helper-function fallback), so no migration is required.
+
+### Changed — Add/edit form UI: pill-style channel toggles
+
+The single "Send WhatsApp notification" checkbox is gone; in its place is a clean **"Receive notifications via"** legend with two pill-style toggle buttons (WhatsApp green when active, SMS blue when active). Both toggles are full-width click targets, keyboard-focusable, and announce active state via `is-active` class for assistive tech.
+
+The read-only contact list now also shows a small SMS message-square icon next to the number when SMS is enabled, in addition to the existing WhatsApp/phone icon.
+
 ## [2.15.5] - 2026-04-28
 
 ### New — Mobile registers with the parent's frontend-pages registry

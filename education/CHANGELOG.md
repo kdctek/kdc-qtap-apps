@@ -2,6 +2,35 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.57] — 2026-04-28
+
+### New — Education registers with the parent's frontend-pages registry
+
+Parent v3.1.1 introduced `kdc_qtap_frontend_pages` — one filter where every child plugin declares the frontend-facing pages it owns. Education migrates its Admin page (the one that hosts the `qtap/education-dashboard` block) to this contract.
+
+**Updated:** [`includes/class-kdc-qtap-education-dashboard-integration.php`](includes/class-kdc-qtap-education-dashboard-integration.php) — new `register_frontend_page()` method hooked at `kdc_qtap_frontend_pages`. One entry:
+
+| Page id | Block | Visibility | Priority |
+|---|---|---|---|
+| `admin` | `qtap/education-dashboard` | `rest_api` | 90 |
+
+The pre-v3.1.1 `kdc_qtap_dashboard_admin_block_name` and `kdc_qtap_dashboard_admin_auto_page_id` filters are **kept for one transition release** as a back-compat shim — they only fire on parent < v3.1.1, so sites that haven't yet upgraded the parent keep working.
+
+**End-user visible changes (after upgrading parent + Education):**
+
+- The Admin row appears in **qTap App > User Dashboard > Frontend pages > Elevated (REST API access)** alongside Finance's Staff row. Same picker UI; the existing admin selection survives the upgrade unchanged.
+- The qTap Menu FAB picks the Admin URL up automatically from the registry.
+
+See the parent's [`docs/CHILD-PLUGIN_FRONTEND-PAGES.md`](../kdc-qtap/docs/CHILD-PLUGIN_FRONTEND-PAGES.md) for the full registration contract.
+
+### Coordinated companion releases
+
+- **kdc-qtap v3.1.1** — introduces the registry.
+- **kdc-qtap-finance v3.21.13** — registers `staff` + `fees`.
+- **kdc-qtap-mobile v2.15.5** — registers `mobile`.
+
+Deploy parent first.
+
 ## [1.0.56] — 2026-04-27
 
 ### Added — User Dashboard Admin-block contributor

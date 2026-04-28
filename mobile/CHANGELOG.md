@@ -2,6 +2,38 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.5] - 2026-04-28
+
+### New — Mobile registers with the parent's frontend-pages registry
+
+Parent v3.1.1 introduced `kdc_qtap_frontend_pages` — a single filter where every child plugin declares the frontend-facing pages it owns. Mobile registers its Mobile-numbers page through this contract.
+
+**Updated:** [`includes/class-kdc-qtap-mobile-endpoint.php`](includes/class-kdc-qtap-mobile-endpoint.php) — new `register_frontend_page()` method hooked at `kdc_qtap_frontend_pages`. One entry:
+
+| Page id | Block | Visibility | Priority |
+|---|---|---|---|
+| `mobile` | `kdc-qtap/mobile-editor` | `logged_in` | 30 |
+
+What this changes for end users (after upgrading parent + Mobile):
+
+- The Mobile row now appears in **qTap App > User Dashboard > Frontend pages > Logged-in users** alongside Fees and other registered pages — site admins manage the Mobile page assignment from the centralised location.
+- The qTap Menu FAB picks the Mobile URL up automatically from the registry.
+
+What stays the same:
+
+- `KDC_qTap_Mobile_Endpoint` continues to handle auto-create + content-rewrite + auth gating for the page. The registry only owns the **page assignment** and **discoverability** — the runtime behaviour of the page is still Mobile's responsibility.
+- The legacy mobile-side admin UI is unchanged this release. (Future v2.16.x may relocate it; this release is purely additive.)
+
+See the parent's [`docs/CHILD-PLUGIN_FRONTEND-PAGES.md`](../kdc-qtap/docs/CHILD-PLUGIN_FRONTEND-PAGES.md) for the full registration contract.
+
+### Coordinated companion releases
+
+- **kdc-qtap v3.1.1** — introduces the registry.
+- **kdc-qtap-finance v3.21.13** — registers `staff` + `fees`.
+- **kdc-qtap-education v1.0.57** — registers `admin`.
+
+Deploy parent first.
+
 ## [2.15.4] - 2026-04-28
 
 ### Removed — last `fab`-named filter call (the only FAB-adjacent reference left in mobile)

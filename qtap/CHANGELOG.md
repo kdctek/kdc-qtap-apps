@@ -2,6 +2,74 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.1.1] - 2026-04-28
+
+### New — `kdc_qtap_frontend_pages` registry: one filter for child-plugin frontend pages
+
+Pre-3.1.1 the parent only knew how to surface two child-plugin frontend pages: Staff (Finance's `kdc-qtap/staff-console` block) and Admin (Education's `qtap/education-dashboard` block). Both were hardcoded in the User Dashboard admin (`render_console_page_row( 'staff', ... ); render_console_page_row( 'admin', ... );`), with bespoke filters per kind (`kdc_qtap_dashboard_{kind}_auto_page_id`, `kdc_qtap_dashboard_{kind}_block_name`). Other child-plugin pages — Finance's Fees, Mobile's Mobile-numbers — lived entirely outside this contract: each plugin built its own admin UI, owned its own option, hardcoded its own URL into the qTap Menu FAB.
+
+v3.1.1 collapses all of this into one registry. Child plugins call **one filter** to declare a frontend page, and the parent automatically:
+
+1. **Adds a picker row** (with + Create new button) under qTap App > User Dashboard > **Frontend pages**, grouped by visibility (Public / Logged-in / Elevated).
+2. **Resolves the page id** via `kdc_qtap_user_dashboard()->get_frontend_page_id( $id )` — admin selection wins; falls back to legacy filter back-compat (staff/admin only); falls back to looking up the registered `auto_page_slug`.
+3. **Renders the dashboard nav link** in the elevated section for `rest_api`-visibility entries.
+4. **Renders the qTap Menu FAB item** for any user matching the entry's visibility.
+
+### The contract
+
+```php
+add_filter( 'kdc_qtap_frontend_pages', function ( $pages ) {
+    $pages['fees'] = array(
+        'label'          => __( 'Fees', 'kdc-qtap-finance' ),
+        'page_label'     => __( 'Fees page', 'kdc-qtap-finance' ),
+        'block_name'     => 'kdc-qtap-finance/fees',
+        'auto_page_slug' => 'fees',
+        'icon'           => 'wallet',
+        'priority'       => 20,
+        'visibility'     => 'logged_in',  // public | logged_in | rest_api
+        'description'    => __( 'Where logged-in users see their fees.', 'kdc-qtap-finance' ),
+    );
+    return $pages;
+} );
+```
+
+Full reference: [`docs/CHILD-PLUGIN_FRONTEND-PAGES.md`](docs/CHILD-PLUGIN_FRONTEND-PAGES.md).
+
+### What changed in the parent
+
+| File | Change |
+|---|---|
+| [`includes/user-dashboard/class-kdc-qtap-user-dashboard.php`](includes/user-dashboard/class-kdc-qtap-user-dashboard.php) | New methods: `get_registered_frontend_pages()`, `get_frontend_page_option_key( $id )`, `get_frontend_page_id( $id )`, `user_can_see_frontend_page( $entry, $user_id )`. `create_console_page()` generalised over the registry. `get_extra_links()` (elevated dashboard nav) now loops over `rest_api`-visibility entries. `get_console_block_name()` / `get_console_icon()` / `get_staff_page_id()` / `get_admin_page_id()` reduced to thin wrappers reading from the registry. |
+| [`includes/user-dashboard/class-kdc-qtap-user-dashboard-admin.php`](includes/user-dashboard/class-kdc-qtap-user-dashboard-admin.php) | "Elevated-user shortcuts" section renamed to **"Frontend pages"**. Renders rows by looping over `get_registered_frontend_pages()`, grouped by visibility (Public / Logged-in / Elevated headings). Save handler iterates all registered ids dynamically. Create-handler validates `kind` against the live registry instead of a hardcoded `array( 'staff', 'admin' )`. |
+| [`includes/fab/class-kdc-qtap-fab-menu.php`](includes/fab/class-kdc-qtap-fab-menu.php) | `get_menu_items()` no longer hardcodes Staff / Admin / Fees / Mobile entries. Loops over the registry, gates each item by `user_can_see_frontend_page()`, resolves page URLs via `get_frontend_page_id()`. Hardcoded SVG strings replaced with a `lucide_for_fab( $name )` helper that reads from the parent's `kdc_qtap_lucide_icons` filter — register an icon once, get it everywhere. |
+| [`docs/CHILD-PLUGIN_FRONTEND-PAGES.md`](docs/CHILD-PLUGIN_FRONTEND-PAGES.md) | New file. Full child-plugin guide: when to use, the contract, visibility levels, migration patterns, common gotchas, end-to-end example. |
+
+### Visibility levels
+
+```
+public     — anyone, including anonymous visitors
+logged_in  — any authenticated WordPress user (default)
+rest_api   — users where kdc_qtap_can_access_rest_api() returns true
+```
+
+Visibility drives **whether the link surfaces** in nav and FAB. The page itself is still publicly-routable by URL — visibility is presentational, not a permission gate. Block-level access enforcement remains the block's responsibility.
+
+### Back-compat
+
+- `kdc_qtap_dashboard_staff_auto_page_id`, `kdc_qtap_dashboard_admin_auto_page_id`, `kdc_qtap_dashboard_staff_block_name`, `kdc_qtap_dashboard_admin_block_name` — all four legacy filters are still honoured. The registry's legacy fallback (when no child has registered via the new filter) synthesises `staff` + `admin` entries that read these. Sites running the older Finance/Education will continue to see Staff/Admin shortcuts during the transition.
+- Option keys: `staff` and `admin` ids keep their pre-3.1.1 option keys (`kdc_qtap_dashboard_staff_page_id`, `kdc_qtap_dashboard_admin_page_id`) so existing admin selections survive. New ids use a scoped pattern: `kdc_qtap_frontend_page_id__{id}`.
+- `get_staff_page_id()` / `get_admin_page_id()` / `create_console_page()` keep their pre-3.1.1 signatures — internally they delegate to the new registry-aware methods.
+
+### Coordinated companion releases
+
+Three child plugins migrate to the new API in lockstep:
+
+- **kdc-qtap-finance v3.21.13** — registers `staff` (rest_api visibility) + `fees` (logged_in). Drops nothing yet (legacy filters kept for one transition release).
+- **kdc-qtap-mobile v2.15.5** — registers `mobile` (logged_in).
+- **kdc-qtap-education v1.0.57** — registers `admin` (rest_api). Drops nothing yet (legacy filters kept).
+
+Deploy order: parent first → finance → mobile → education.
+
 ## [3.1.0] - 2026-04-28
 
 ### Refactor — `includes/` reorganised into feature subfolders

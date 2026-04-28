@@ -2,6 +2,36 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.1.8] - 2026-04-28
+
+### Fixed — Send Test SMS now writes to the notification log
+
+The 3.1.7 **Send Test SMS** button instantiated `KDC_qTap_Channel_SMS` directly and called `send()` to bypass the channel-enabled flag. That bypass also skipped the central `log_notification()` path, so test sends never appeared in **qTap App → Notifications → Log** — making it impossible to inspect a test's full request/response from the same UI used to audit production sends.
+
+### What changed
+
+`ajax_send_test_sms()` ([includes/traits/trait-kdc-qtap-admin-channels.php](includes/traits/trait-kdc-qtap-admin-channels.php)) now mirrors the insert that `KDC_qTap_Notifications::log_notification()` performs, immediately after the direct channel send:
+
+- **Type:** `sms_channel_test` — distinct from `system`/`alert`/`info` so admins can filter test rows out of audit views.
+- **Priority:** `low`.
+- **Status:** `sent` or `failed`, derived from the channel response.
+- **Results blob** mirrors the standard structure (`request`, `response_code`, `response_body` truncated to 1000 chars, `response_message`, `recipients`, `total_recipients`, `sent`, `failed`) so the existing log-detail view renders the test exactly like a production SMS send.
+- **Respects `kdc_qtap_notification_log_enabled`** — if logging is globally off, tests aren't logged either (consistent behaviour, no special-case row showing up when audit logging is disabled).
+
+The success message in the inline result panel now reads "Test SMS dispatched. Logged as type "sms_channel_test"." so admins know where to find the entry.
+
+### Files changed
+
+| File | Change |
+|------|--------|
+| `includes/traits/trait-kdc-qtap-admin-channels.php` | `ajax_send_test_sms()` adds `kdc_qtap_notification_log()->insert()` call mirroring the production log shape. Result-panel success copy updated. |
+
+### Back-compat
+
+No behavioural change for production sends. Test sends that previously vanished now leave a `sms_channel_test` row in `wp_kdc_qtap_notification_log` — visible in the existing log UI without filter changes (the admin Type filter accepts arbitrary values).
+
+---
+
 ## [3.1.7] - 2026-04-28
 
 ### Refined — qTap.buzz SMS settings: lean form, conditional fields, read-only DLR URL, in-place test sender

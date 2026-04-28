@@ -28,6 +28,10 @@
         {
           "name": "Page Loader",
           "file": "page-loader.md"
+        },
+        {
+          "name": "Frontend Pages",
+          "file": "frontend-pages.md"
         }
       ]
     },

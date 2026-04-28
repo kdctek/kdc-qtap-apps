@@ -2,6 +2,28 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.2.1] - 2026-04-28
+
+### New — HMAC gate for trusted-server OTP callers (api.qtap.app)
+
+The `/wp-json/kdc/v1/qtap/otp/*` endpoints are public by default (existing dashboard + mobile-app login flows depend on this). v3.2.1 adds a **trusted-caller HMAC opt-in** so the central qTap API at `api.qtap.app` can call `send_otp` and `verify_otp` server-to-server without exposing a denial-of-wallet surface to the open internet.
+
+**Contract:**
+
+- When a request carries `X-Qtap-Signature` + `X-Qtap-Timestamp`, the parent plugin requires a valid HMAC against the shared secret bootstrapped via `/wp-json/kdc/v1/qtap/otp-handshake`. Both headers must be present; either alone is rejected.
+- Signature: `hex(hmac_sha256(secret, "${timestamp}.${rawBody}"))`.
+- 5-minute skew window, constant-time comparison via `hash_equals()`.
+- When neither header is present, the existing public flow continues to work — backwards-compatible.
+- When a signed request arrives but no secret has been handshaked, returns 412 (refuses to silently fall through to public — would otherwise let an attacker bypass HMAC by pretending to be a trusted caller).
+
+**Routes:**
+
+- `POST /wp-json/kdc/v1/qtap/otp-handshake` — body `{"secret":"<32–128 char lowercase hex>"}`. One-time bootstrap; returns 409 if a secret is already set unless `?rotate=1` AND the request is HMAC-signed by the current secret. Secret stored encrypted-at-rest via `KDC_qTap_Education_Secret` when the Education plugin is active, plaintext otherwise. Always autoload=no.
+
+**Files:** new [`includes/class-kdc-qtap-otp-hmac.php`](includes/class-kdc-qtap-otp-hmac.php), wired in [`kdc-qtap.php`](kdc-qtap.php).
+
+**`check_otp_permission` filter contract update:** the `kdc_qtap_otp_permission` filter now propagates `WP_Error` returns from callbacks (previously a `WP_Error` was incorrectly treated as truthy and the request fell through to allow). Callbacks may return `true` (allow), `false` (generic 403), or `WP_Error` (returned as-is for specific status/code). Backwards-compatible for callbacks that only ever returned bool.
+
 ## [3.2.0] - 2026-04-28
 
 ### New — Passkeys (WebAuthn) login alongside OTP

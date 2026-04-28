@@ -2,6 +2,27 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.7] - 2026-04-28
+
+### Changed — Channel chips now mirror the parent dashboard's notification preferences UI
+
+The add/edit form's channel toggles use the exact same pill/chip pattern as the parent qTap App's user dashboard notification preferences (`.kdc-qtap-prefs__chip*`): rounded pill, hidden checkbox, icon + label + state slot with check/spin SVGs, "OFF" pseudo-element when unchecked, blue solid fill when active, save spinner support. Visually consistent with the FINANCE / Payment Due Reminder card chips users already see in their dashboard.
+
+The mobile plugin's previous custom toggle styles are gone — we now reuse the parent's CSS classes (already loaded via `kdc_qtap_enqueue_frontend_components()`), so any future styling change to the parent's chip flows through to this form automatically.
+
+### Changed — SMS now requires OTP verification to enable
+
+In v2.15.6 the SMS toggle was a free opt-in flag with no verification. The user reported that this was inconsistent with WhatsApp's enable-requires-OTP behavior, so SMS-enable is now treated the same way: turning the SMS chip on triggers the Send-OTP flow, and the verify step commits the SMS field alongside any other change. Disabling either channel still skips OTP (chicken-and-egg trap) and is now gated by a confirmation prompt.
+
+| Action | New behavior |
+|---|---|
+| Enable WhatsApp | Send OTP → verify → save (unchanged) |
+| Enable SMS | Send OTP → verify → save (NEW — was no-OTP) |
+| Disable WhatsApp | Confirm modal → save (NEW — was direct save) |
+| Disable SMS | Confirm modal → save (NEW — was direct save) |
+
+Cancelling the confirm modal reverts the toggled chip back to its previous state and re-validates the action button.
+
 ## [2.15.6] - 2026-04-28
 
 ### New — Per-contact SMS opt-in toggle alongside WhatsApp

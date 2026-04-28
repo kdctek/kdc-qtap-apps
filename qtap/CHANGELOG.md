@@ -2,6 +2,21 @@
 
 All notable changes to qTap App are documented in this file.
 
+## [3.1.5] - 2026-04-28
+
+### Added — qTap SMS Platform integration in the SMS notification channel
+
+The qTap SMS platform (n8n workflow `9ZcKA2qzOBYii7qb` at `flow.kdc.in`) now persists every send to a `paysharp.sms_messages` ledger and exposes a unified DLR receiver at `/webhook/sms-dlr`. The SMS channel has been wired up to that contract while staying fully backwards-compatible.
+
+- **`X-Message-ID` capture** — the platform's UUID is read from the response header on every successful send and exposed as `result['msg_id']` (top-level + per-recipient). Persist it to correlate sends with later DLRs, status queries, and audit trails.
+- **Optional `dlr_url` per send** — pass `data['sms_dlr_url']` to receive a normalised DLR envelope POSTed to your URL when the carrier reports delivery. Sites can also configure `default_dlr_url` in the SMS channel settings as a site-wide fallback.
+- **`x-caller` header** — derived from `notification['source']` for qTapBuzz mode (`kdc-qtap-finance`, `kdc-qtap-mobile`, etc.). Recorded in the platform ledger for per-app analytics without changing the payload contract.
+- **`LLM.md` integration guide** — new docs file at the plugin root covering endpoints, request/response, the DLR forwarding envelope, qTap notification recipes, schema, and design rules. Future AI agents working on qTap SMS code should read it first.
+
+### Changed — Use `kdc_qtap_debug_log()` in the SMS channel
+
+Replaced two direct `error_log()` calls in `class-kdc-qtap-channel-sms.php` with `kdc_qtap_debug_log( $msg, 'kdc-qtap-sms', $context )`. Output is now gated by the **Import/Export → Data Retention → Debug Mode** toggle and includes the captured `msg_id` in failure logs for easier correlation.
+
 ## [3.1.4] - 2026-04-28
 
 ### Improved — Notification preferences UI: card-and-chip layout replaces the raw HTML table

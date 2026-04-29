@@ -2,6 +2,33 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.80] — 2026-04-29 — Compose: contenteditable rich-text editor
+
+### Changed — `<textarea>` replaced with a WYSIWYG editor
+
+The compose body was a plain textarea where users typed (and saw) raw `*bold*`/`_italic_`/etc. markup. It's now a `contenteditable` div that renders the formatting inline as you type, while a hidden `<input name="body">` carries the canonical WhatsApp markup the server stores. The wire format is unchanged — every recipient (mobile, web reading pane, future "forward to WhatsApp") still sees raw WhatsApp syntax — only the *authoring* surface changed.
+
+| Concern | Behaviour |
+|---|---|
+| Visual | Bold/italic/strike/inline-code/monospace-block/quote/list/link all render styled in the editor; no `*`/`_`/etc. characters visible to the author. |
+| Wire format | Hidden `<input name="body">` is synced on every keystroke via `htmlToWhatsappMarkup( editor.innerHTML )`. Autosave + send payloads read the markup, never the HTML. |
+| Drafts roundtrip | Draft load runs `editor.innerHTML = whatsappMarkupToHtml( draft.body )`; hidden input gets the raw markup verbatim. Re-edits round-trip via the same pair, idempotent. |
+| Toolbar | `bold`/`italic`/`strike`/`list` use `document.execCommand`. `code` (inline) wraps the selection in `<code>`. `mono` (block) wraps in `<pre><code>`. `quote` wraps in `<blockquote>`. `link` uses `execCommand( 'createLink' )` after a `prompt()`. Buttons `mousedown`-preventDefault to keep editor focus across clicks. |
+| Validation gate | Send button still gated by `form.subject.value.trim() && form.body.value.trim()`. Editor `input` event triggers `editorChanged()` which syncs the hidden input first, then runs `refreshSendEnabled()` + `scheduleAutosave()`. |
+| Browser focus | `focusEditor()` ensures the caret is inside the editor before any `execCommand` runs (otherwise the browser applies the command to whatever it thinks is focused — usually nothing). |
+| Hermes/Safari | All inline regex use `(^|[^\w*])` capture groups instead of `(?<!...)` lookbehind so the helpers run on engines that silently drop lookbehind matches. |
+
+| File | Change |
+|---|---|
+| [`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) | Replaced compose-form `<textarea name="body">` with `<div contenteditable data-role="body-editor">` + hidden `<input name="body">`. Replaced `wrapSelection()` / `insertLinePrefix()` (textarea selection APIs) with `execCmd()` / `wrapInline()` / `wrapBlock()` (Range/Selection APIs). Updated `reopenDraft()` body-load path: editor gets HTML-rendered, hidden input gets raw markup. Removed redundant `form.body.addEventListener( 'input', ... )` wires (the editor's `input` already fans out via `editorChanged()`). |
+| [`blocks/messaging-console/style.css`](blocks/messaging-console/style.css) | `.qtap-messaging-console__body-editor` styles — same border/radius/min-height as the textarea it replaced, focus ring matches the subject input, nested `strong`/`em`/`s`/`code`/`pre`/`blockquote`/`ul`/`ol`/`a` styled to match the reading pane's WhatsApp render. `:empty::before` placeholder via `data-placeholder`. |
+
+### Known limitations (tracked for follow-ups)
+
+- Pasted formatted HTML (Word, Gmail, Notion) is not yet sanitised — paste runs through the browser's default paste handler, which may keep inline styles/classes the markup converter doesn't understand. Workaround: paste as plain text (Cmd-Shift-V).
+- The HTML→markup serializer doesn't handle deeply nested formatting (`<strong><em>both</em></strong>`) past one level. Most authoring stays at one level.
+- Pre-existing legacy drafts authored before v1.0.80 (raw markup-style typing) still round-trip cleanly because the markup parser is the same on both sides.
+
 ## [1.0.79] — 2026-04-29 — Audience picker uses Finance customizable labels
 
 ### Changed — "By class" / "Specific students" copy follows Finance Settings → Labels

@@ -2,6 +2,32 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.74] — 2026-04-29 — Phase 5 push fan-out (WP side)
+
+### Added — Webhook to api.qtap.app on message publish
+
+When a `qtap-message` transitions to `publish` and the recipient snapshot succeeds, the plugin now schedules a one-shot `wp_schedule_single_event` (`kdc_qtap_education_dispatch_publish_webhook`) that POSTs an HMAC-signed payload to `https://api.qtap.app/api/internal/messages/published` (configurable via `kdc_qtap_education_webhook_base_url` filter / option).
+
+Payload shape:
+```json
+{
+  "tenant": "<slug>",
+  "wp_post_id": <id>,
+  "subject": "<post_title>",
+  "body_preview": "<240-char-stripped-text>",
+  "recipient_phones": ["+91…", …]
+}
+```
+
+Headers `X-Qtap-Timestamp` + `X-Qtap-Signature` use the same HMAC scheme as the federation routes (`hmac_sha256(secret, ts.body)`). api.qtap.app validates the signature against the per-tenant secret in its `tenants` table (synced via the existing handshake) and inserts one `push_jobs` row per recipient phone, then drains the queue via Vercel Cron and ships Expo Push notifications.
+
+Idempotent on the receiver side — the unique index on (tenant, wp_post_id, phone) makes redelivered webhooks no-ops, so the `wp_schedule_single_event` retry path is safe.
+
+### Notes — Configuration
+
+- `kdc_qtap_education_federation_tenant_slug` option must be set (today this defaults to the WP site's slug; the handshake rotation will surface a setting for it). When empty, the webhook is skipped silently.
+- `kdc_qtap_education_webhook_base_url` filter / option lets dev sites point at `https://api.qtap.local:3000` instead of prod.
+
 ## [1.0.73] — 2026-04-29 — Phase 4.5 messaging polish
 
 ### Added — Finance Group as a 5th audience tab

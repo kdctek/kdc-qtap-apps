@@ -2,6 +2,120 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.61] — 2026-04-29
+
+### Fixed — `qtap-message` and `qtap-message-group` admin menus not visible
+
+After v1.0.60 the new CPTs registered correctly at the REST and capability layers but did not surface in the WordPress admin sidebar. Root cause: `'show_in_menu' => 'kdc-qtap-education'` referenced a *submenu* page slug. WordPress only nests CPT submenus under top-level menus; pointing at a submenu silently swallows the registration.
+
+Changed to `'show_in_menu' => true` (matches the canonical `qtap-event` pattern in the events plugin sibling), so **Messages** appears as a top-level admin menu with **Messaging Groups** nested under it via `'edit.php?post_type=qtap-message'`.
+
+Pure admin-menu visibility fix — no schema, no REST contract, no auth changes.
+
+## [1.0.60] — 2026-04-29
+
+### Updated — Messaging redesigned on WP-native primitives (CPTs + taxonomy)
+
+The v1.0.59 messaging layer used three custom tables (`wp_kdc_qtap_education_messages`, `_groups`, `_message_recipients`) and a hand-rolled audience JSON. That worked, but it forked from the qTap family pattern (queryable / admin-visible content lives in WP-native CPTs; custom tables are reserved for high-volume transactional state — the `wp_kdc_qtap_finance_payments` precedent).
+
+This release rebuilds the layer on WP primitives. **The federation REST JSON shape is unchanged**, so `api.qtap.app` and the deployed mobile/web clients keep working without any updates.
+
+**New WP-native primitives:**
+
+| Type | Slug | Purpose |
+|---|---|---|
+| CPT | `qtap-message` | Broadcast envelope. `post_title`=subject, `post_content`=body, `post_author`=sender, `post_modified_gmt`=sent_at. |
+| CPT | `qtap-message-group` | Ad-hoc audience definition. `_qtap_message_group_criteria` post_meta holds `{include:[…], exclude:[…]}` clauses. |
+| Taxonomy | `qtap-message-category` | Hierarchical, REST-enabled. Inbox folders on the parent app. Default terms: Announcements, Academic, Administrative, Emergency. |
+
+**New post_meta keys on `qtap-message`:**
+
+- `_qtap_message_audience` — audience JSON (5 modes — see below)
+- `_qtap_message_attachments` — attachments JSON
+- `_qtap_message_sent_by_display` / `_qtap_message_sent_by_role` — sender label/role surfaced on parent inbox
+
+**Audience modes (was 4 → now 5):**
+
+- `school` — all `kdc_qtap_student` users.
+- `class` — `class_ids: ['I:A', '8:B']` (year-prefix variant `'2026-27:8:A'` also matches).
+- `finance_group` — `titles: ['I A', 'III B']` — reads from `kdc-qtap-finance` Groups feature. **Currently disabled** — requires `kdc_qtap_finance_get_groups()` + `kdc_qtap_finance_resolve_group_users()` helpers from kdc-qtap-finance which are not yet shipped. Sending with this audience type returns HTTP 412 with an explanatory error. Will un-disable in v1.0.61 once Finance ships the helpers.
+- `message_group` — `post_ids: [123]` references a `qtap-message-group` CPT post. Resolves recursively (`union(include) − union(exclude)`) with cycle protection.
+- `students` — `student_ids: [42, 43]` (verbatim).
+
+**REST namespace pinning (security):** both CPTs and the taxonomy register under `rest_namespace => 'kdc/v1/qtap'` rather than the WP default `/wp/v2/`. This keeps the existing federation HMAC layer in front of every messaging route. Without this pin the same data would be exposed at `/wp/v2/qtap-messages` with no auth gate beyond WP caps — a bypass we do not want.
+
+**Capability map (security):** `qtap-message` uses dedicated capabilities (`edit_qtap_messages`, `publish_qtap_messages`, `manage_qtap_messages`, etc.) instead of inheriting `post` caps. This means an Editor with `publish_posts` does NOT automatically get to broadcast. v1.0.60 grants the new caps to `administrator`; granular role mapping ships in Phase 3.5 alongside the admin send UI.
+
+**Recipients snapshot lifecycle (new file [`includes/class-kdc-qtap-education-message-publisher.php`](includes/class-kdc-qtap-education-message-publisher.php)):**
+
+- `transition_post_status` (draft → publish) — snapshot recipients. Guarded against block-editor re-saves: only fires when `$old_status !== 'publish'`.
+- `wp_trash_post` — drop recipients (`before_delete_post` doesn't fire on trash, so this catches the leak).
+- `before_delete_post` — drop recipients on force-delete.
+
+**`sent_at` derives from `post_modified_gmt`, not `post_date_gmt`.** Block editor lets users backdate `post_date`; only `modified_gmt` reliably reflects the actual publish moment.
+
+### Updated — Migration: drop two tables, rename one column
+
+`wp_kdc_qtap_education_messages` and `wp_kdc_qtap_education_groups` are dropped on plugin load (the upgrade path runs the new `KDC_qTap_Education_Messages::install()` once when DB version flips from `1.0.0` → `2.0.0`). The recipients table survives with `message_id` renamed to `message_post_id` (in-place ALTER, idempotent — safe to run on either fresh or upgraded DBs).
+
+**Migration is fresh-start.** Local qtap.kdc held 2 stale test rows (now dropped). tridha.edu.in held 0 messaging rows after the v1.0.59 cleanup of the accidental 1,550-recipient broadcast. No client coordination needed; v1.0.59-issued post IDs are not preserved.
+
+### Updated — `KDC_qTap_Education_Messages` class rewritten
+
+- Drop: `messages_table()`, `groups_table()`, `create_message()`, `resolve_audience()` (moved to new Audience class), `expand_recipients()` (moved), `students_in_classes()` (moved), all schema for the dropped tables.
+- Keep + rewrite: `inbox_for_phone()`, `get_message_for_phone()`, `mark_seen()` — all three now JOIN `wp_posts` on `r.message_post_id = p.ID` and filter `post_type = 'qtap-message' AND post_status = 'publish'`.
+- New: `count_recipients(post_id)` — used by the federation create handler to return `recipient_count` alongside `message_id`.
+
+### Updated — Federation handlers thin
+
+- `POST /federation/messages` → calls `wp_insert_post(['post_type'=>'qtap-message', 'post_status'=>'publish', ...])`. Audience JSON → post_meta. Channel string → term assignment by slug (best-effort; unknown slugs are skipped). Publisher hook fires recipient snapshot. Returns `{message_id: <post_id>, recipient_count}` — wire format identical to v1.0.59.
+- `DELETE /federation/messages/{id}` → calls `wp_delete_post($id, true)`. Publisher's `before_delete_post` hook drops recipient rows.
+- `finance_group` audience type returns HTTP 412 (`finance_group_unavailable`) until Finance ships the helpers.
+
+### New files
+
+- [`includes/class-kdc-qtap-education-cpt.php`](includes/class-kdc-qtap-education-cpt.php) — registers both CPTs + taxonomy with the REST namespace + capability settings; seeds 4 default category terms; grants admin caps once.
+- [`includes/class-kdc-qtap-education-audience.php`](includes/class-kdc-qtap-education-audience.php) — 5-mode resolver. `KDC_qTap_Education_Audience::is_finance_group_mode_available()` is the public probe used by the federation handler and any future admin UI.
+- [`includes/class-kdc-qtap-education-message-publisher.php`](includes/class-kdc-qtap-education-message-publisher.php) — three lifecycle hooks (publish snapshot, trash cleanup, force-delete cleanup).
+
+## [1.0.59] — 2026-04-28
+
+### New — Messaging data layer + federation REST endpoints (Phase 3)
+
+One-way school → parent messaging — the v1-critical feature. Lays the data layer + the HMAC-authed federation endpoints so api.qtap.app can read parents' inboxes and admin staff can send messages. Mobile/web admin UIs land in v1.0.6x (Phase 3.5).
+
+**New file:** [`includes/class-kdc-qtap-education-messages.php`](includes/class-kdc-qtap-education-messages.php) — owns three tables, self-installs on plugin load (idempotent dbDelta).
+
+| Table | Purpose |
+|---|---|
+| `wp_kdc_qtap_education_messages` | Message envelope + audience snapshot + attachments JSON. One row per send. |
+| `wp_kdc_qtap_education_message_recipients` | Per-(message, student, parent_phone) recipient. Where read/delivery state lives. |
+| `wp_kdc_qtap_education_groups` | Named ad-hoc student groups for the "custom group" audience mode. |
+
+**Audience targeting (4 modes, snapshotted at send-time):**
+
+- `{type:'school'}` → every `kdc_qtap_student`
+- `{type:'class', class_ids:['8:A','9:B']}` → students whose `kdc_qtap_school_grade` + `kdc_qtap_school_division` matches. Optional academic-year prefix `'2026-27:8:A'`.
+- `{type:'group', group_ids:[12,13]}` → students in any of those groups.
+- `{type:'students', student_ids:[42,43]}` → exact list.
+
+When a message is sent, the audience is resolved to a concrete student list, expanded to `(student_id, parent_phone, parent_contact_name)` recipient rows by walking each student's `kdc_qtap_mobile_numbers` contacts, and persisted. Editing a class roster tomorrow does NOT affect yesterday's messages — the recipient rows are immutable history.
+
+**New federation routes (HMAC-authed, in [`class-kdc-qtap-education-federation.php`](includes/class-kdc-qtap-education-federation.php)):**
+
+| Route | Body / Query | Purpose |
+|---|---|---|
+| `POST /federation/messages` | `{channel, subject, body, audience, attachments?, sent_by:{user_id?, display_name, role}}` | Admin send. Returns `{message_id, recipient_count}`. |
+| `GET /federation/messages?phone=&cursor=&limit=` | — | Parent inbox aggregator. Returns `{messages:[…], next_cursor}`. Marks every returned undelivered row as `delivered_at=now` synchronously. |
+| `GET /federation/messages/{id}?phone=` | — | Single message; 404 if this phone has no recipient row for that id. |
+| `POST /federation/messages/{id}/seen` | `{phone}` | Idempotent mark-read. Uses `COALESCE(read_at, now)` so the FIRST seen call wins. |
+
+GET-method HMAC accepts an empty-body signature (`hex(hmac_sha256(secret, '${ts}.'))`) since GET has no body. POST routes use the same `${ts}.${rawBody}` contract as Phase 2 federation.
+
+**ISO 8601 fix:** all datetime columns are stored UTC, formatted as `YYYY-MM-DDTHH:MM:SSZ` on the wire (was `YYYY-MM-DDTHH:MM:SS` without timezone — strict zod / Date parsers reject the timezone-less form).
+
+**Verified e2e on `qtap.kdc`:** school broadcast → 3 recipients (Vachan × 2 parent contacts + Sister × 1); class `8:A` broadcast → 2 recipients (Vachan only, Sister in 5:C correctly excluded); inbox aggregation by parent phone shows messages duplicated per-child (one row per `child_id`); seen-then-re-fetch shows `read_at` populated and `delivered_at` preserved.
+
 ## [1.0.58] — 2026-04-28
 
 ### New — Federation endpoints for api.qtap.app

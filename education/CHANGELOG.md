@@ -2,6 +2,22 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.71] — 2026-04-29
+
+### Fixed — Compose Send button stuck disabled (clone-replace orphaned the reference)
+
+The Send button kept the `disabled` attribute even after subject + body were filled in. Root cause: `wireComposeForm` clones the Send node mid-init to drop the no-attachments listener and rebind a richer one, but the closure-scoped `sendBtn` variable still referenced the now-orphaned (out-of-DOM) original. The validation gate (`refreshSendEnabled`, fired on subject/body input) flipped `disabled` on the orphan, leaving the visible button stuck disabled forever. Fix: change the binding to `let`, reassign `sendBtn = newSend` after `replaceChild`, and call `refreshSendEnabled()` once post-swap so the live button picks up the current dirty state.
+
+### Updated — Block alignment + Lucide icons (render.php)
+
+- Block-supports for `align: ['wide', 'full']` was already declared in [`block.json`](blocks/messaging-console/block.json), but the render emitted a hardcoded `<div class="qtap-messaging-console">` so Gutenberg's `alignwide`/`alignfull` classes never landed on the wrapper. Switched all three render branches (gated, unauthorized, main) to `get_block_wrapper_attributes()`, plus defensive CSS for themes without built-in alignwide/alignfull rules.
+- Replaced every dashicon in [`render.php`](blocks/messaging-console/render.php) with `kdc_qtap_lucide()` calls (mail, pen-line, inbox, user, users) per the icon CORE-MEMORY policy: Lucide-only, no dashicons, no `$` for currency. Pre-rendered SVG strings now also flow into `bootstrap.icons.<name>` so view.js can read them as inline strings.
+- Added [`includes/class-kdc-qtap-education-icons.php`](includes/class-kdc-qtap-education-icons.php) registering `mail`, `inbox`, `send`, `pen-line`, `paperclip`, `user`, `refresh-cw` via the parent's filterable `kdc_qtap_lucide_icons` map. Other child plugins now share the same canonical set.
+
+### Known followups
+
+- `view.js` still emits some `dashicons-*` spans for dynamic content (compose modal footer recipients chip, message-row attachment indicator, error/warning states). Each can now read from `bootstrap.icons.<name>`; tracked for v1.0.72.
+
 ## [1.0.70] — 2026-04-29
 
 ### Updated — Compose modal: explicit-close only, dirty-form confirm

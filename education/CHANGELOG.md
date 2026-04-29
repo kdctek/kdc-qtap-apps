@@ -2,6 +2,48 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.76] — 2026-04-29 — Year-anchored class audience
+
+### Changed — Class audience now requires a year prefix
+
+Class-targeted broadcasts always carry an academic year. Two valid shapes:
+
+- `<year>:<grade>` — whole grade, all divisions (e.g. `2026-27:8`)
+- `<year>:<grade>:<division>` — specific class (e.g. `2026-27:8:A`)
+
+The bare `<grade>:<division>` form (used by v1.0.59–v1.0.75) is **rejected for new posts**. Existing audience post_meta with bare entries is silently coerced to `<current_year>:<grade>:<division>` at resolve time, so historical recipient snapshots remain unchanged.
+
+**Why:** cohorts cycle through "Grade 3 Division B" each year. Without a year qualifier, a class-targeted message would resolve against every cohort that has ever been in 3B — wrong audience by construction. Locking the year removes the ambiguity at the schema level.
+
+### Changed — `list_classes` now hierarchical
+
+`GET /messaging/classes` returns a year-aware tree instead of a flat list:
+
+```jsonc
+{
+  "current_year": "2026-27",
+  "grades": [
+    {
+      "year": "2026-27", "grade": "8", "class_id": "2026-27:8", "count": 24,
+      "divisions": [
+        { "division": "A", "class_id": "2026-27:8:A", "count": 12 },
+        { "division": "B", "class_id": "2026-27:8:B", "count": 12 }
+      ]
+    }
+  ]
+}
+```
+
+Sorted current-year-first, then by year descending, then grade ascending. Lets the compose UI render the picker as a tree (whole-grade chip + per-division chips beneath).
+
+### Changed — Compose modal class picker
+
+The "By class" pane now shows a year tag per grade row, a "Grade N · all" chip (selects every division of that year+grade), and indented per-division chips below. Each chip carries a head count.
+
+### Bumped — KDC_QTAP_EDUCATION_VERSION constant
+
+v1.0.75 release inadvertently shipped with `KDC_QTAP_EDUCATION_VERSION = '1.0.74'` (only the docblock + readme.txt were bumped). v1.0.76 corrects the define so `kdc_qtap_education_version` option syncs on next admin load.
+
 ## [1.0.75] — 2026-04-29 — Messaging console polish + WhatsApp-compatible authoring
 
 ### Fixed — Subject HTML-encoded twice

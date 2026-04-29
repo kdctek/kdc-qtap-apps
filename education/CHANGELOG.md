@@ -2,6 +2,30 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.64] — 2026-04-29
+
+### New — Messaging console data layer (inbox + reading pane + recipient grid)
+
+The messaging-console block (`qtap/messaging-console`, v1.0.63 scaffold) now actually shows messages. New REST controller [`includes/class-kdc-qtap-education-messaging-rest.php`](includes/class-kdc-qtap-education-messaging-rest.php) — cookie+nonce-authed, capability-gated by `edit_qtap_messages`, distinct from the HMAC federation surface used by api.qtap.app.
+
+**Routes (under `/kdc/v1/qtap/messaging/`):**
+
+| Route | Purpose |
+|---|---|
+| `GET /messages?folder=&term=&search=&cursor=&limit=` | Paginated list with aggregated `recipient_count` / `delivered_count` / `read_count` per row. `folder=sent-by-me` (or any user without `edit_others_qtap_messages`) restricts to own. `term=<slug>` filters by category. `search=<q>` LIKE-matches title + body. Cursor based on `post_modified_gmt` + `id`. |
+| `GET /messages/{id}` | Single-message detail: body (filtered through `the_content`), audience, attachments, channel, sent_by, recipient count. |
+| `GET /messages/{id}/recipients?cursor=&limit=` | Recipient grid for the reading pane — id, student name, parent contact name + phone, delivered_at + read_at timestamps. |
+
+**Frontend** ([`blocks/messaging-console/view.js`](blocks/messaging-console/view.js)) rewritten end-to-end:
+- Initial paginated list fetch on mount; sidebar folder/category clicks reset + refetch
+- Search input now active — debounced 300ms LIKE on title + body
+- Click a list row → parallel fetch of detail + recipients into the reading pane
+- "Load more" button when a `next_cursor` is returned
+- Per-row metadata: channel dot, author, sent_at (smart-formatted relative date), recipient/delivered/read counts, channel name pill
+- Reading pane: subject, sender display + role, sent-at long-format, channel + audience tags, full filtered body, recipient table with delivered/read status
+
+**Styling additions** ([`blocks/messaging-console/style.css`](blocks/messaging-console/style.css)) — list row layout (channel dot, author, date, subject, meta row), reading-pane typography (22px subject, 15px body), category-coloured tag pills (Announcements blue, Academic green, Administrative amber, Emergency red), recipients table styling, status indicators.
+
 ## [1.0.63] — 2026-04-29
 
 ### New — `qtap/messaging-console` block scaffold (Gmail-style staff messaging)

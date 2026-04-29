@@ -2,6 +2,25 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.69] — 2026-04-29
+
+### Fixed — Audience snapshot empty on freshly-published messages (Gutenberg + REST save-order gap)
+
+Newly created `qtap-message` posts published from the block editor (with the audience textarea in our classic side metabox) and from the messaging-console REST endpoint were landing **0 recipients** even when the audience JSON was clearly set, the post was Published, and the metabox showed a valid resolution. Federation `/messages?phone=...` returned empty for those posts. Root cause was a save-order race in two distinct code paths:
+
+1. **Block editor + classic side metabox.** `transition_post_status` (auto-draft → publish) fires DURING the REST save. Classic side-context metabox forms (`kdc_qtap_audience_json`) are submitted via a separate iframe AFTER the REST save resolves. At the moment the publisher hook ran, audience meta was still empty → publisher silently bailed → no rows.
+
+2. **`messaging/messages` REST endpoint.** `wp_insert_post(['post_status'=>'publish', 'meta_input'=>[...]])` runs `transition_post_status` before its `meta_input` loop finishes processing. Same shape: hook fires before audience meta is committed.
+
+Fix introduces an explicit, idempotent fallback in [`KDC_qTap_Education_Message_Publisher::snapshot_recipients( $post_id )`](includes/class-kdc-qtap-education-message-publisher.php) — public, reads current audience meta + post status, expands recipients via the existing audience resolver, INSERT IGNOREs them. The unique key `(message_post_id, student_user_id, parent_phone)` makes duplicate calls free.
+
+`on_transition` now delegates to `snapshot_recipients` (functionality unchanged for the cases it already handled). Two new explicit calls close the gaps:
+
+- [`KDC_qTap_Education_Admin_Metaboxes::save_message_meta`](includes/class-kdc-qtap-education-admin-metaboxes.php) — calls `snapshot_recipients` AFTER persisting the audience textarea, so the iframe-submitted Gutenberg metabox path covers the snapshot itself.
+- [`KDC_qTap_Education_Messaging_REST::create_message`](includes/class-kdc-qtap-education-messaging-rest.php) — calls `snapshot_recipients` after `wp_insert_post` returns, guaranteeing the snapshot fires once the meta_input loop has actually written the audience.
+
+This unblocks audience modes other than `school` for first-publish (especially `students` and `class`, which were the most common 0-recipient repros).
+
 ## [1.0.68] — 2026-04-29
 
 ### Fixed — "No classes found" on tenants that store grade/division in Finance enrollment

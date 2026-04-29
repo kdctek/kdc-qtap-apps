@@ -2,6 +2,24 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.72] — 2026-04-29
+
+### Updated — Lucide everywhere (view.js dashicon cleanup)
+
+Eliminated the last 20 `dashicons-*` references in [`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) — message-row chips, recipient counters, attachment tiles, error/loading states, the recipient-count chip on group rows, all of it. Each dashicon span now expands to an inline Lucide SVG via a small `icon( name )` helper that reads from `bootstrap.icons` (pre-rendered server-side in v1.0.71).
+
+Mapping used:
+- `dashicons-groups` → `users`
+- `dashicons-update spin` → `refresh-cw` wrapped in `.qtap-messaging-console__spin` (CSS keyframes; replaces the dashicon's built-in `.spin`)
+- `dashicons-email-alt2` → `inbox`
+- `dashicons-yes-alt` → `check-circle-2`
+- `dashicons-visibility` → `eye`
+- `dashicons-warning` → `alert-triangle`
+- `dashicons-paperclip` → `paperclip`
+- attachment fallback (was `dashicons-pdf` / `dashicons-media-default`) → `file-text` / `paperclip`
+
+CSS adds the spin keyframes plus a default sizing rule for `.kdc-qtap-lucide` inside the console.
+
 ## [1.0.71] — 2026-04-29
 
 ### Fixed — Compose Send button stuck disabled (clone-replace orphaned the reference)

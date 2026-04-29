@@ -2,6 +2,25 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.62] — 2026-04-29
+
+### New — Admin metaboxes for messaging CPTs (low-friction fallback)
+
+The primary messaging UX is the upcoming Gmail-style frontend block at `/messaging` (`qtap/messaging-console`, Phase 3.5+). These metaboxes are the WP-admin fallback — so technical users can smoke-test sends, edit audiences, and patch group criteria without a React client. New file [`includes/class-kdc-qtap-education-admin-metaboxes.php`](includes/class-kdc-qtap-education-admin-metaboxes.php) registers four metaboxes:
+
+| Screen | Metabox | What it does |
+|---|---|---|
+| `qtap-message` (side, high) | **Audience** | JSON textarea with collapsible "Available modes" reference — `school` / `class` / `students` / `finance_group` / `message_group`. Disabled-mode note inlined when `kdc-qtap-finance` helpers haven't shipped. |
+| `qtap-message` (side) | **Sender display** | Two text inputs: display-name + role. These appear above the message subject on the parent's mobile inbox. Falls back to the WP author if blank. |
+| `qtap-message` (normal, low) | **Recipients (snapshot)** | After publish: count of total / delivered / read, plus a 200-row table joining the recipients snapshot with student + parent contact name + delivery/read timestamps. Pre-publish: explanatory note. |
+| `qtap-message-group` (normal, high) | **Criteria** | JSON textarea for `{include:[…], exclude:[…]}` clause arrays. Collapsible reference for the four clause types. |
+
+Both save handlers route through the existing `KDC_qTap_Education_CPT::sanitize_audience_meta()` and `sanitize_group_criteria_meta()` — identical on-disk shape regardless of whether the value came from the metabox, the federation REST handler, the (future) React block, or a direct REST PUT into the CPT route.
+
+**Invalid JSON does not lose data.** When `json_decode` fails, the existing post_meta stays untouched and the parser error string is surfaced in the post-save redirect via `?kdc_qtap_audience_json_error=…` / `?kdc_qtap_criteria_json_error=…` so admins can fix and re-save without their previous value being clobbered with empty.
+
+Metaboxes are loaded only on `is_admin()` requests — no overhead on frontend page hits.
+
 ## [1.0.61] — 2026-04-29
 
 ### Fixed — `qtap-message` and `qtap-message-group` admin menus not visible

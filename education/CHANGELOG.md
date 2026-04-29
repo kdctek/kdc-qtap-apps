@@ -2,6 +2,24 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.68] — 2026-04-29
+
+### Fixed — "No classes found" on tenants that store grade/division in Finance enrollment
+
+After v1.0.67 deployed to tridha.edu.in, the compose modal's "By class" audience pane showed *No classes found. Make sure students have grade + division metadata.* — but tridha has 678 `kdc_qtap_student` users. Root cause: tridha stores grade/division in **`KDC_qTap_Finance_Enrollment`** (Finance plugin's enrollment table, key `kdc_qtap_finance_enrollments` user_meta), not in the canonical `kdc_qtap_school_grade` / `kdc_qtap_school_division` user_meta keys that the parent CLAUDE.md describes.
+
+Two storage shapes exist in production:
+- **qtap.kdc local + canonical pattern:** `kdc_qtap_school_grade`, `kdc_qtap_school_division`, `kdc_qtap_school_academic_year` user_meta on the student.
+- **tridha.edu.in pattern:** Finance enrollment via `KDC_qTap_Finance_Enrollment::get_current($user_id)` returns `{grade, division}`; year via `kdc_qtap_finance_get_active_year_for_user()`.
+
+New shared helper [`KDC_qTap_Education_Audience::get_student_grade_division( $student_id )`](includes/class-kdc-qtap-education-audience.php) tries canonical first, falls back to Finance. Returns `{year, grade, division}` or null. Used by:
+
+- `KDC_qTap_Education_Audience::students_in_classes()` — `class` audience-mode resolution
+- `KDC_qTap_Education_Messaging_REST::list_classes()` — `/messaging/classes` endpoint
+- `KDC_qTap_Education_Messaging_REST::student_class_id()` — class label rendered in compose autocomplete + group member preview
+
+This makes both storage shapes work transparently — no per-tenant config required. The federation `audience: {type:'class', class_ids:[...]}` mode also benefits since it routes through the same `students_in_classes()`.
+
 ## [1.0.67] — 2026-04-29
 
 ### New — Date-range filter chips + attachments via wp.media

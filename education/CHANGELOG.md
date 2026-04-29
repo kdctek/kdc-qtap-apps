@@ -2,6 +2,59 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.78] — 2026-04-29 — Toolbar split + Finance-driven class order
+
+### Added — Inline-code toolbar button (separate from monospace block)
+
+The compose toolbar previously had a single `<>` button that wrapped the selection in triple backticks (monospace block). It now ships two buttons:
+
+| Button | Icon | Inserts | Purpose |
+|---|---|---|---|
+| Inline code | `<>` (`code`) | `` `text` `` | Single-backtick — short inline snippets, variable names, codes |
+| Monospace block | `>_` (`terminal`, new) | ` ```text``` ` | Triple-backtick — multi-line preformatted blocks |
+
+Mirrors the same split the mobile renderer makes (different visual weight for inline vs block monospace) so admins authoring on the web get the same expressive range parents see in the inbox.
+
+| File | Change |
+|---|---|
+| [`includes/class-kdc-qtap-education-icons.php`](includes/class-kdc-qtap-education-icons.php) | Registered `terminal` Lucide glyph in the `kdc_qtap_lucide_icons` filter map. |
+| [`blocks/messaging-console/render.php`](blocks/messaging-console/render.php) | Added `terminal` to `$icon_names` so the SVG ships in the bootstrap payload. |
+| [`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) | Toolbar adds `data-rt="code"` button (single backtick). Existing `data-rt="mono"` keeps triple-backtick behaviour but switches to the new `terminal` icon. Click handler grew a `case 'code'` arm. |
+
+### Changed — Class picker honours Finance Settings → Grades / Divisions order
+
+Class-audience compose modal listed `2026-2027:I → II → III → IV → IX → Jr. K.g.` (alphabetic by grade string — wrong every time IX appears before V). Now uses [`kdc_qtap_finance_get_grades()`](../kdc-qtap-finance/includes/kdc-qtap-finance-helper-functions.php#L706) and [`kdc_qtap_finance_get_divisions()`](../kdc-qtap-finance/includes/kdc-qtap-finance-helper-functions.php#L716) to build a position map, then sorts grades + divisions in the school's defined academic order. Grades/divisions absent from settings fall through to natural-string ordering.
+
+| File | Change |
+|---|---|
+| [`includes/class-kdc-qtap-education-messaging-rest.php`](includes/class-kdc-qtap-education-messaging-rest.php) | `list_classes()` builds `$grade_pos` + `$division_pos` from Finance helpers and passes them into the `usort` callbacks. |
+
+### Fixed — Sidebar nav hover/focus legibility
+
+The Drafts entry (and any unfocused nav item) had `var(--qmc-hover) = #f3f4f6` — barely distinguishable from the surface, so on hover the row looked washed-out and the focus outline got lost in the same gradient. Bumped to `#e5e7eb` (gray-200), added an explicit `color` declaration on hover so labels stay dark, and replaced the default browser focus outline with a 2 px primary-blue `:focus-visible` ring offset inwards.
+
+| File | Change |
+|---|---|
+| [`blocks/messaging-console/style.css`](blocks/messaging-console/style.css) | `--qmc-hover` → `#e5e7eb`. `:hover { color: var(--qmc-text) }`. Suppressed default `:focus`. Added `:focus-visible { outline: 2px solid var(--qmc-primary); outline-offset: -2px }`. |
+
+## [1.0.77] — 2026-04-29 — Drafts polish
+
+### Fixed — Drafts nav button now shows its icon
+
+The Drafts entry in the messaging-console sidebar was unlabeled (icon column blank) because the parent's Lucide registry doesn't ship `file-edit` (Lucide renamed it to `file-pen` in v0.460). Education's child registry now ships both names with the current `file-pen` SVG, so any call site using either name resolves correctly.
+
+| File | Change |
+|---|---|
+| [`includes/class-kdc-qtap-education-icons.php`](includes/class-kdc-qtap-education-icons.php) | Added `file-edit`, `file-pen`, `trash-2` to the `kdc_qtap_lucide_icons` filter map. `file-pen` aliases `file-edit` so legacy and current Lucide names both work. |
+
+### Fixed — Sending a message no longer leaves a stray draft behind
+
+When the compose modal had been autosaving (so `currentDraftId` was set) and the user clicked **Send**, the close-path `_flushAutosave()` would fire one last `POST /messages/draft` request *after* `create_message` had already promoted that post to `publish`. The server then created a duplicate draft post (because the original id no longer matched a draft-status post). End result: one published message + one stray draft per send, accumulating in the Drafts folder.
+
+| File | Change |
+|---|---|
+| [`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) | Send-success handler now `clearTimeout( saveTimer )` and replaces `overlay._flushAutosave` with a no-op before calling `close()`. The debounce can't fire and the close-path flush is neutralised, so no `messages/draft` request hits the server post-publish. |
+
 ## [1.0.76] — 2026-04-29 — Year-anchored class audience
 
 ### Changed — Class audience now requires a year prefix

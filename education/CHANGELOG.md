@@ -2,6 +2,30 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.63] — 2026-04-29
+
+### New — `qtap/messaging-console` block scaffold (Gmail-style staff messaging)
+
+The first iteration of the staff messaging powerhouse — a Gutenberg block that frontend-renders a Gmail-style three-pane console for sending, auditing, and managing parent broadcasts. The block ships in scaffold form: server-rendered layout, sidebar nav + category labels with click feedback, empty states with explicit "lands in v1.0.64+" copy. Live data fetching, compose modal, recipient grid, group builder, search, and attachments come in v1.0.64–v1.0.67.
+
+**New block files** under [`blocks/messaging-console/`](blocks/messaging-console/):
+
+| File | Role |
+|---|---|
+| `block.json` | Block declaration (`qtap/messaging-console`, apiVersion 3, full-width align). |
+| `index.js` | Block-editor placeholder with `ServerSideRender`. |
+| `render.php` | Server-side render — capability gate, bootstrap JSON, three-pane shell. |
+| `view.js` | Frontend view script — parses bootstrap, exposes `window.kdcQtapMessagingConsole` for the v1.0.64+ data layer, wires sidebar nav active-state. |
+| `style.css` | Gmail-flavoured CSS — `--qmc-*` token palette, three-column grid (240/360/1fr), responsive collapse below 900px, color-coded category dots (Announcements blue, Academic green, Administrative amber, Emergency red). |
+
+**Page contributor** in new file [`includes/class-kdc-qtap-education-messaging-integration.php`](includes/class-kdc-qtap-education-messaging-integration.php) — registers the `messaging` page id with the parent's `kdc_qtap_frontend_pages` filter (parent v3.1.1+). Admins get a "+ Create new" affordance on `qTap App > User Dashboard > Host Page` that auto-creates a `/messaging` page pre-populated with the block. Auto-detection mirrors the Education Dashboard's pattern: transient cache busted on `save_post_page` / `deleted_post`.
+
+**Block registration** added to [`includes/class-kdc-qtap-education-block-editor.php`](includes/class-kdc-qtap-education-block-editor.php) — pre-registers the view script with `kdc-qtap-frontend-helpers` + `wp-api-fetch` deps so KdcQtapUI helpers (page loader etc.) and `wp.apiFetch` are guaranteed loaded ahead of view.js. Render callback enqueues the parent's frontend framework + Finance staff-console stylesheet so buttons + form controls feel native to the qTap series UI.
+
+**Capability gate is server-side.** Logged-out visitors see a polite login-required notice. Logged-in users without `edit_qtap_messages` see an access-denied notice. Only staff with the cap see the console shell.
+
+**Bootstrap config** is mounted as an inline `<script type="application/json">` rather than data-* attrs so view.js can JSON.parse once. Fields: `rest_url`, `rest_namespace='kdc/v1/qtap'`, `rest_nonce`, `current_user`, `caps`, `post_type`, `taxonomy`. Read-only — view.js mutates `window.kdcQtapMessagingConsole.state` for the active folder/term selection.
+
 ## [1.0.62] — 2026-04-29
 
 ### New — Admin metaboxes for messaging CPTs (low-friction fallback)

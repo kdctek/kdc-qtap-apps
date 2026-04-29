@@ -2,6 +2,19 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.21.18] - 2026-04-29
+
+### Added — Public helpers for resolving Reporting Groups → user IDs
+
+Two new helper functions on the Finance public API:
+
+- **`kdc_qtap_finance_get_groups()`** — returns the saved Reporting Groups list (the same shape Settings → Grouping renders).
+- **`kdc_qtap_finance_resolve_group_users( string $title, array $opts = [] ): int[]`** — resolves a group (by title or id) for an academic year to a deduplicated list of enrolled student WP user IDs. Recursive over nested group references and cycle-safe.
+
+Reasoning: `kdc-qtap-education` v1.0.73 needs Finance Groups as a messaging audience. Until now there was no public path — the recursive `report_resolve_group_items()` lived as a private trait method, and reading `kdc_qtap_finance_settings['groups']` directly across the plugin boundary would silently break the moment Finance changed its on-disk shape. These two helpers wrap the existing private logic so Education can target audiences like "Class IV A" without forking the resolver.
+
+The new helpers also gate Education's `finance_group` audience mode via `function_exists()` — Education's compose UI shows a clear "needs Finance v3.21.18+" notice when the helpers are absent.
+
 ## [3.21.17] - 2026-04-28
 
 ### Added — Loud signal when `Payment::create` silently fails during enrollment regen

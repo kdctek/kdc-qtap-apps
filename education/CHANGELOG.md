@@ -2,6 +2,28 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.66] — 2026-04-29
+
+### New — Messaging Groups view + structured criteria builder
+
+The "Messaging Groups" sidebar item is now wired up. Clicking it switches the middle pane to a list of `qtap-message-group` posts with live student-resolution counts. Selecting a group renders the reading pane with the group's title, member count, criteria summary (Include / Exclude clause lists), and a 50-row member preview joined to class metadata.
+
+**Group editor modal** — opened via "+ New group" or "Edit" button on the reading pane. Two-column structured builder:
+- **Include / Exclude columns** — same shape on each side. Each column hosts a list of clause cards plus a "+ Add clause…" select. Three clause types in v1: `By class` (chip toggle of every grade:division pair from `/messaging/classes`), `Specific students` (debounced autocomplete pill list), `Reference group` (chip toggle of every other published `qtap-message-group`). `finance_group` clause is parked until Finance ships its helpers (server still accepts the type — just no UI affordance yet).
+- Live preview at the bottom — when there's exactly one include clause and no excludes, the count is exact (server `/preview-audience` call); otherwise it shows clause counts and resolves on save.
+
+**New REST routes** under `/kdc/v1/qtap/messaging/`:
+
+| Route | Permission | Purpose |
+|---|---|---|
+| `GET /message-groups` | `edit_qtap_message_groups` | List groups with `student_count` (server resolves criteria via the audience class). Used by both compose-modal group picker and the groups view. |
+| `POST /message-groups` | `publish_qtap_message_groups` | Create. Body `{title, criteria}`. Returns the freshly-created group with members. |
+| `GET /message-groups/{id}` | `edit_qtap_message_groups` | Detail with criteria + first-50-member preview. |
+| `PUT/PATCH /message-groups/{id}` | `publish_qtap_message_groups` | Partial update (title and/or criteria). |
+| `DELETE /message-groups/{id}` | `publish_qtap_message_groups` | Force-delete the post. |
+
+Both group-CRUD endpoints route through `KDC_qTap_Education_CPT::sanitize_group_criteria_meta()`, so on-disk shape is identical whether the criteria came from this builder, the v1.0.62 admin metabox, or a direct REST PUT.
+
 ## [1.0.65] — 2026-04-29
 
 ### New — Compose modal + audience picker in messaging-console

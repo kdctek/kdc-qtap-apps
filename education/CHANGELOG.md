@@ -2,6 +2,25 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.79] — 2026-04-29 — Audience picker uses Finance customizable labels
+
+### Changed — "By class" / "Specific students" copy follows Finance Settings → Labels
+
+The compose modal hard-coded "By class" and "Specific students" tab labels. Schools using Finance's customizable-labels framework rename these nouns ("Class" → "Standard" / "Form" / "Section"; "Student" → "Member" / "Participant" / "Resident") in **qTap Finance Settings → Labels**, and the messaging UI now reflects whichever wording the school configured. Same applies to the Messaging Group → "Add clause" dropdown options and the audience-summary chip prefixes ("Class: I-A" → "Standard: I-A").
+
+| File | Change |
+|---|---|
+| [`blocks/messaging-console/render.php`](blocks/messaging-console/render.php) | Bootstrap payload now includes a `labels` map sourced from [`kdc_qtap_finance_label()`](../kdc-qtap-finance/includes/kdc-qtap-finance-helper-functions.php#L1152) for `grade`/`grades`/`division`/`divisions`/`student`/`students`/`academic_year`. Falls back to canonical English when Finance isn't loaded. |
+| [`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) | Added `lbl( key, fallback )` helper reading from `bootstrap.labels`. Audience radio labels, summary chip prefixes, and Messaging Group clause-type options now compose from the helper instead of literal strings. |
+
+### Added — `whatsappMarkupToHtml()` / `htmlToWhatsappMarkup()` helpers (precursor to v1.0.80 WYSIWYG)
+
+Lays the groundwork for replacing the compose `<textarea>` with a contenteditable rich-text editor in v1.0.80. The helpers are dormant in this release (no call sites yet) but live alongside `escapeHtml()` so the next release can wire them in without a second helper introduction. Kept in this release rather than as a v1.0.80-only patch so the diff for the editor swap stays scoped to UI wiring rather than bundling helpers + UI in a single PR.
+
+| File | Change |
+|---|---|
+| [`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) | Adds two pure helpers: markup → HTML (block-level + inline + auto-link) and HTML → markup (DOM walker that rebuilds WhatsApp wire format). No lookbehind regex (Hermes/Safari compatibility). |
+
 ## [1.0.78] — 2026-04-29 — Toolbar split + Finance-driven class order
 
 ### Added — Inline-code toolbar button (separate from monospace block)

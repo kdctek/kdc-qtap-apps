@@ -2,6 +2,29 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.81] — 2026-04-29 — Triple-backtick monospace renders inline (WhatsApp parity)
+
+### Changed — Triple-backtick `` ```text``` `` no longer renders as a full-width `<pre>` block
+
+Reading-pane and contenteditable editor both stopped rendering triple-backtick monospace as a `<pre><code>` block — that span has always been *inline* in WhatsApp, with just a font change (no grey badge, no full-width container). The old `<pre>` rendering broke this parity and was visually identical to a code block, which is misleading: WhatsApp doesn't have a "code block" concept.
+
+Single-backtick `` `text` `` keeps its grey-badge inline-code rendering (markdown convention). The two are now visually distinguishable: badge for "inline code", plain monospace font for "WhatsApp monospace".
+
+| Surface | Before | After |
+|---|---|---|
+| Reading pane HTML | `<pre><code>text</code></pre>` (full-width grey block) | `<code class="qtap-mono">text</code>` (inline, transparent) — `<br>` between lines for multi-line content |
+| Compose toolbar (`mono` button) | Inserted `<pre><code>` block element | Inserts `<code class="qtap-mono">` inline element |
+| Markup ↔ HTML round-trip | `<pre><code>x</code></pre>` ↔ `` ```x``` `` | `<code class="qtap-mono">x</code>` ↔ `` ```x``` `` |
+| Wire format | unchanged — `` ```text``` `` | unchanged — `` ```text``` `` |
+
+| File | Change |
+|---|---|
+| [`includes/class-kdc-qtap-education-messaging-rest.php`](includes/class-kdc-qtap-education-messaging-rest.php) | `whatsapp_markup_to_html()`: triple-backtick placeholder replacement now emits `<code class="qtap-mono">` with `<br>` for newlines, not `<pre><code>`. |
+| [`blocks/messaging-console/style.css`](blocks/messaging-console/style.css) | New `.qtap-mono` rule (no background, no padding) for both reading pane and contenteditable. Legacy `<pre>` from pre-v1.0.81 stored content forced to `display: inline` so historical messages don't render as blocks either. |
+| [`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) | `wrapInline( tag, fallback, className )` accepts an optional class; `mono` toolbar button uses `wrapInline( 'code', 'monospace', 'qtap-mono' )`. Walker (`htmlToWhatsappMarkup`) detects the `qtap-mono` class on `<code>` and emits triple-backtick markup. `whatsappMarkupToHtml` mirrors the server: triple-backtick → inline `<code class="qtap-mono">` with `<br>` for line breaks. |
+
+Wire format is unchanged — every recipient (mobile, web reading pane, future "forward to WhatsApp") still sees the same `` ```text``` `` markup. Only the *rendering* changed.
+
 ## [1.0.80] — 2026-04-29 — Compose: contenteditable rich-text editor
 
 ### Changed — `<textarea>` replaced with a WYSIWYG editor

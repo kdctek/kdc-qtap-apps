@@ -2,6 +2,34 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.65] — 2026-04-29
+
+### New — Compose modal + audience picker in messaging-console
+
+The Compose button in the sidebar now actually composes. Full-screen modal opens with subject + body + category select + audience picker + sender display fields. Live recipient-count preview updates as the audience changes.
+
+**Audience picker — four tabs:**
+- **School-wide** — sends to every student's parent contacts. No additional input.
+- **By class** — chip toggles for each `<grade>:<division>` pair found in student metadata, with student counts.
+- **Specific students** — search input with debounced LIKE-on-display_name autocomplete; click a result to add it to the recipient pill list. Click `×` on a pill to remove.
+- **Messaging Group** — chip toggles for each published `qtap-message-group` post.
+
+`finance_group` mode is still server-blocked until `kdc-qtap-finance` ships its public helpers — exposing it in the picker would just produce friction.
+
+**New REST routes** under `/kdc/v1/qtap/messaging/`:
+
+| Route | Purpose |
+|---|---|
+| `POST /messages` | Cookie+nonce send. Cap-gated by `publish_qtap_messages`. Calls `wp_insert_post(qtap-message)` with audience + attachments meta + sent_by display/role; assigns category term by slug. The Publisher's `transition_post_status` hook fires the recipient snapshot. Returns `{id, recipient_count}`. |
+| `POST /preview-audience` | Resolve an audience spec to `{student_count, recipient_count}` without writing a post. Returns `finance_disabled:true` (counts 0) if the type is `finance_group` and Finance helpers are missing. |
+| `GET /students?q=&limit=` | LIKE-search on `kdc_qtap_student` users. Returns id + display_name + class_id (if grade+division metadata is set). |
+| `GET /classes` | Walks all students once, returns unique `<grade>:<division>` pairs with student counts, sorted naturally by grade then division. |
+| `GET /message-groups` | Lists published `qtap-message-group` posts (id + title) for the picker dropdown. |
+
+**Frontend** ([`view.js`](blocks/messaging-console/view.js)) — Compose modal, audience picker, prefetch caching of categories+classes+groups (one-time per session), debounced preview, send → close → refetch list flow.
+
+**Styling** ([`style.css`](blocks/messaging-console/style.css)) — `.qtap-messaging-console__modal*` (full-screen overlay, blurred backdrop, 900px max-width centred card, mobile breakpoint at 700px goes full-screen), form controls (`__field`, `__field-grid`), audience picker (`__audience-tabs` with checked-state highlighting, `__chips`, students autocomplete `__students-picker` + `__students-selected` pill list).
+
 ## [1.0.64] — 2026-04-29
 
 ### New — Messaging console data layer (inbox + reading pane + recipient grid)

@@ -2,6 +2,39 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.73] — 2026-04-29 — Phase 4.5 messaging polish
+
+### Added — Finance Group as a 5th audience tab
+
+The compose modal now exposes a fifth audience type: **Finance Group**. Maps to the Reporting Groups admins already configure under qTap Finance &rsaquo; Settings &rsaquo; Grouping (e.g. "Class IV A"). Resolves to enrolled student user IDs at send time via the new public helpers `kdc_qtap_finance_get_groups()` + `kdc_qtap_finance_resolve_group_users()` shipped in **kdc-qtap-finance v3.21.18**. When Finance is older than 3.21.18 the tab still renders but shows a "needs Finance v3.21.18+" notice instead of a chip list — no errors.
+
+New REST endpoint: `GET /kdc/v1/qtap/messaging/finance-groups`. Returns `{ available, groups[ {title, student_count} ] }`. Cap-gated on `edit_qtap_messages`.
+
+### Added — OTP-gated group delete
+
+Deleting a Messaging Group is now a destructive action that requires WhatsApp/SMS OTP confirmation. Two new endpoints:
+
+- `POST /messaging/message-groups/{id}/delete-otp` — sends an OTP to the staff user's primary mobile (from `kdc_qtap_mobile_numbers` user_meta). Returns `{ method, mobile_masked, expires_in_sec: 300 }`.
+- `POST /messaging/message-groups/{id}/delete-confirm` with `{ otp }` — verifies via `kdc_qtap_verify_otp()` and hard-deletes the group on success.
+
+The frontend's old DELETE flow is replaced with a two-step modal: send-code → enter-code → confirm. If the staff user has no mobile on file, the request 412s with a clear message asking them to register one first.
+
+### Added — Drafts (CPT post_status=draft, autosave + folder + restore)
+
+Compose modal now autosaves every ~1.5s while the user types. Drafts are real `qtap-message` posts (`post_status=draft`) — cross-device, survive logout, visible in WP admin. New sidebar folder **Drafts** lists the current user's drafts (rendered with a "Draft" tag instead of recipient counts). Click a draft row to reopen the compose modal in edit mode with subject / body / channel / audience / sender pre-populated.
+
+Send transitions the draft (carries `id` in the publish payload) so the post survives instead of forking; recipient snapshot fires on `transition_post_status` as before. Discard-draft button is shown only in edit-draft mode.
+
+New REST endpoints:
+- `POST /messaging/messages/draft` — upserts a draft (idempotent on `id`). Returns `{ id, updated_at }`.
+- `DELETE /messaging/messages/{id}` — refuses on published posts (409); hard-deletes drafts.
+
+### Added — Published messages are read-only
+
+Once a message is published, the WP admin edit screen renders read-only and the REST `update_post` route returns 403 (universal `do_not_allow` cap mapping). Reasoning: the mobile inbox is the canonical record after publish — mutating subject/body silently desyncs recipients who already received the push. To "edit," staff trash and recompose. Trash + delete still work normally; Publisher's `before_delete_post` hook continues to clean recipient rows.
+
+Implementation: `KDC_qTap_Education_CPT::lock_published_messages()` filters `map_meta_cap` for `edit_post` on published `qtap-message` posts.
+
 ## [1.0.72] — 2026-04-29
 
 ### Updated — Lucide everywhere (view.js dashicon cleanup)

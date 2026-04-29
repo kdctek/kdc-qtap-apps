@@ -2,6 +2,55 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.82] — 2026-04-29 — Deep links + compose toolbar polish
+
+### Added — Per-message deep links
+
+Every message in the reading pane now has a shareable deep link. Two URL forms:
+
+| Form | Example | When |
+|---|---|---|
+| Path (primary) | `https://tridha.edu.in/messages/8126` | Auto-configured server-side rewrite — admins don't need to touch permalink rules |
+| Query (fallback) | `https://tridha.edu.in/messages/?d=8126` | Works on any deployment, even before the rewrite rule has been registered |
+
+The URL stays in sync with the selected message: clicking a row updates `history.replaceState`, opening a deep-link URL auto-selects the message after the inbox loads. A new **Copy link** button next to the "Post #" stamp copies the live URL to clipboard (with a clean fallback for browsers that block the async clipboard API).
+
+| File | Change |
+|---|---|
+| [`includes/class-kdc-qtap-education-messaging-deeplink.php`](includes/class-kdc-qtap-education-messaging-deeplink.php) | **NEW.** Self-bootstrapping rewrite handler. Tracks the host page id (set when the messaging-console block first renders), registers `^<page-path>/(\d+)/?$` → `index.php?page_id=X&qtap_msg=$matches[1]`, and adds `qtap_msg` to public query vars. Flushes rewrites only the FIRST time a new host page is detected (cheap option-compare on every render thereafter). |
+| [`kdc-qtap-education.php`](kdc-qtap-education.php) | `load_dependencies()` requires the new class. |
+| [`blocks/messaging-console/render.php`](blocks/messaging-console/render.php) | Calls `KDC_qTap_Education_Messaging_Deeplink::record_host_page( get_the_ID() )`. Bootstrap payload exposes `page_path` (relative permalink) so the JS can construct path-form URLs without round-tripping. |
+| [`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) | Adds `readDeepLinkId()` (path → `?d=` → `?qtap_msg=` → legacy `?message_id=`) + `updateDeepLink()` (writes path form, strips any query params). One-shot `pendingDeepLinkId` on boot consumes after the first list fetch. New "Copy link" button in the reading-pane header with clipboard-write + textarea fallback. |
+
+### Added — Compose toolbar: ordered-list button + paste-URL-as-link
+
+| Affordance | Behaviour |
+|---|---|
+| **Numbered list** button (`list-ordered` Lucide icon) | Inserts a `<ol><li>...</li></ol>` block via `execCommand('insertOrderedList')`. Walker emits `1. item\n2. item` markup. Mirror to the existing **Bulleted list** button. |
+| **Paste URL on selection** | When clipboard contents are a single `https?://…` URL **and** a non-empty range is selected in the editor, the paste is intercepted and `execCommand('createLink', url)` runs instead of replacing the text — so highlighted "click here" + paste URL = a labelled link. Default paste behaviour is unchanged when there's no selection or the clipboard isn't a URL. |
+
+| File | Change |
+|---|---|
+| [`includes/class-kdc-qtap-education-icons.php`](includes/class-kdc-qtap-education-icons.php) | Registered Lucide `list-ordered` glyph in the `kdc_qtap_lucide_icons` filter map. |
+| [`blocks/messaging-console/render.php`](blocks/messaging-console/render.php) | Added `list-ordered` to `$icon_names` so the SVG ships in the bootstrap payload. |
+| [`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) | New `data-rt="olist"` toolbar button. Click handler grew a `case 'olist'` arm. Editor `paste` listener intercepts URL-on-selection and calls `createLink`. |
+
+### Changed — Inline `code` and monospace `qtap-mono` get distinct treatment
+
+Both render in the same monospace font so the wire format reads consistently, but `code` (single-backtick) gets a subtle slate-tinted highlight to mark "this is a literal token" and `qtap-mono` (triple-backtick) stays as bare monospace text. Mirrors the visual difference between markdown's "inline code" and WhatsApp's plain monospace conventions.
+
+| File | Change |
+|---|---|
+| [`blocks/messaging-console/style.css`](blocks/messaging-console/style.css) | `.qtap-messaging-console__reading-body code` → slate-100 background, slate-800 text, 1px×6px padding, 3px radius. `.qtap-messaging-console__reading-body code.qtap-mono` → transparent background, default text colour, no padding/border (font change only). Same pair applied in the contenteditable. |
+
+### Fixed — Blockquote regex tolerates leading whitespace
+
+`> quote` lines weren't rendering as `<blockquote>` if the contenteditable inserted a leading space or non-breaking-space before `>`. The list and ordered-list regexes already allowed leading whitespace; the quote regex now does too (`^\s*>\s?(.*)$`).
+
+| File | Change |
+|---|---|
+| [`includes/class-kdc-qtap-education-messaging-rest.php`](includes/class-kdc-qtap-education-messaging-rest.php) | `whatsapp_markup_to_html()` quote regex: `^>\s?` → `^\s*>\s?`. |
+
 ## [1.0.81] — 2026-04-29 — Triple-backtick monospace renders inline (WhatsApp parity)
 
 ### Changed — Triple-backtick `` ```text``` `` no longer renders as a full-width `<pre>` block

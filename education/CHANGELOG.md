@@ -2,6 +2,24 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.67] — 2026-04-29
+
+### New — Date-range filter chips + attachments via wp.media
+
+The messaging-console picks up two of the longest-still-missing inbox affordances.
+
+**Filter chips** — a new toolbar above the message list with All time / Today / Last 7 days / Last 30 days. Server-side support: `/messaging/messages` accepts `since=` parameter (parsed as `today`, `Ndays`, ISO-8601, or mysql datetime; clamped 1–365 days). Helper `parse_since()` lives on the messaging REST controller.
+
+**Attachments — fully wired through the WP media library:**
+- `wp_enqueue_media()` is loaded conditionally on the `/messaging` page (only for users with `edit_qtap_messages`), so the standard WP picker is available without bringing it onto every frontend page.
+- Compose modal gets a paperclip "Add attachments" button that opens `wp.media({ multiple: true, library: { type: ['image', 'application/pdf'] } })`. Selected items render as removable chips inside the form (image thumb where available, PDF / file icon otherwise, filename, formatted size, ✕ remove).
+- On send, the attachment array (`id, kind, url, thumbnail_url, filename, size_bytes`) is included in the POST body and persisted to `_qtap_message_attachments` post_meta — sanitised through the existing CPT sanitiser.
+- Reading pane renders attachments as a tile grid below the body — clickable, opens in a new tab. Image attachments show inline thumbnail, others show a dashicon for kind.
+
+Both pieces use `kind` heuristic on insert (image/pdf/file) so the UI can differentiate without re-querying the media library.
+
+This closes the messaging-console feature loop for v1.0.67. Drafts, scheduled send, templates, threading, and parent-side inbox stay parked for Phase 3.6+.
+
 ## [1.0.66] — 2026-04-29
 
 ### New — Messaging Groups view + structured criteria builder

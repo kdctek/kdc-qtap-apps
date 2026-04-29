@@ -2,6 +2,39 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.84] — 2026-04-29 — Audience exempt-filter (Finance integration)
+
+### Added — Filter audience by Finance "exempt" status
+
+Admins composing a message can now narrow the resolved student set to **only exempt students** or **exclude exempt students** — useful for fee-related comms ("send to all of Class 8 except RTE/scholarship students") and for direct messaging exempt cohorts ("send only to scholarship students about the new uniform stipend"). The "exempt" wording follows whatever the school configured in `kdc_qtap_finance_label('exempt')` — RTE, Scholarship, etc.
+
+The toggle lives in a new **Advanced** disclosure inside the audience picker (collapsed by default; only power users open it). Hidden entirely when:
+- The audience type is `students` or `message_group` (the admin already named the recipients explicitly — further filtering would be confusing). The toggle resets to "All" on hide so a stale selection doesn't survive a type-flip.
+- `kdc-qtap-finance` is not active at the tenant (no exempt concept exists).
+
+The default state is always "All" (no filter) on a fresh compose — explicit opt-in.
+
+| File | Change |
+|---|---|
+| [`includes/class-kdc-qtap-education-audience.php`](includes/class-kdc-qtap-education-audience.php) | Added `is_student_exempt()` (current-year enrollment first, falls back to default `kdc_qtap_finance_exempt` user_meta) and `is_exempt_filter_available()` (returns true when `KDC_qTap_Finance_Enrollment` is loadable). `resolve()` now applies the optional `exempt_filter` modifier (`'only'` / `'exclude'`) at the outer call only — nested `message_group` resolution does not re-filter. Honoured for `school` / `class` / `finance_group`; ignored for `students` / `message_group` (matches UI rule). |
+| [`blocks/messaging-console/render.php`](blocks/messaging-console/render.php) | Bootstrap surfaces `labels.exempt` (Finance customizable) + `exempt_filter_available` so the JS can decide whether to render the toggle at all. |
+| [`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) | New `renderAdvancedAudienceSection()` produces the disclosure + 3-state radio (`""` / `"only"` / `"exclude"`). `readAudienceFromForm()` reads the radio when applicable. `toggleExemptFilterVisibility()` hides the toggle for `students` / `message_group` and resets it to "All" on hide. Draft pre-population restores the modifier and auto-opens the disclosure so admins notice it survived. `audienceLabel()` appends "· only Exempt" / "· excl. Exempt" so the inbox row tag reflects what the audience actually does. |
+| [`blocks/messaging-console/style.css`](blocks/messaging-console/style.css) | Subtle disclosure styling — dashed top border, surface-coloured panel when open, segmented-radio look matching the audience tabs. |
+
+#### Audience JSON shape (additive)
+
+```json
+{
+  "type": "class",
+  "class_ids": ["2026-27:8:A"],
+  "exempt_filter": "exclude"   // optional: "only" | "exclude" | null
+}
+```
+
+Existing audience JSON (without `exempt_filter`) keeps working unchanged.
+
+---
+
 ## [1.0.83] — 2026-04-29 — Reading-pane meta polish + media-library scoping
 
 ### Security — Media library narrowed to own uploads for non-admin roles

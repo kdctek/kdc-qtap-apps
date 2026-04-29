@@ -2,6 +2,37 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.83] — 2026-04-29 — Reading-pane meta polish + media-library scoping
+
+### Security — Media library narrowed to own uploads for non-admin roles
+
+The compose modal's attachment picker (`wp.media()`) and any block-editor / wp-admin Media Library now hides other users' uploads from anyone without `edit_others_posts`. Out of the box that means Editors/Admins still see everything; Authors/Contributors and any custom low-trust role see only their own uploads. Removes a quiet privacy leak where a teacher with `edit_qtap_messages` could browse principal/finance/etc. uploads via the messaging composer.
+
+| File | Change |
+|---|---|
+| [`includes/class-kdc-qtap-education-media-security.php`](includes/class-kdc-qtap-education-media-security.php) | **NEW.** Hooks `ajax_query_attachments_args`; forces `author = current_user_id` when the caller lacks `edit_others_posts`. Site-wide so it covers wp-admin Media Library + any other block-editor picker, not just the messaging console. |
+| [`kdc-qtap-education.php`](kdc-qtap-education.php) | `load_dependencies()` requires the new class. |
+| [`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) | `wp.media()` call gets a `library.author` hint (sourced from `bootstrap.caps.edit_others`) — narrows the picker UI before the server filter takes effect. |
+
+
+
+### Changed — One date string at a time, alternate as tooltip
+
+The reading pane was showing both the human-time form ("47 minutes ago") and the WP-formatted absolute ("Wed, 29-Apr-2026 07:38 pm") on the same line. Now it shows only one — relative for messages under 24 hours old, absolute for anything older — and the alternate form lives in the tooltip so hovering reveals the missing detail (recent → exact timestamp; old → relative offset).
+
+| File | Change |
+|---|---|
+| [`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) | `renderReading()` picks one of `sent_at_relative` / `sent_at_formatted` based on age (`Date.now() - sent_at_ms < 86400000`); the other string fills the `title` attribute. |
+
+### Changed — Post # is the click-to-copy affordance
+
+The "Copy link" button next to the Post # stamp went away. The Post # itself (e.g., `#72`, monospace) is now the button — clicking copies the deep link to the clipboard. Tooltip says "Click to copy the direct link". Position: stacked below the date in the right-aligned meta column so the visual hierarchy stays clean (sender on the left, time + ID on the right).
+
+| File | Change |
+|---|---|
+| [`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) | `<button class="qtap-messaging-console__reading-postid" data-action="copy-link">#72</button>` replaces the prior `<div>Post #72 <button>Copy link</button></div>` pair. The `data-action="copy-link"` attribute keeps the existing copy-link click handler in scope. |
+| [`blocks/messaging-console/style.css`](blocks/messaging-console/style.css) | New `.qtap-messaging-console__reading-meta-right` flex-column wrapper. `.qtap-messaging-console__reading-postid` rewritten as a transparent text-button (monospace, hover/focus underline, primary-blue colour) instead of a non-interactive monospace stamp. |
+
 ## [1.0.82] — 2026-04-29 — Deep links + compose toolbar polish
 
 ### Added — Per-message deep links

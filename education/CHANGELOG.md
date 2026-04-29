@@ -2,6 +2,42 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.75] — 2026-04-29 — Messaging console polish + WhatsApp-compatible authoring
+
+### Fixed — Subject HTML-encoded twice
+
+`Testing iOS & Android` rendered as `Testing iOS &amp; Android` in both the row and the reading pane. Root cause: insert path used `wp_kses_post()` (which encodes bare `&`), then the JS `escapeHtml()` re-encoded the stored entity. Fix: titles are plain text by definition — switched to `sanitize_text_field()` at insert, and added `decode_title()` (uses `wp_specialchars_decode()`-style `html_entity_decode`) on read so the existing rows clean up too.
+
+### Added — Dates follow WP date_format / time_format settings + human-relative
+
+Server now emits two extra fields alongside `sent_at`:
+
+- `sent_at_formatted` — built via `wp_date( get_option('date_format') . ' ' . get_option('time_format') )` so it matches what every other timestamp on this WP install renders.
+- `sent_at_relative` — uses `human_time_diff()` for "X ago" within the last 6 hours, then steps up to "Today at 4:23 pm" / "Yesterday at 4:23 pm" / "Mon at 4:23 pm" / falls back to the absolute format past 7 days.
+
+Row shows the relative form with the absolute form as a `title=` tooltip; reading pane shows both side-by-side.
+
+### Added — Rich-text authoring (WhatsApp-compatible markup)
+
+The compose modal now has a 7-button toolbar (all Lucide icons): **Bold** / **Italic** / **Strikethrough** / **Code** / **List** / **Quote** / **Link**. Each wraps the current selection with the equivalent WhatsApp character syntax (`*bold*`, `_italic_`, `~strike~`, ` ```mono``` `, `* item`, `> quote`, plus auto-linked URLs).
+
+Storage stays as raw WhatsApp markup — that's the wire format. Three reasons:
+
+1. **Forward-able to WhatsApp as-is** — when a future "send via WhatsApp" channel lands, no translation needed.
+2. **Mobile renders natively** (v1.0.76) — TS parser produces React Native styled segments. Shipping the storage shape now keeps the mobile renderer simple.
+3. **Server renders to HTML for the web admin** via the new `whatsapp_markup_to_html()` PHP function, which uses `wpautop` + `make_clickable` + `wp_kses_post` for the safe-HTML pass. Result is exposed alongside `body` as `body_html` in API responses.
+
+### Added — Sender label in row + Post ID for support
+
+- **Row sender label**: now shows `<sent_by_display> — <sent_by_role> [<wp_login>]` instead of just the WP author's display name. Login is shown only when it differs from the display, so admins can see who actually sent it when sender-display overrides hide the WP user.
+- **Reading-pane Post ID**: small monospace stamp `Post #<id>` under the meta line, with `user-select: all` so it's one tap to copy when reporting issues to tech support.
+
+### Notes
+
+- Existing posts with HTML-encoded subjects in DB display correctly because the decode happens on read — no migration needed.
+- The federation API (mobile) still returns `body` as raw markup. Mobile rendering of WhatsApp markup ships in v1.0.76.
+- All toolbar + row icons use the centralised `kdc_qtap_lucide()` helper. New icons registered in [`includes/class-kdc-qtap-education-icons.php`](includes/class-kdc-qtap-education-icons.php): `bold`, `italic`, `strikethrough`, `code`, `list`, `quote`, `link`.
+
 ## [1.0.74] — 2026-04-29 — Phase 5 push fan-out (WP side)
 
 ### Added — Webhook to api.qtap.app on message publish

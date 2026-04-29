@@ -2,6 +2,21 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.70] — 2026-04-29
+
+### Updated — Compose modal: explicit-close only, dirty-form confirm
+
+Backdrop clicks no longer dismiss the Compose modal. The cost of an accidental dismiss while typing — losing a half-written subject + body — is much higher than the cost of one extra explicit click. Two intentional close paths remain:
+
+- **× in the header**
+- **Cancel** button in the footer
+
+Both check whether the form is dirty (subject or body has content). If yes, a native `confirm()` asks: *"Discard this message? Your subject + body will be lost. (Drafts are not saved automatically yet.)"* — defaulting to keeping the modal open.
+
+Draft auto-save is intentionally deferred — Phase 4.x scope. Once it lands, the confirm dialog upgrades to *"Save as draft / Discard / Keep editing"*.
+
+[`blocks/messaging-console/view.js`](blocks/messaging-console/view.js) line ~520.
+
 ## [1.0.69] — 2026-04-29
 
 ### Fixed — Audience snapshot empty on freshly-published messages (Gutenberg + REST save-order gap)

@@ -2,6 +2,68 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.89] — 2026-04-30 — Split recipients summary + dedicated view
+
+v1.0.88 packed every recipients control into the reading pane — chips, search, class filter, sortable table, paginator, CSV button — and the result was a 50/50 split between message body and recipients-table real estate. v1.0.89 splits the surface in two: the reading pane keeps a lean summary (total + 5 counters + a "View recipients →" button), and the full controls move to a dedicated recipients view that takes over the reading area, hides the narrow message-list pane, and gives the table proper horizontal room.
+
+### Updated — Reading-pane recipients section is now a slim summary
+
+The recipients section in the reading pane was reduced to:
+
+- **Total** with a parenthesised count next to the heading.
+- **Counters strip** of five labels: All / Delivered / Pending / Read / Unread, each with a count from `msg.aggregates`. These are read-only — no clicks, no filtering. Just at-a-glance status.
+- **"View recipients →" button** in the header, anchored opposite the heading. One click opens the dedicated view.
+
+The chip strip, search input, class dropdown, sortable headers, paginator, and Export CSV button are all GONE from the reading pane. They live in the recipients view now.
+
+`selectMessage()` no longer fires the parallel recipients fetch — only the message GET, which already carries `aggregates` (the only data the slim summary needs). One round-trip instead of two.
+
+### New — Dedicated recipients view (full-bleed, view-mode flip)
+
+Opening the recipients view sets a `qtap-messaging-console--recipients-view` modifier class on the console root. CSS hides the message-list pane (`.qtap-messaging-console__list-pane`) and the topbar message-search input via that modifier, so the reading pane absorbs the freed horizontal room. The recipients view renders into the same DOM slot as the reading pane — no new page, no new block.
+
+Layout:
+
+- **Header bar** with a "← Back to message" button on the left and the message subject + channel/audience tags on the right.
+- **Full recipients controls** below — the v1.0.88 chip filters / search / class dropdown / sortable headers / paginator / CSV export, unchanged feature-wise.
+- **Back button** invokes `exitRecipientsView()` which restores the modifier class, drops the `/recipients` URL suffix, and re-paints the reading pane via `selectMessage()`.
+
+### New — Path + query deep links for the recipients view
+
+The deeplink class (`KDC_qTap_Education_Messaging_Deeplink`) now registers TWO rewrite rules instead of one. The `/recipients` rule is added **first** so the path `/messaging/123/recipients` doesn't get partially matched as message-id `123` with a stray `/recipients` left over.
+
+| URL form | Routes to |
+|---|---|
+| `/messaging/123` (path) | message reading view |
+| `/messaging/123/recipients` (path) | recipients view |
+| `/messaging/?d=123` (query) | message reading view |
+| `/messaging/?d=123&view=recipients` (query) | recipients view |
+| `/messaging/?qtap_msg=123&qtap_view=recipients` (server rewrite internal) | recipients view |
+
+Both forms work anywhere, but the path form is what the JS writes via `history.pushState` / `replaceState`. New query var `qtap_view` registered alongside `qtap_msg`.
+
+### New — Browser back-button returns from recipients view to message read
+
+`updateDeepLink()` grew a third arg `push` — `enterRecipientsView()` passes `true` on first entry from a message read, so a new history entry is created. Subsequent recipients-view navigations (e.g. switching message inside the view) keep using `replaceState` so flipping through messages doesn't pollute history.
+
+A new `popstate` handler reads the current URL via `readDeepLink()` and routes accordingly:
+
+- Bare `/messaging/` URL → exit any view-mode, clear selection.
+- `/messaging/{id}` → message reading view (if not already there).
+- `/messaging/{id}/recipients` → recipients view (if not already there).
+- Same view-mode but different id → re-render in current mode.
+
+So Cmd+[ / browser back from the recipients view returns to the message read; forward goes back to recipients. Browser-history works as users expect.
+
+### Notes
+
+- No DB schema changes. No REST changes. `GET /messaging/messages/{id}` still returns `aggregates` + `csv_nonce` so the slim summary works without an extra round-trip.
+- `renderRecipientsBody()`, `wireRecipientsSection()`, `refreshRecipientsBody()`, `exportRecipientsCsv()` from v1.0.88 are unchanged — they're now used inside the recipients view rather than inline in the reading pane.
+- The `recipientsCtx` module-scope state object is still per-message; entering the recipients view re-initialises it. Filter / sort / page state survives table-body refreshes inside one view-session, but switching messages or exiting/re-entering resets it.
+- Capability gate unchanged — `edit_qtap_messages` at server-render time, `staff_can_read_post` on the recipients endpoint, `edit_qtap_messages` at the CSV export handler.
+
+---
+
 ## [1.0.88] — 2026-04-30 — Recipients view in the frontend messaging console
 
 v1.0.87 gave WP-admin a paginated/filterable recipients list. v1.0.88 brings the same affordances to the staff-facing `qtap/messaging-console` block — so a teacher reading a message on the frontend `/messaging` page no longer has to hop into `/wp-admin` to answer "who's seen this?". The reading pane's recipients section now matches the admin table feature-for-feature: chips, search, class filter, sortable headers, page paginator, CSV export.

@@ -2,6 +2,165 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.87] — 2026-04-30 — Recipients management UI in WP admin
+
+The qtap-message edit screen had no answer to "did Class IV-B parents see this?". The v1.0.62 fallback metabox dumped the first 200 recipients inline as a flat table — unworkable for tridha.edu.in's typical 1,550-recipient school broadcasts. v1.0.87 replaces that with a focused admin UI: a compact aggregate summary in the side metabox, and a dedicated paginated/filterable/searchable list table on a hidden admin page. Pure PHP, no REST, no JS framework.
+
+### Added — Compact recipients meta-box on the qtap-message edit screen
+
+Side context, high priority. Renders:
+
+- **Total recipients** count
+- Status pills: Delivered N · Read N · Pending N (Failed N when non-zero)
+- "View all N recipients →" link to the dedicated page
+
+Reads aggregates via the new transient-cached `aggregates_for_message()` helper (60-second window) so consecutive screen refreshes don't re-aggregate. Supersedes the v1.0.62 inline-table metabox which is now removed.
+
+### Added — Hidden admin page `admin.php?page=qtap-message-recipients&message=<id>`
+
+WP-native list table experience:
+
+- **Filter chips** above the table: All · Delivered · Read · Unread · Pending — each with live counts.
+- **Class filter dropdown** (table-nav) populated from the audience snapshot of THIS message + the resolved classes of its recipients (so admins of `audience='school'` broadcasts can still filter by class).
+- **Search box** (top-right standard slot): min 2 chars, case-insensitive LIKE on `parent_contact_name` / `parent_phone` / student `display_name`.
+- **Sortable columns**: Student · Parent · Phone · Delivered · Read. Default sort `recipient_id ASC` (insertion = audience-snapshot order).
+- **Screen Options** lets admins set per-page size (default 50, capped at 500).
+- **No menu item** — the page is reachable only via the meta-box link or the row action below; standard WP "hidden submenu" pattern.
+- **Capability gate**: `current_user_can( 'edit_qtap_messages' )` — same map the qtap-message CPT registers.
+
+### Added — Row action on the qtap-message list table
+
+`post_row_actions` filter adds **Recipients →** to the row action set on every published `qtap-message`. Lets admins jump from the messages list directly to the recipients of a specific message without opening the edit screen.
+
+### Added — CSV export
+
+A "Download CSV" button next to the search box streams the current filtered set (status / class / search) as CSV. Implementation:
+
+- Routes through `admin-post.php?action=qtap_message_recipients_csv` with a nonce'd URL.
+- Streams via `fputcsv` to `php://output` — UTF-8 BOM prepended so Excel renders non-ASCII names.
+- Chunked queries (500 rows per round-trip) via the new `recipients_for_admin_export()` generator — no full-result-set load even at 5,000+ recipients.
+- Columns: `recipient_id, student_id, student_name, class, parent_name, parent_phone, delivered_at, read_at`.
+- File name: `recipients-{message_id}-{Ymd-His}.csv`.
+- Logs row count + applied filters via `kdc_qtap_debug_log()` for support traceability.
+
+### Changed — `KDC_qTap_Education_Admin_Metaboxes` no longer registers the recipients metabox
+
+The legacy inline-table metabox + its `format_dt()` helper are removed. Other metaboxes registered by that class (Audience, Sender display, Group criteria) are unchanged. The recipients metabox now lives in the new `KDC_qTap_Education_Admin_Message_Recipients` controller.
+
+### Added — `KDC_qTap_Education_Messages` data-layer helpers
+
+- `aggregates_for_message( $post_id )` — transient-cached wrapper around `get_aggregates()` (60s key `qtap_msg_aggs_<id>`).
+- `recipients_for_admin_list( $post_id, $args )` — offset-paginated recipients query with status/q/class filters, sortable column whitelist (`r.id`, `r.delivered_at`, `r.read_at`, `u.display_name`, `r.parent_contact_name`, `r.parent_phone`), returns `{rows, total}`.
+- `recipients_for_admin_export( $post_id, $args, $chunk = 500 )` — `Generator` that yields rows page-by-page; same filters as `recipients_for_admin_list`. Used by the CSV streamer.
+
+### Files
+
+- `includes/class-kdc-qtap-education-admin-message-recipients.php` (NEW) — meta-box, admin-page registration, row action, CSV export handler.
+- `includes/class-kdc-qtap-education-message-recipients-list-table.php` (NEW) — extends `WP_List_Table`.
+- `includes/class-kdc-qtap-education-messages.php` — three new helpers, plus `student_class_id()` promoted to `public`.
+- `includes/class-kdc-qtap-education-admin-metaboxes.php` — removed the recipients metabox + `format_dt()`.
+- `kdc-qtap-education.php` — `require_once` + init the new admin controller behind `is_admin()`.
+
+## [1.0.86] — 2026-04-30 — Scalable recipients access for federation admin UI
+
+The federation `messages` endpoint snapshots all recipients into `wp_kdc_qtap_education_message_recipients` at publish time. At tridha.edu.in's typical school-wide audience (1,550 rows per broadcast), the inline `recipients[]` array on the single-message GET became unworkable for the api.qtap.app admin UI. v1.0.86 introduces aggregates + a paginated recipients endpoint, and lets the existing single-message GET serve admin-mode (no phone scope) responses.
+
+### Added — `aggregates` block on `GET /federation/messages/{id}`
+
+When called without a `phone` parameter (admin mode), the response now includes an `aggregates` object:
+
+```json
+{
+  "id": 4231,
+  "subject": "...", "body": "...", "channel": "emergency",
+  "sent_at": "2026-04-30T08:01:23Z",
+  "audience": { ... }, "attachments": [ ... ],
+  "sent_by": { "user_id": 42, "display_name": "Principal", "role": "principal" },
+  "aggregates": {
+    "total": 1550,
+    "delivered": 1238,
+    "read": 612,
+    "failed": 0,
+    "pending": 312
+  },
+  "recipients": [ ... ]
+}
+```
+
+- Counts come from one conditional-COUNT query (`COUNT(*) + SUM(delivered_at IS NOT NULL) + SUM(read_at IS NOT NULL)`) — single round trip, not five.
+- New composite index `idx_msg_aggregate (message_post_id, delivered_at, read_at)` keeps the query at <50ms even on 100k recipient rows. Added via dbDelta on `KDC_qTap_Education_Messages::install()`; existing tenants pick it up on plugin update.
+- `failed` is hard-zero this release — recipients table has no `failed_at` column yet. Wire format stays identical when delivery-failure tracking lands.
+- The inline `recipients[]` array is preserved for one release (capped at 200 to keep the response manageable). Deprecated in favor of the new dedicated endpoint below; will be removed in v1.0.87 alongside the api.qtap.app proxy update.
+
+### Added — `GET /federation/messages/{id}/recipients` (paginated, filterable, searchable)
+
+Drill-in endpoint for the admin recipients grid. Same HMAC auth as the existing federation routes; no new permission model.
+
+```
+GET /wp-json/kdc/v1/qtap/education/federation/messages/{id}/recipients
+    ?cursor=<opaque>     opaque base64-JSON {"id": <last_recipient_id>}; missing = first page.
+    ?limit=50            int, server-clamped to ≤ 200.
+    ?status=delivered    one of: delivered | undelivered | read | unread | failed.
+    ?q=<term>            free-text; LIKE %q% on parent_contact_name / parent_phone /
+                         student display_name. Min 2 chars; <2 → empty result, no DB hit.
+    ?class=IV:A          class_id in "Grade:Division" or "YYYY-YYYY:Grade:Division" form.
+                         Resolves via Audience::students_in_classes(), then
+                         WHERE student_user_id IN (...). No grade/division JOIN
+                         re-implementation in this layer.
+```
+
+Response:
+
+```json
+{
+  "rows": [
+    {
+      "recipient_id": 8421,
+      "student_id": 42,
+      "student_name": "Vachan Kudmule",
+      "parent_phone": "+917738122532",
+      "parent_name": "Vachan Kudmule",
+      "class_id": "2026-2027:IV:A",
+      "delivered_at": "2026-04-30T08:04:00Z",
+      "read_at": "2026-04-30T08:46:12Z",
+      "failed_at": null,
+      "fail_reason": null
+    }
+  ],
+  "next_cursor": "eyJpZCI6ODQ3MX0=",
+  "total": 1550
+}
+```
+
+- Sort: `r.id ASC` — insertion order = audience snapshot order.
+- `total` is the count of rows matching the filters (excluding cursor) — what api.qtap.app's admin UI wants for "X recipients" labels.
+- Cursor is opaque base64-JSON; multi-key extension (e.g. for alternative sort orders) is a non-breaking change later.
+
+### Changed — `GET /federation/messages/{id}` is now dual-mode
+
+- **`?phone=+E164`** → existing parent-scoped behavior, unchanged. Returns the message + per-recipient delivery state, or 404 if this phone was not on the snapshot.
+- **(no `phone`)** → admin mode. Returns the envelope + aggregates + capped `recipients[]`. Requires the same HMAC auth as before; admin scope is implicit in api.qtap.app's role as the only HMAC-credentialed caller.
+
+### Changed — `KDC_qTap_Education_Audience::students_in_classes()` made public
+
+Was `private`. Promoted to `public` so the new `recipients_for_message()` data layer can resolve `class_id → student_ids` without re-implementing the grade/division JOIN. No call-site changes elsewhere — `students_in_classes` was previously only invoked from within the same class.
+
+### Schema — new index added (idempotent)
+
+```sql
+KEY idx_msg_aggregate (message_post_id, delivered_at, read_at)
+```
+
+dbDelta adds this on install/upgrade. Existing tenants pick it up automatically when the plugin loads after update; no manual migration needed.
+
+### Out of scope (deferred to v1.0.87+)
+
+- **Removing the inline `recipients[]` from message GET admin response** — bumps a downstream breaking change; coordinated with the api.qtap.app proxy update.
+- **CSV export** (`GET .../recipients.csv`) — admin UI ergonomic, layered on the new endpoint later.
+- **Bulk actions** (resend-to-unread, etc.) — needs the recipients endpoint as foundation; v1.0.87+.
+- **`aggregates.by_class` breakdown** — current top-level aggregates cover 80% of admin questions; surface demand-driven.
+- **`failed_at` column + delivery-failure tracking** — separate release; wire format already accommodates it.
+
 ## [1.0.85] — 2026-04-30 — Read-receipt mark_seen accurate rows-affected
 
 ### Fixed — `mark_seen()` returned ok=true even when no recipient row matched

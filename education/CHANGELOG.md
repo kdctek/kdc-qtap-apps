@@ -2,6 +2,24 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.85] — 2026-04-30 — Read-receipt mark_seen accurate rows-affected
+
+### Fixed — `mark_seen()` returned ok=true even when no recipient row matched
+
+`KDC_qTap_Education_Messages::mark_seen()` was returning `true` whenever `$wpdb->query` didn't error — but that includes the case where the UPDATE matched zero rows. The mobile app would receive `ok: true`, mark the message as read in its local SQLite cache, and the user-perceived unread dot would clear momentarily. On the next inbox refresh, however, the federation would return `read_at: null` (because the live recipient row was never actually updated), and the local cache would be overwritten back to unread.
+
+End-user symptom: opened messages stayed visually unread on mobile, AND the tridha admin recipient grid kept showing "0 read" no matter how many times a parent opened a message. Both shared the same root cause.
+
+The fix narrows the success condition to `false !== $updated && (int) $updated > 0` — only true when at least one row was actually updated. Surfaces real failures (no matching row) as `ok: false` instead of swallowing them.
+
+Also: every `mark_seen()` call now writes a `kdc_qtap_debug_log` line including the message_post_id, parent_phone, and rows-affected count. Pair with the `tag":"messages.seen"` JSON line on Vercel logs to triangulate any future "still showing unread" reports — both sides of the federation now log their view of the same call.
+
+| File | Change |
+|---|---|
+| [`includes/class-kdc-qtap-education-messages.php`](includes/class-kdc-qtap-education-messages.php) | `mark_seen()` returns true only on `$updated > 0`. Adds `kdc_qtap_debug_log` line per invocation with rows-affected + sql_error fields. Docblock explains the gotcha for future maintainers. |
+
+---
+
 ## [1.0.84] — 2026-04-29 — Audience exempt-filter (Finance integration)
 
 ### Added — Filter audience by Finance "exempt" status

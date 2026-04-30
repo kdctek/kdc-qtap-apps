@@ -2,6 +2,16 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.90] — 2026-04-30 — Recipients view absorbs the freed column
+
+v1.0.89 hid the message-list pane in recipients view via `display: none` on `.qtap-messaging-console__list-pane`, but didn't update the parent grid template. CSS Grid still allocated the 360px column for the (now-hidden) list-pane, so the recipients table sat in the rightmost `1fr` track with a 360px void to its left.
+
+### Fixed
+
+- The `qtap-messaging-console--recipients-view` modifier now also overrides `.qtap-messaging-console__layout`'s `grid-template-columns` from `240px 360px 1fr` → `240px 1fr` (sidebar + everything else). Matching overrides land at the existing breakpoints — `220px 1fr` at ≤1100px, `1fr` at ≤900px (single-column stack on mobile, same as the message reading view). Result: recipients table now stretches full-bleed across the freed column, as v1.0.89 originally intended.
+
+---
+
 ## [1.0.89] — 2026-04-30 — Split recipients summary + dedicated view
 
 v1.0.88 packed every recipients control into the reading pane — chips, search, class filter, sortable table, paginator, CSV button — and the result was a 50/50 split between message body and recipients-table real estate. v1.0.89 splits the surface in two: the reading pane keeps a lean summary (total + 5 counters + a "View recipients →" button), and the full controls move to a dedicated recipients view that takes over the reading area, hides the narrow message-list pane, and gives the table proper horizontal room.

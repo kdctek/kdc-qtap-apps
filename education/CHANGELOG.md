@@ -2,6 +2,32 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.0.88] — 2026-04-30 — Recipients view in the frontend messaging console
+
+v1.0.87 gave WP-admin a paginated/filterable recipients list. v1.0.88 brings the same affordances to the staff-facing `qtap/messaging-console` block — so a teacher reading a message on the frontend `/messaging` page no longer has to hop into `/wp-admin` to answer "who's seen this?". The reading pane's recipients section now matches the admin table feature-for-feature: chips, search, class filter, sortable headers, page paginator, CSV export.
+
+### Added — Recipients controls in the reading pane
+
+- **Filter chips** with live counts: All / Delivered / Pending / Read / Unread. Counts come from the per-message aggregates surfaced on the `GET /messaging/messages/{id}` response (cached for 60s); they're global, not filtered, so switching chips never reshuffles the totals you're looking at.
+- **Search input** above the table — debounced 300ms, min 2 chars, LIKE across `parent_contact_name`, `parent_phone`, and the joined student `display_name`. Same three-field semantics as the admin search.
+- **Class dropdown** populated from the `available_classes` array on the recipients response — union of the audience snapshot's `class_ids` and the actual recipient students' resolved classes (so an audience='school' broadcast still gets a useful filter).
+- **Sortable column headers** for Student, Parent, Phone, Delivered, Read. Click toggles asc → desc → asc; the active column shows a ▴/▾ caret.
+- **Prev / Next paginator** with "Showing X–Y of Z" + "Page X of Y". `per_page=50` server cap; filter / sort / class changes reset to page 1.
+- **Export CSV button** in the recipients header. Reuses the v1.0.87 admin-post handler (`action=qtap_message_recipients_csv`) — the URL is built client-side with the current `status` / `class_filter` / `s` / `_wpnonce` params, so the export honours whatever filters are currently applied. The nonce ships down on the message GET response (`csv_nonce` field), capability `edit_qtap_messages` enforced at the handler.
+
+### Updated — REST recipients endpoint switches modes by parameter shape
+
+- `GET /messaging/messages/{id}/recipients` now branches on the `page` param: presence of `page` flips into offset-paginated mode and returns `{recipients, total, page, per_page, total_pages, available_classes}`; absence of `page` keeps the v1.0.64 cursor mode (`{recipients, next_cursor}`) — back-compat preserved for any pre-1.0.88 client. Offset mode delegates to `KDC_qTap_Education_Messages::recipients_for_admin_list()` so SQL semantics are identical to the admin table.
+- `GET /messaging/messages/{id}` now includes `aggregates` (the cached `aggregates_for_message()` payload) and `csv_nonce` (a fresh `qtap_message_recipients_csv_{id}` nonce) so the reading pane can render chip counts and link the CSV export without a second round-trip.
+
+### Notes
+
+- The recipients section's filter / sort / page state lives on a module-scope `recipientsCtx` object in `view.js`; it's reset on every `selectMessage()` call. Within a single message's lifetime, the body is re-rendered in place via a fetch + innerHTML swap — the chips and search input do not get rebuilt, so focus and typing-in-progress survive the refresh.
+- Capability gate is unchanged: the messaging-console block already requires `edit_qtap_messages` at server render time. The recipients endpoint additionally enforces `staff_can_read_post`. The CSV export handler enforces `edit_qtap_messages` independently.
+- No DB schema changes. All filter SQL goes through the v1.0.87 `idx_msg_aggregate` composite index.
+
+---
+
 ## [1.0.87] — 2026-04-30 — Recipients management UI in WP admin
 
 The qtap-message edit screen had no answer to "did Class IV-B parents see this?". The v1.0.62 fallback metabox dumped the first 200 recipients inline as a flat table — unworkable for tridha.edu.in's typical 1,550-recipient school broadcasts. v1.0.87 replaces that with a focused admin UI: a compact aggregate summary in the side metabox, and a dedicated paginated/filterable/searchable list table on a hidden admin page. Pure PHP, no REST, no JS framework.

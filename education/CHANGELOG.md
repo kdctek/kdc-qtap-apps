@@ -2,6 +2,108 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.1.3] — 2026-05-01 — Push-change reference for cheap mobile-app polling
+
+The mobile app caches the full `/federation/app-config` payload in local storage. Without a way to detect "did anything change?", the app would either (a) re-download the full payload on every launch (wasteful, drains battery), or (b) cache forever and miss admin updates (stale). v1.1.3 adds a tiny version-counter primitive so the app can poll cheaply and only refetch when the admin actually changes something.
+
+### Added — `config_version` + `updated_at` on every `/app-config` response
+
+Two new fields ride along on the existing endpoint:
+
+```json
+{
+  "config_version": 17,
+  "updated_at": "2026-05-01T10:30:00Z",
+  "tenant_slug": "tridha",
+  "app_icon_url": "...",
+  ...
+}
+```
+
+Mobile app stores the full payload **and** the `config_version` int locally. The version is the comparison key; the timestamp is for human/debugging reference (and useful in headers/logs).
+
+### Added — `GET /federation/app-config/version` lightweight probe
+
+Same HMAC auth as the full endpoint (`check_hmac_get`), but the response carries only:
+
+```json
+{ "config_version": 17, "updated_at": "2026-05-01T10:30:00Z" }
+```
+
+~50 bytes on the wire. Mobile-app flow on launch:
+
+1. Poll `/app-config/version` (cheap).
+2. Compare returned `config_version` to locally-cached value.
+3. If equal → use the cached `/app-config` payload. No further round-trip. **This is the once-in-a-blue-moon path.**
+4. If different → fire full `/app-config` GET, replace cache, persist new version.
+
+Same authentication as the full endpoint so the version itself isn't leakable to unauthenticated callers — surfacing "this tenant just changed something" is information.
+
+### Added — Auto-bump on every change that actually matters
+
+`config_version` is incremented (and `updated_at` stamped to current UTC) automatically when any of these option mutations happen:
+
+| Source | Detected via |
+|---|---|
+| App tab save (logo / icon / privacy / terms / OTP toggle) | `updated_option:kdc_qtap_education_app_settings` |
+| General tab `email_mode` change (assign ↔ collect) | `updated_option:kdc_qtap_education_settings` — diffs the `general` subarray |
+| General tab `email_provider` change (manual ↔ google_workspace) | same as above |
+| Federation handshake setting `tenant_slug` for the first time, or a rotation changing it | `updated_option:kdc_qtap_education_federation_tenant_slug` + `added_option` companion |
+
+Wired through WP's `updated_option` and `added_option` hooks in `KDC_qTap_Education_App_Settings`. The `added_option` companion is needed because brand-new option creation fires `added_option` instead of `updated_option`. Idempotent under concurrent saves — `update_option` is atomic per row, so two simultaneous bumps land at version+1 and version+2 in some order. Mobile app only cares about "different from before", not the exact integer value.
+
+### Notes
+
+- Storage: two new options autoloaded — `kdc_qtap_education_app_config_version` (int) and `kdc_qtap_education_app_config_updated_at` (ISO-8601 string). Both small and read on every `/app-config` GET, so `autoload=yes` is correct.
+- `KDC_qTap_Education_App_Settings::get_config_version()` static helper returns `{config_version: int, updated_at: string|null}` for callers that need both.
+- `KDC_qTap_Education_App_Settings::bump_config_version()` static helper available if any future code path needs to force-bump (e.g. after a manual import/migration).
+- No bump is fired by image-attachment-side mutations (e.g. someone deletes the logo attachment from the Media library). The federation response would silently surface a stale URL until next bump — admin would have to re-pick. Could be hardened by hooking `delete_attachment`, but out of scope for this release.
+
+---
+
+## [1.1.2] — 2026-05-01 — Fix logo picker + add 1:1 App icon
+
+Two related changes: (1) the App logo media-library button never opened in v1.1.0–v1.1.1 because of a JS load-order bug, and (2) one image isn't enough — the mobile app needs a 1:1 launcher/tab-bar icon plus a wide ~3:1 wordmark for splash + headers. v1.1.2 fixes the bug AND splits the field into two pickers.
+
+### Fixed — App logo media library wasn't opening
+
+The inline picker `<script>` block sits mid-page (inside the form's `<td>`). `wp_enqueue_media()` enqueues the media JS for the page footer. Order of execution:
+
+1. Browser parses the `<script>` block in the body.
+2. Script runs `if ( ! window.wp || ! wp.media ) return;` → bails because the media JS hasn't loaded yet.
+3. `<button>` click handler is never attached.
+4. Footer scripts load → `wp.media` is now defined, but it's too late.
+
+Fix: the existence check moves *inside* the click handler, evaluated when the user clicks (not when the script is parsed). By then `wp.media` is loaded. Same script also gains a `console.error` if `wp.media` is genuinely missing (e.g. someone removes the `wp_enqueue_media()` gate by accident).
+
+### Added — Separate App icon (1:1) and App logo (~3:1)
+
+The mobile app needs both shapes:
+
+- **App icon** — square 1:1 (e.g. 512×512). Used as the per-tenant launcher icon, tab-bar icon, parent's home-screen tile.
+- **App logo** — wide horizontal wordmark, approximately 3:1 (e.g. 768×256). Used on splash screens and inside the mobile app's headers.
+
+Storage: new `app_icon_id` key in `kdc_qtap_education_app_settings` alongside the existing `app_logo_id`. Federation `GET /app-config` now returns both `app_icon_url` and `app_logo_url` (still URLs, not ids — same portability rationale as v1.1.1's URL-not-id Privacy/Terms decision).
+
+### Updated — Image picker is now multi-instance
+
+The v1.1.0 picker JS was a single-instance IIFE that hardcoded one `[data-role="logo-picker"]` selector. Refactored to:
+
+- Walk every `[data-role="image-picker"]` on the page, attach a per-element handler.
+- Read the picker's preview size off its existing `<img>`'s `style.maxWidth` so the dynamically-replaced image keeps the same dimensions (icon preview is 128px square; logo preview is 180px max-edge to accommodate the wider aspect ratio).
+- Take the modal title from `data-pick-label` so each picker shows its own field name (e.g. "App icon" vs "App logo") in the media-library modal heading.
+
+The PHP-side `$render_image_picker` closure renders both rows from the same template — only the field name, label, description text, and preview size vary.
+
+### Notes
+
+- `KDC_qTap_Education_App_Settings::get_settings()` return shape gained `app_icon_id`. Existing storage rows without that key default to `0` (falsy → null on the federation response).
+- New `KDC_qTap_Education_App_Settings::get_icon_url()` static helper mirrors the existing `get_logo_url()`.
+- Same MIME-type validation as the logo (any non-image attachment id silently falls back to the existing value at save time).
+- Federation response `app_icon_url` is `null` when the icon hasn't been set; mobile app should fall back to the qTap default in that case.
+
+---
+
 ## [1.1.1] — 2026-05-01 — Page picker for Privacy / Terms URLs
 
 The v1.1.0 App tab landed with plain URL text inputs for the Privacy + Terms fields. Schools mostly want to point at an existing WP page, and re-typing the permalink is friction. v1.1.1 replaces the text inputs with a page-picker dropdown — same pattern the parent kdc-qtap uses for the User Dashboard's host-page picker (`class-kdc-qtap-user-dashboard-admin.php` `render_tab_host()`).

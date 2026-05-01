@@ -2,6 +2,67 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.1.0] — 2026-05-01 — App Settings tab + federation app-config + email lookup
+
+The qTap Education mobile app needs per-tenant configuration (logo, privacy/terms URLs, which discovery flows are enabled) and a way to look up parents by school-issued email — not just by phone. v1.1.0 adds both. Minor bump because this introduces a new admin surface AND a new federation endpoint AND broadens an existing endpoint.
+
+### Added — "App" tab on the education settings page
+
+A third tab joins General + Google Workspace at `?tab=app`. Stores under its own option key (`kdc_qtap_education_app_settings`) so the federation endpoint reads exactly what the mobile app needs without walking the larger settings tree. Fields:
+
+- **Tenant slug** — read-only display, sourced from `kdc_qtap_education_federation_tenant_slug` (set during the federation handshake). Friendly empty-state when handshake hasn't run yet.
+- **App logo** — WP media uploader (`wp.media({ library: { type: 'image' } })`). Stored as the attachment ID; surfaced via `wp_get_attachment_image_url($id, 'full')` on the federation response. The picker preview shows a 128px thumbnail. Bad attachment IDs (deleted media, non-image MIME) silently fall back to the existing value at save time.
+- **Privacy policy URL** — `esc_url_raw` with explicit `http`/`https` scheme whitelist, plus a `wp_parse_url()` structural check that rejects scheme-only inputs (`http:` without host). Empty allowed (mobile app falls back to qTap default).
+- **Terms of service URL** — same validation as privacy.
+- **Allow Email OTP discovery** — boolean toggle. SSR-rendered conditionally based on the General tab's `email_mode`: shown only when set to `assign`, replaced with a friendly "requires email_handling=assign on the General tab" notice when in `collect` mode. Belt-and-suspenders defense at save time too — if a tampered POST submits the toggle while collect-mode is on, the value is dropped silently.
+
+`wp_enqueue_media()` is scoped to the App tab only so we don't load the media UI on every admin page.
+
+### Added — `GET /federation/app-config`
+
+HMAC-authed federation endpoint that returns the App tab's saved values + the email-handling pair from the General tab in one response. Reuses the existing `check_hmac_get` permission callback (`X-Qtap-Timestamp` + `X-Qtap-Signature`, 5-minute skew, empty-body or canonical-path signature accepted).
+
+```json
+{
+  "tenant_slug": "tridha",
+  "app_logo_url": "https://tridha.edu.in/wp-content/uploads/.../logo.png",
+  "privacy_url": "https://tridha.edu.in/privacy",
+  "terms_url": "https://tridha.edu.in/terms",
+  "email_handling": "assign",
+  "email_provider": "manual",
+  "allow_email_otp_discovery": true
+}
+```
+
+`email_handling` is the spec-mandated public name; storage key is `email_mode`. `email_provider` is `null` when in `collect` mode (provider is meaningless there). app/web is expected to cache the response for ~5 minutes — no ETag in v1.
+
+### Updated — `lookup-by-phone` accepts `{email}`
+
+Body now accepts `{"phone": "+E164"}` OR `{"email": "name@host"}` (or both — phone wins when both are supplied, since phone is the primary identifier the mobile app holds an OTP-verified token for).
+
+The path stays `lookup-by-phone` rather than the more accurate `lookup-by-identity` to avoid forcing apps/web to release in lockstep. Response shape is unchanged.
+
+Email lookup searches two surfaces and de-dupes by user ID:
+
+1. `wp_users.user_email` — primary email column. WP enforces uniqueness so at most one match.
+2. `kdc_qtap_mobile_numbers` user_meta — each entry is `{number, email, name}`. A parent's school email may appear on multiple student records (one per child), exactly mirroring the phone-search surface.
+
+Results flow through the same `classify_role()` + `format_student()` + `get_associated_students()` pipeline as the phone path, so the response object's `wp_user_id` / `display_name` / `role` / `children` semantics are identical.
+
+### Out of scope (intentional)
+
+- Email OTP send / verify endpoints — those live in `kdc-qtap-mobile` (parallel plugin) and weren't touched.
+- White-label per-tenant app branding rendering — apps/mobile pulls the logo and caches it; the actual rendering work lives there.
+- apps/web's "link school" screen consuming `/app-config` — separate task on the web-qtap-app side.
+
+### Architecture notes
+
+- The App tab follows the existing hand-rolled-form pattern used by the General + Google Workspace tabs (admin-post.php handler + transient-based notices) rather than the WP Settings API. Consistency with the rest of the plugin's settings surface beats imposed-DSL purity; sanitization is rigorous (`esc_url_raw` + scheme + host validation, `absint`, `sanitize_text_field`, MIME-type check on the logo attachment). A future Settings-API rewrite would touch all three tabs at once and is a separate refactor.
+- The orchestrator `KDC_qTap_Education_Admin_Settings` only routes the App tab — it doesn't grow with new render/save logic. The new `KDC_qTap_Education_App_Settings` class owns the App tab end-to-end and exposes static `get_settings()` + `get_email_settings()` + `get_logo_url()` helpers that the federation endpoint reads.
+- Debug logging follows the project rule: `kdc_qtap_debug_log()` (NOT `error_log()`). One save-confirmation log line, gated on the function existing for safety on stripped-down installs.
+
+---
+
 ## [1.0.90] — 2026-04-30 — Recipients view absorbs the freed column
 
 v1.0.89 hid the message-list pane in recipients view via `display: none` on `.qtap-messaging-console__list-pane`, but didn't update the parent grid template. CSS Grid still allocated the 360px column for the (now-hidden) list-pane, so the recipients table sat in the rightmost `1fr` track with a 360px void to its left.

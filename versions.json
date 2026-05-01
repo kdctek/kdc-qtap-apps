@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-05-01T10:40:00Z",
+  "updated_at": "2026-05-01T12:20:00Z",
   "plugins": {
     "kdc-qtap": {
       "version": "3.2.2",
@@ -142,6 +142,18 @@
       "is_premium": false,
       "subscription": true,
       "description": "Extended WhatsApp Business API integration and message templates."
+    },
+    "kdc-qtap-platform": {
+      "version": "0.1.0",
+      "updated_at": "2026-05-01T12:20:00Z",
+      "name": "qTap Platform",
+      "slug": "kdc-qtap-platform",
+      "requires_php": "7.4",
+      "requires_wp": "6.0",
+      "status": "alpha",
+      "is_premium": true,
+      "subscription": false,
+      "description": "Central tenant registry for the qTap ecosystem (qtap.app only). Federation REST for api.qtap.app, encrypted per-tenant HMAC secret storage, and multi-vertical handshake orchestration."
     }
   }
 }

@@ -2,6 +2,30 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.1.1] — 2026-05-01 — Page picker for Privacy / Terms URLs
+
+The v1.1.0 App tab landed with plain URL text inputs for the Privacy + Terms fields. Schools mostly want to point at an existing WP page, and re-typing the permalink is friction. v1.1.1 replaces the text inputs with a page-picker dropdown — same pattern the parent kdc-qtap uses for the User Dashboard's host-page picker (`class-kdc-qtap-user-dashboard-admin.php` `render_tab_host()`).
+
+### Updated
+
+- **Page-picker dropdown** is now the form input itself — the `<select>` carries `name="app[privacy_url]"` / `name="app[terms_url]"` and each `<option value>` is the page's full permalink (`get_permalink($page->ID)`), not the page id. Posting the form saves the permalink string straight to `kdc_qtap_education_app_settings.privacy_url` / `.terms_url`. The federation `/app-config` response stays portable across imports + page-id reshuffles because the saved value is the URL, not a fragile id.
+- **Read-only URL preview** (`<code>`) below each dropdown shows the currently-selected URL — visual confirmation of exactly what the mobile app will receive. Updated in real-time via a tiny inline JS handler (`select[data-role="url-picker"]` → `code[data-display]`).
+- **"None" sentinel** at the top of each dropdown saves `''` so the mobile app falls back to the qTap default.
+- **Legacy custom URL** (any v1.1.0 saved value that doesn't match a current page permalink) is rendered as a synthetic option labeled "Legacy custom URL — {url}" at the top of the dropdown. Selected by default so the saved value survives this release; admin can switch to a real page at their convenience.
+
+### Added
+
+- **"+ Create new" button** next to each picker — same pattern the parent's User Dashboard host-page tab uses. Clicking it hits `admin-post.php?action=kdc_qtap_education_app_create_page&field=privacy_url|terms_url&kdc_qtap_app_create_nonce=…`, the handler publishes a fresh page with sensible defaults (title "Privacy Policy" / "Terms of Service", slug `privacy` / `terms`, a single placeholder paragraph block), then **autoassigns** that page's permalink to the matching field. Redirects back to the App tab with a success notice. WP's `wp_unique_post_slug()` handles slug collisions automatically.
+- Capability gate on the handler: `manage_options`. Nonce-protected (`kdc_qtap_education_app_create_page_{field}`). The handler is wired via `admin_post_kdc_qtap_education_app_create_page` so it can be reached from the GET link (HTML doesn't allow nested `<form>`s, so this can't live inside the settings form).
+
+### Notes
+
+- No changes to the storage shape, sanitization, or the federation endpoint. The URL still goes through the same `esc_url_raw` + scheme + host validation in `handle_save()`.
+- External / off-site URLs are no longer typeable from the UI — admins point at WP pages they own. The legacy-URL fallback option preserves any pre-1.1.1 custom URL until they choose to switch.
+- Cap is 200 pages in the dropdown (`get_pages( number=200, sort_column=post_title )`). Tenants with more pages can still see the existing legacy URL or pick from the first 200 alphabetically.
+
+---
+
 ## [1.1.0] — 2026-05-01 — App Settings tab + federation app-config + email lookup
 
 The qTap Education mobile app needs per-tenant configuration (logo, privacy/terms URLs, which discovery flows are enabled) and a way to look up parents by school-issued email — not just by phone. v1.1.0 adds both. Minor bump because this introduces a new admin surface AND a new federation endpoint AND broadens an existing endpoint.

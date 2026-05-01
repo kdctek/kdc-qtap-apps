@@ -2,6 +2,69 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.1.4] — 2026-05-01 — Federation lookup rename + identity-aware response
+
+apps/web (api.qtap.app) needs to know HOW the lookup matched (was it the WP user's primary `user_email`, or a `kdc_qtap_mobile_numbers` contact-array email?) to decide auto-link vs requiring email-OTP verification on the OAuth-to-tenant linking flow. v1.1.4 also renames the lookup endpoint to a name that doesn't lie ("phone" was a misnomer once email lookup landed in v1.1.0).
+
+### Added — `POST /federation/lookup-by-identity` (canonical path)
+
+Same callback as `/lookup-by-phone`, same HMAC auth (`check_hmac`), same body schema, same response shape. The old path stays registered as an alias — apps/web cuts over in its own release, then we drop the alias in v1.2.0 (separate task).
+
+```php
+register_rest_route(
+    'kdc/v1',
+    '/qtap/education/federation/lookup-by-identity',
+    array( 'methods' => 'POST', 'callback' => array( $this, 'lookup_by_phone' ), 'permission_callback' => array( $this, 'check_hmac' ) )
+);
+// Alias kept registered for back-compat. Drops in v1.2.0.
+register_rest_route(
+    'kdc/v1',
+    '/qtap/education/federation/lookup-by-phone',
+    array( 'methods' => 'POST', 'callback' => array( $this, 'lookup_by_phone' ), 'permission_callback' => array( $this, 'check_hmac' ) )
+);
+```
+
+### Added — `{identity}` field in request body
+
+Body now accepts (in priority order):
+
+1. `{phone: "+E164"}` — explicit phone.
+2. `{email: "name@host"}` — explicit email.
+3. `{identity: "..."}` — single string, auto-classified: contains `@` → email, else phone.
+
+Explicit fields beat `identity`. When both `phone` and `email` are explicit, phone wins (already the v1.1.0 behavior). The `identity` catch-all lets apps/web pass a single "user typed something" string without classifying it client-side.
+
+### Added — `match_path` and `primary_email` on the lookup response
+
+The response gains two fields, additive (existing fields unchanged):
+
+```json
+{
+  "found": true,
+  "wp_user_id": 42,
+  "display_name": "Alice Wong",
+  "role": "parent",
+  "match_path": "primary" | "contact" | null,
+  "primary_email": "alice@school.edu" | null,
+  "children": [...]
+}
+```
+
+- `match_path` = `"primary"` when matched on `wp_users.user_email`; `"contact"` when matched on `kdc_qtap_mobile_numbers[].email`; `null` when matched by phone (no email match needed). When the SAME user matches both surfaces (e.g. their school email is both their WP login email AND listed on a child's contact array), `"primary"` wins for that user — `find_users_by_email()` skips re-tagging users it already collected via the primary path.
+- `primary_email` = the matched WP user's `user_email`. apps/web reads this when `match_path === "contact"` to send an email-OTP to the canonical institute-issued email (NOT the OAuth email). `null` when the matched WP user has no `user_email` set — apps/web can't proceed with email-OTP for that tenant in that case and must surface to the user.
+
+### Updated — `find_users_by_email()` returns `{users, paths}`
+
+The helper is now `private function find_users_by_email( $email ): array{users:WP_User[], paths:array<int,string>}`. The `paths` map is keyed by user_id with values `'primary'|'contact'` — the lookup handler reads it to compute `match_path` for the chosen adult. Order of `users` is primary-first, contact-second — matches the existing first-adult-wins selection naturally prefer primary when both exist.
+
+### Notes
+
+- `/lookup-by-phone` and `/lookup-by-identity` share one callback (`lookup_by_phone()`). The function name didn't change, so internal references and the existing test fixtures keep working.
+- Phone-by-default behavior is preserved: if a v1.0-era client posts `{phone: "+919876543210"}` to either path, the response is identical to v1.1.3 plus `match_path: null` and `primary_email` (or `null`).
+- HMAC body signing is unaffected — both routes verify the signature over the raw body bytes regardless of which keys are present.
+
+---
+
 ## [1.1.3] — 2026-05-01 — Push-change reference for cheap mobile-app polling
 
 The mobile app caches the full `/federation/app-config` payload in local storage. Without a way to detect "did anything change?", the app would either (a) re-download the full payload on every launch (wasteful, drains battery), or (b) cache forever and miss admin updates (stale). v1.1.3 adds a tiny version-counter primitive so the app can poll cheaply and only refetch when the admin actually changes something.

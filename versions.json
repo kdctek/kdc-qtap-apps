@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "updated_at": "2026-05-01T10:40:00Z",
+  "updated_at": "2026-05-04T08:45:00Z",
   "plugins": {
     "kdc-qtap": {
       "version": "3.2.2",
@@ -142,6 +142,40 @@
       "is_premium": false,
       "subscription": true,
       "description": "Extended WhatsApp Business API integration and message templates."
+    },
+    "kdc-qtap-igcr": {
+      "version": "2.59.0",
+      "updated_at": "2026-05-04T08:45:00Z",
+      "name": "qTap IGcr",
+      "slug": "kdc-qtap-igcr",
+      "requires_php": "8.0",
+      "requires_wp": "6.0",
+      "status": "stable",
+      "is_premium": true,
+      "subscription": false,
+      "description": "Instagram Graph API management for WordPress Multisite — connect Business/Creator accounts, sync media, automate DM and comment flows, and integrate with WooCommerce.",
+      "docs": [
+        {
+          "name": "Features",
+          "file": "features.md"
+        },
+        {
+          "name": "API Reference",
+          "file": "api-docs.md"
+        },
+        {
+          "name": "Connector Integration",
+          "file": "kdc-igcr-wc-connector-prompt.md"
+        },
+        {
+          "name": "Support Knowledge Base",
+          "file": "support-rag.md"
+        },
+        {
+          "name": "Marketing Prompts",
+          "file": "marketing-prompts.md"
+        }
+      ]
     }
   }
 }

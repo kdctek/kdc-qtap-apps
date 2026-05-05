@@ -2,6 +2,52 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.22.0] - 2026-05-05
+
+### Fixed — Bulletproof fee-payment cascade flow
+
+The headline correctness fix in this release. Three classes of long-standing bugs are gone:
+
+1. **Admin Record Payment with excess no longer silently skips order creation.** Previously, when an admin recorded ₹6,000 against a fee with ₹5,000 remaining balance, `create_fee_order()` rejected the request as "amount exceeds balance"; the AJAX handler swallowed the error to `null`; the cascade still trickled correctly in the ledger but **no WooCommerce order, no receipt, no PDF** ever materialised. The customer's payment lived only as `Payment_Transaction` rows. With v3.22.0 the cascade plan is computed first; the order is born with **one properly-priced line item per fee that received money** plus an "Account Credit" line item if any residual parks as credit; total = entered amount; PDF generates from a correctly-shaped order.
+
+2. **"Recompute Breakup" / "Regenerate Receipt" / "Rebuild Payment Items" no longer routinely needed on fresh orders.** The order's line-item shape now matches the underlying ledger by construction, not by post-hoc repair. The `maybe_recompute_breakup_for_amount_mismatch` priority-5 hook (which existed solely to repair drift between order total and linked Payment.amount_due) is gone — it was papering over the root bug.
+
+3. **Cascade is unified across all five entry points.** Admin Record Payment, Direct Fees Block (Pay Now → online checkout), Direct Fees Block (offline submission), CSV import, and `process_completed_order` (gateway success) all now route through one canonical `KDC_qTap_Finance_Payment::commit_fee_payment()` orchestrator. Prior divergent paths produced subtly different order shapes for the same logical operation; one shared implementation kills that.
+
+### Changed — Excess overflows everywhere; never a hard stop
+
+All entry points treat excess identically per the user's directive: excess overflows naturally to the next pending regular fee; if all pending fees are paid, the residual parks as user credit. The UI surfaces a non-blocking warning notice ("₹1,000 carried forward to subsequent fees") but **never rejects the payment**. The legacy `$allow_excess` parameter on `create_fee_order()` is now ignored (deprecated). The 5× sanity cap on offline submissions is gone — the cascade plan + Account Credit line item make any entered amount auditable.
+
+### Changed — `KDC_qTap_Finance_Payment` API
+
+New public methods that consolidate a string of inline copy-paste patterns:
+
+- **`is_regular_fee( string $slab ): bool`** — replaces 10+ inline `0 !== strpos($slab, '_custom_') && …` checks across the plugin. Single source of truth for "regular fee" classification.
+- **`plan_cascade( int $payment_id, float $amount ): array|WP_Error`** — pure read-only planner. Returns the deterministic allocation map the cascade *would* execute (`allocations`, `credit_residual`, `total`) without mutating any state.
+- **`commit_fee_payment( array $entries, int $user_id, array $payment_meta, array $order_opts ): array|WP_Error`** — the canonical orchestrator. Plans + creates order shell + line items + (optional) ledger writes + (optional) status→completed.
+- **`finalize_fee_order( int $order_id ): array|WP_Error`** — runs the deferred ledger writes for orders born in `pending`/`on-hold` status. Idempotent; defends against webhook replay via the `_kdc_qtap_finance_transactions_created` flag.
+- **`trickle_excess_forward()`** is now public (was `protected`). The redundant `trickle_excess_from_payment()` id-wrapper is removed; both former external callers (`Payment_Transaction` verify path, migrations overpayment-trickle) now resolve `Payment::get($id)` and pass the object directly.
+
+### Changed — `create_fee_order()` is now a thin shim
+
+The legacy `KDC_qTap_Finance_WooCommerce::create_fee_order()` becomes a ~20-line wrapper around `commit_fee_payment( finalize=false )`. Existing callers (REST API, direct-payment integration, etc.) keep working with no signature change. The internal triplicate (separate `create_fee_order` / `create_multi_fee_order` / `create_term_order` implementations, each ~150 LOC) is now a single canonical path under `commit_fee_payment` + a shared `build_fee_order_scaffold()` helper.
+
+### Removed — Dead code from past iteration creep
+
+- **`Payment::trickle_excess_from_payment()`** id-based wrapper — collapsed into the now-public `trickle_excess_forward()`.
+- **`maybe_recompute_breakup_for_amount_mismatch` priority-5 hook registration** — no longer wired to `woocommerce_order_status_completed`/`processing`. The function itself stays as a manual safety net (deprecated) for historical orders.
+- **The `$allow_excess` parameter** on `create_fee_order()` is retained for backwards-compatibility but ignored — excess always cascades.
+- **The 5× balance sanity cap** on the offline payment submission flow.
+- **The `amount_exceeds_balance` WP_Error path** from `create_fee_order()`.
+
+### Migration — `_kdc_qtap_finance_payment_id` → `_kdc_qtap_finance_payment_ids`
+
+A one-shot, idempotent backfill normalises the dual order-meta keys (singular `_payment_id` for legacy single-fee orders, plural-JSON `_payment_ids` for multi-fee) to the canonical always-array form. Every reader can now do `json_decode( $meta, true ) ?: []` and stop checking two keys. Migration runs automatically on plugin load when stored version `< 3.22.0`; idempotent on re-run.
+
+### Deferred to v3.22.1
+
+The 2,118-LOC `kdc-qtap-finance-block-frontend.js` modular split (six namespaced IIFE files under `blocks/fees-block/frontend/`) is deferred to keep this release's diff focused on the cascade correctness fix. The block continues to work via the existing single-file enqueue.
+
 ## [3.21.18] - 2026-04-29
 
 ### Added — Public helpers for resolving Reporting Groups → user IDs

@@ -2,6 +2,24 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.7] - 2026-05-06
+
+### Fixed — Full-Tenure / Full-Cycle / Full-Year enrollments now title their Payment rows correctly
+
+A Playgroup-Aster enrollment with cycle = "Full Tenure" was showing its single Payment row as `1st Term [2026-2027]: Jun 2026 to May 2027` — the date range correctly spanned the whole year (Jun → May), but the term stem was hard-coded to "1st Term" because the row's term-label always pulled the academic-term name of whichever month happened to be first in the period. For single-billing-period collection modes (one Payment row covering the whole year/tenure), that's wrong by construction.
+
+Three fixes:
+
+1. **`KDC_qTap_Finance_Installment_Generator::generate_billing_period_payments()`** — when there's exactly one billing period (the cycle subsumes the schedule), the `term_label` field is now derived from the cycle itself: `full_tenure` → "Full Tenure", `full_cycle` → "Full Cycle", `full_year` → "Full Year". For multi-period cycles (`per_term`, `per_month`, `quarterly`, `half_yearly`), the academic term name is preserved as before.
+
+2. **`KDC_qTap_Finance_Installment_Generator::make_label()`** — the `term_name` builder ("{Term} {Range}") now strips the academic term prefix for `full_tenure` and `full_cycle` modes too. Previously only `full_year` got that treatment, so `full_tenure` periods rendered with a misleading "1st Term Jun-May" label even though the period spanned every term.
+
+3. **Enrollment update — title-refresh for retained payments.** When admin clicks "Update Enrollment", retained (paid / wc-linked / has-transactions) Payment rows whose date range exactly matches a freshly-generated billing period now have their cosmetic title columns rewritten to the new generator output. Without this, an existing paid Payment row stamped with the old buggy "1st Term ..." title would never refresh — admins clicked Update repeatedly and saw nothing change. Period-equality matching is intentionally strict so paid per-term rows aren't accidentally collapsed under a single new "Full Tenure" name when the cycle is changed mid-year.
+
+Touched columns on retained payments: `slab`, `installment_label`, `label_stem`, `label_period`. Untouched: `amount_due`, `amount_paid`, `due_date`, `period_start`, `period_end`, `term_key`, `status`, transaction history. Idempotent — no write when the title is already correct.
+
+Existing Playgroup-Aster row on tridha will retitle to "Full Tenure" the next time staff clicks "Update Enrollment" on it.
+
 ## [3.23.6] - 2026-05-06
 
 ### Fixed — Full Tenure retitle now runs BEFORE WCPDF receipt is generated (no more stale-title PDFs)

@@ -2,6 +2,18 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.8] - 2026-05-06
+
+### Fixed — v3.23.7's enrollment-update title-refresh was silently no-oped by Payment::update()'s column whitelist
+
+`KDC_qTap_Finance_Payment::update()` filters incoming column writes through an `$allowed_fields` whitelist. The four cosmetic title columns the v3.23.7 retained-refresh path tried to rewrite — `slab`, `installment_label`, `label_stem`, `label_period` — were not in that whitelist, so every retitle attempt got silently dropped before it reached the SQL UPDATE. The function returned a result code that looked successful while writing nothing.
+
+This is why clicking "Update Enrollment" on the Playgroup-Aster row on tridha live (already on v3.23.7) didn't change the displayed title from "1st Term ..." to "Full Tenure ...".
+
+Fix: added the four columns to the whitelist with `%s` formats so `Payment::update()` actually persists them. The retained-refresh code from v3.23.7 is unchanged — it now just does what it was supposed to.
+
+After deploy, click "Update Enrollment" once on any affected row and the title will refresh.
+
 ## [3.23.7] - 2026-05-06
 
 ### Fixed — Full-Tenure / Full-Cycle / Full-Year enrollments now title their Payment rows correctly

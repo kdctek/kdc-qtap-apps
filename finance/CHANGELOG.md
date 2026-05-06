@@ -2,6 +2,30 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.2] - 2026-05-06
+
+### Added — Cascade-to-credit on Adjust overpayment
+
+The Matrix-Delta Adjust action now closes the loop on overpayment. Previously (v3.23.1), when a Payment row's `amount_paid` exceeded the new matrix-derived `amount_due`, Adjust surfaced the excess in the response message and left it for admin to handle manually. Now Adjust pushes the excess through the same `Payment::trickle_excess_forward()` machinery that handles waterfall overflow on a regular customer payment:
+
+1. **Source row capped.** `Payment.amount_paid` is reduced to `new_amount_due`, status set to `paid`. `allocate_payment_to_items()` re-runs so per-item paid columns reconcile.
+2. **Excess cascaded.** `trickle_excess_forward()` is called with the excess amount and `payment_method='credit'`. It honours all the existing rules:
+   - Regular fees: cascade to the next pending regular fee for the same `(user_id, academic_year)` via `find_next_pending_regular()`. If that row also overflows, recursion handles the chain.
+   - Custom slabs / user-fees: park directly to user credit per the v3.16.47 fee-type boundary.
+   - Final residual when no pending regular fee exists: `kdc_qtap_finance_add_user_credit()` parks it as user credit.
+3. **Audit chain preserved.** Each downstream trickle row is created via `record_transaction()` with `payment_method_title = "Matrix Adjust Cascade"` so the source of the carry-forward is unambiguous in the per-Payment Transaction Records panel and on receipts.
+
+The success message now reports cascade outcome (e.g. *"Overpayment ₹8,050 cascaded via trickle_excess_forward — applied to Term 2 / parked as user credit"*) so admin sees exactly where the money went.
+
+### Still pending — flagged for later
+
+- **Reverse-Adjust** — one-click undo for an Adjust applied to the wrong row. Requires storing a pre-Adjust snapshot of `Payment_Items` + `Payment.amount_due` keyed by `(payment_id, applied_at)` with a TTL-based purge. Not in this release because the pre-state restore needs careful handling against any Transactions created by the cascade in step 2 above (reverse-Adjust would also need to reverse the trickle chain). Tracking for a future release.
+
+### Files modified
+
+- `includes/class-kdc-qtap-finance-wc-orders-admin.php` — `ajax_apply_matrix_delta_action` Adjust branch now caps `amount_paid` and invokes `Payment::trickle_excess_forward()` when overpayment is detected.
+- `kdc-qtap-finance.php`, `readme.txt` — version bump.
+
 ## [3.23.1] - 2026-05-06
 
 ### Added — Adjust action on Matrix-Delta Review

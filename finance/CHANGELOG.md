@@ -2,6 +2,34 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.0] - 2026-05-06
+
+### Added — Reconcile Selected (per-row checkboxes on orphan/phantom scan)
+
+The orphan + phantom-reconciled scan results table now has a checkbox column. Each reconcilable row gets its own checkbox; the header has a master "select all reconcilable" checkbox; rows that are non-reconcilable (multi-match / missing meta) render `—` instead of a checkbox so they can't be accidentally selected. A new "Reconcile Selected" button (secondary style) sits between Scan and Reconcile All — it posts only the checked order IDs to the existing reconcile AJAX. Reconcile All is unchanged. The student name in each row is now an `<a target="_blank" rel="noopener">` to `wp-admin/user-edit.php?user_id=…`, so jumping to the affected user's profile is one click away.
+
+### Added — Matrix-delta detection on enrollment regen
+
+When `create_term_payments_on_enrollment()` runs (via the Update Enrollment admin action), retained paid/partial Payment rows are now compared against the freshly-computed fee-matrix `term_data`. Each retained row's Payment_Items are matched to the fresh items by `(slab, fee_type, period_start)`; if any item amount has drifted, the row is flagged. The flag captures `payment_id`, `slab_label`, `amount_paid`, `old_amount_due`, `new_amount_due`, `delta`, and per-item old/new diffs. Flags are persisted as user meta `kdc_qtap_finance_matrix_delta_flags` (an array keyed by academic year) — pending/unpaid rows are NOT in scope here because they get rebuilt cleanly by the term loop. Custom slabs (`_custom_*`) and user-fees (`_user_fee_*`) are skipped (they don't come from the regular fee matrix).
+
+This preserves the original "skip paid transactions" rule on enrollment regen — the retained row is left untouched — while making the drift between old breakup and current matrix visible to admin instead of silent.
+
+### Added — Matrix-delta review (Maintenance tab)
+
+A new amber-bordered card under **Finance → Maintenance** lists every flagged row across all users with: student (clickable to user-edit), year, slab + Payment ID, amount_paid, old amount_due, new amount_due, delta (red if increase, green if decrease), detection timestamp, and two per-row actions:
+
+- **Acknowledge** — sets `Payment.amount_due` to the new matrix value and recomputes status (`paid` if `amount_paid >= new_amount_due`, `partial` if some paid, `pending` if zero). Existing Transactions and WC order line items are NOT touched. Removes the flag.
+- **Skip** — clears the flag without any data change. The row stays at its old `amount_due`; admin will handle manually (or wait for the v3.23.1 Adjust action).
+
+**Adjust** — full breakup recompute + WC-order-line-item regeneration + cascade of excess/shortfall — is intentionally deferred to v3.23.1. Acknowledge + Skip cover the surface-it-and-handle-conservatively cases; Adjust is a destructive action that needs its own validation pass.
+
+### Files modified
+
+- `includes/class-kdc-qtap-finance-enrollment.php` — added `detect_and_flag_matrix_deltas()`, `persist_matrix_delta_flags_for_year()`, `clear_matrix_delta_flags_for_year()` private methods. Hook point: end of `create_term_payments_on_enrollment()` after term_data + custom slabs settled.
+- `includes/class-kdc-qtap-finance-wc-orders-admin.php` — registered AJAX handlers `ajax_scan_matrix_deltas` and `ajax_apply_matrix_delta_action`.
+- `includes/traits/trait-kdc-qtap-finance-admin-tab-maintenance.php` — added Reconcile Selected button + select-all checkbox + per-row checkboxes + clickable student names; new Matrix-delta review card with Acknowledge/Skip wiring.
+- `kdc-qtap-finance.php`, `readme.txt` — version bump.
+
 ## [3.22.3] - 2026-05-06
 
 ### Fixed — Reconcile All now actually creates the missing Transaction (was silently no-op)

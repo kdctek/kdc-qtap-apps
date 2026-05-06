@@ -2,6 +2,30 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.1] - 2026-05-06
+
+### Added — Adjust action on Matrix-Delta Review
+
+The third action on the matrix-delta card (deferred from v3.23.0) is now live alongside Acknowledge and Skip. **Adjust** does what Acknowledge does plus three things:
+
+1. **Reprices Payment_Items in place.** Each `Payment_Item` row matched by `(slab, fee_type, period_start)` against the flag's `items` diff has its `amount` column rewritten to the new matrix value. Uses an in-place `UPDATE` rather than delete+recreate so any `payment_item_id` references inside WC order line-item breakup meta keep resolving.
+2. **Re-allocates `amount_paid` across the new item amounts.** Calls the existing `Payment::allocate_payment_to_items()` so the per-item `amount_paid` columns reflect the new breakup. The Payment row's `amount_paid` itself is NOT changed (the customer's actual payment is immutable history).
+3. **Refreshes linked WC order receipts.** For each WC order in `Payment.wc_order_ids`: deletes any cached `_wcpdf_receipt_file` / `_wcpdf_invoice_file` PDFs and clears the meta, so the next view of the receipt re-renders against the new item amounts. Adds an order note documenting the matrix Adjust (old due, new due, items repriced).
+
+The action surfaces a per-row outcome message including any **overpayment** (e.g. customer paid ₹1,08,050 toward a row whose new amount_due is ₹1,00,000 → ₹8,050 overpayment flagged in the response) or **shortfall** detection. The flag is cleared on success.
+
+### Limitations — what Adjust does NOT do (yet)
+
+- **Cascade-to-credit for overpayment** — when `amount_paid > new_amount_due`, the excess is detected and surfaced in the success message, but is NOT yet auto-parked as user credit. Admin handles manually for now (e.g. via existing user credit tools or a manual refund). This cascade lands in **v3.23.2**.
+- **Reverse-Adjust** — there is no one-click undo. If admin Adjusts the wrong row, the original item amounts can be restored manually, but no automated reverse path exists.
+- **Cross-Payment cascade** — overpayment on Term 1 is not auto-applied to a pending Term 2 row. The `trickle_excess_forward()` integration for matrix Adjust is part of the v3.23.2 cascade work.
+
+### Files modified
+
+- `includes/class-kdc-qtap-finance-wc-orders-admin.php` — `ajax_apply_matrix_delta_action` accepts `delta_action='adjust'` with the in-place item reprice + receipt cache purge + order note flow.
+- `includes/traits/trait-kdc-qtap-finance-admin-tab-maintenance.php` — added Adjust button (primary style, between Acknowledge and Skip), JS click handler, and updated card description text.
+- `kdc-qtap-finance.php`, `readme.txt` — version bump.
+
 ## [3.23.0] - 2026-05-06
 
 ### Added — Reconcile Selected (per-row checkboxes on orphan/phantom scan)

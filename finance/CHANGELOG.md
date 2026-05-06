@@ -2,6 +2,42 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.3] - 2026-05-06
+
+### Added — Reverse-Adjust on the Maintenance tab
+
+The third action on the Matrix-Delta workflow (deferred from v3.23.1, then v3.23.2) is now live: every Matrix Adjust captures a snapshot of pre-state and admin can reverse it from a new card. Closes the loop on Adjust mistakes.
+
+**Snapshot captured during Adjust** (`ajax_apply_matrix_delta_action` → `'adjust'` branch):
+
+- `pre_state` — `Payment.amount_due`, `amount_paid`, `status`, plus every `Payment_Item` row's `(id, amount)` tuple.
+- `cascade_txn_ids` — IDs of any Transaction rows created by `trickle_excess_forward()` after the Adjust capped overpayment. Captured via `MAX(id)` watermark recorded **before** the cascade and a SQL diff after, scoped to this user's Payment rows.
+- `wc_order_ids` — list of WC orders whose receipt cache was purged.
+- `flag_data` — the original Matrix-Delta flag, kept so reverse can re-add it.
+- `applied_at`, `snapshot_id` — timestamp + unique 10-char id.
+
+Persisted as user meta `kdc_qtap_finance_matrix_adjust_history` (latest 20 per user, FIFO eviction; reversed entries kept as soft-delete for audit).
+
+**Reverse flow** (`ajax_reverse_adjust`):
+
+1. Validate snapshot exists and not already reversed.
+2. Validate Payment row + every snapshot Item id still exist (refuses with clear error if Payment shape has drifted; no partial restore).
+3. **Cascade-delete** each `cascade_txn_ids` entry via `Payment_Transaction::delete()`. The class already handles parent→child trickle reversal, `credit_parked` rollback into `kdc_qtap_finance_consume_user_credit()`, `amount_paid` decrement on each affected Payment, and `allocate_payment_to_items()` re-run — so the entire cascade chain unwinds with one loop.
+4. **Restore** `Payment_Items.amount` in place via `UPDATE` matched by item id (same row that was modified going IN).
+5. Restore `Payment.amount_due` / `amount_paid` / `status` from snapshot.
+6. Re-run `allocate_payment_to_items()` so per-item paid columns reconcile.
+7. Purge WCPDF receipt cache on each linked WC order; add reverse audit note.
+8. Re-add the original flag back into `kdc_qtap_finance_matrix_delta_flags` so admin can pick a different action (Acknowledge / Skip / re-Adjust).
+9. Mark snapshot `reversed=true` (kept for audit, hidden from the list).
+
+**UI** — new purple-bordered "Reverse a recent Adjust (v3.23.3)" card under the Matrix-Delta card on Maintenance tab. **Load Adjust history** button fetches the cross-user list (sorted by `applied_at` DESC). Each row shows when, student (clickable to user-edit), year, slab + Payment ID, pre-Adjust paid/due, cascade Transaction count, WC order count, and a per-row Reverse button with confirm-dialog.
+
+### Files modified
+
+- `includes/class-kdc-qtap-finance-wc-orders-admin.php` — registered AJAX handlers `ajax_list_adjust_history` + `ajax_reverse_adjust`. The Adjust branch now captures pre-state snapshot, cascade watermark, and persists `kdc_qtap_finance_matrix_adjust_history` after the cascade completes.
+- `includes/traits/trait-kdc-qtap-finance-admin-tab-maintenance.php` — added Reverse-Adjust card + history table + JS handlers (Load history button, per-row Reverse button).
+- `kdc-qtap-finance.php`, `readme.txt` — version bump.
+
 ## [3.23.2] - 2026-05-06
 
 ### Added — Cascade-to-credit on Adjust overpayment

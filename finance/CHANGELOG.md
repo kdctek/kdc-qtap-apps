@@ -2,6 +2,84 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.22.3] - 2026-05-06
+
+### Fixed — Reconcile All now actually creates the missing Transaction (was silently no-op)
+
+The v3.22.1 / v3.22.2 reconciler used the WC order's `_kdc_qtap_finance_transactions_created = 'yes'` meta as its idempotency check. That flag was already stamped on every fee order during its original commit (pre-enrollment-regen), and survived the orphaning even though the underlying Transaction got cascade-deleted with the original Payment. Trusting the flag → false-positive idempotent skip → reconcile re-linked `wc_order_ids` and stamped the order note, but never recreated the Transaction. Net effect: order showed `Reconciled (v3.22.1): re-linked to Payment #N` in its notes, `wc_order_ids` carried the order, but `Payment.amount_paid` stayed at 0 and the Transaction Records panel under the user's enrollment stayed empty.
+
+The idempotency check now compares actual `Payment_Transaction` existence: any Transaction row where `(payment_id = candidate, wc_order_id = order_id)` already exists → skip; otherwise create it. The order flag is still stamped at the end of reconcile (so future status-change hooks don't re-cascade), but no longer gates the Transaction-creation step.
+
+### Added — Scan now detects "phantom-reconciled" orders
+
+A new recovery state surfaces alongside true orphans: orders whose line-item `_kdc_qtap_finance_payment_id` references resolve to live Payment rows (so they look healthy to a naive scan) but where no Transaction row exists linking the order to any of them. This is the residue of the pre-3.22.3 reconcile bug — orders that were partially repaired and then forgotten. The scan badges these as `phantom-reconciled` and Reconcile All recovers them by recreating only the missing Transaction (line-item / order-level metas are already correct, so steps 1–3 are no-ops).
+
+### Changed — Order notes from reconcile now report what actually happened
+
+Previously every reconciled order got the same `Reconciled (v3.22.1): re-linked to Payment #N` note even when no Transaction was created. Now three variants:
+
+- `Reconciled (v3.22.3): re-linked to Payment #N and recreated Transaction #M for ₹X` — full path, Transaction newly created.
+- `Reconciled (v3.22.3): re-linked to Payment #N (Transaction already existed — no recreate)` — idempotent re-run.
+- `Reconciled (v3.22.3): re-linked to Payment #N (Transaction not recreated — order in non-payment status)` — failed/cancelled/refunded order; metas re-linked but no Transaction owed.
+
+### Files modified
+
+- `includes/traits/trait-kdc-qtap-finance-wc-orders.php` — `scan_orphaned_fee_orders()` extended (phantom detection + `recovery_type` field); `reconcile_orphaned_fee_orders()` rewrote idempotency check + differentiated note text.
+- `includes/traits/trait-kdc-qtap-finance-admin-tab-maintenance.php` — UI labels updated, summary line shows orphaned-vs-phantom split, table cell shows recovery type badge.
+- `kdc-qtap-finance.php`, `readme.txt` — version bump.
+
+## [3.22.2] - 2026-05-06
+
+### Added — Diagnostic: Inspect Payment row by ID (Maintenance tab)
+
+Field tool. After a Reconcile All reports success but the affected payment doesn't show up in the user-meta Payment History panel, the linked Payment row has drifted out of the displayed list — almost always because the row's `academic_year` or `slab` string no longer matches what the user-meta page is querying for. The new card under **Finance → Maintenance** dumps a Payment row's raw fields plus:
+
+- Sibling rows fetched via the same `get_by_user_year(user_id, academic_year)` query the user-meta page uses, so we can immediately see whether the inspected row is included or excluded.
+- Every row for the same `user_id` (any year) with `academic_year_raw_hex` and `slab_raw_hex` so trailing whitespace / encoding drift is visible.
+- All linked `Payment_Transaction` rows.
+
+Read-only — never mutates. Triggered by AJAX action `kdc_qtap_finance_inspect_payment` (nonce `kdc_qtap_finance_inspect_payment`, `manage_options`).
+
+### Files modified
+
+- `includes/class-kdc-qtap-finance-wc-orders-admin.php` — registered new AJAX handler `ajax_inspect_payment`.
+- `includes/traits/trait-kdc-qtap-finance-admin-tab-maintenance.php` — added Inspect Payment Row card + JSON dump panel + JS handler.
+- `kdc-qtap-finance.php`, `readme.txt` — version bump.
+
+## [3.22.1] - 2026-05-06
+
+### Fixed — Enrollment regen no longer wipes Payment rows with pending verifications or linked WC orders
+
+The retain condition in `create_term_payments_on_enrollment()` was previously `amount_paid != 0` only. That destroyed any Payment row whose `amount_paid` was still 0 even though it had transactional history — most painfully:
+
+- DirectPay offline submissions awaiting admin verification (the Transaction is `verification_status='pending'` but `amount_paid` only bumps after verify).
+- Online-checkout orders sitting in `pending` status between cart-add and gateway success (the WC order is linked but no transaction exists yet).
+- Any Payment row with verified/refunded/cancelled Transaction children that constitute audit history.
+
+In every case, deleting the Payment cascade-deleted its Transaction children **and** orphaned the linked WC order — its `_kdc_qtap_finance_payment_id` line-item meta now pointed to a deleted row, breaking the receipt's ability to navigate back to the fee.
+
+The retain condition now also checks `wc_order_ids` (non-empty) and any Transaction children. A Payment with *any* of these three signals is preserved through the regen.
+
+### Added — One-click reconcile tool for orphaned fee orders (Maintenance tab)
+
+For orders already orphaned by the pre-3.22.1 enrollment regen, a new admin action under **Finance → Maintenance** scans every fee-payment WC order, identifies dead `_kdc_qtap_finance_payment_id` references, and re-links each to the candidate Payment row in the current state by matching `(user_id, academic_year, slab)`. For `completed` / `processing` orders it also recreates the missing Transaction row from the order's metas (`pay_utr` → reference, `payment_date` → date, `paywith_method` → method title, `_payment_method` → method, total → amount), bumps `Payment.amount_paid` via the standard waterfall, and stamps `_kdc_qtap_finance_transactions_created = yes` to prevent any future status-change re-cascade. For `on-hold` orders (offline submissions awaiting verification) it recreates the Transaction with `verification_status='pending'` and sets the Payment status to `pending_review` so the existing Pending Verifications view picks it up.
+
+The flow is: **Scan** (read-only preview, fills a table with order id, status, dead Payment IDs, candidate, and the reconcile outcome each row will get) → **Reconcile All** (only runs if scan found auto-reconcilable rows). Idempotent — re-running over already-reconciled orders is a no-op via the `transactions_created` flag.
+
+Orders with no candidate match (slab no longer exists) or with multiple candidates are surfaced in the table with a clear `skip_reason` so admin can review them manually.
+
+### Added — Public WC Orders helpers
+
+- **`KDC_qTap_Finance_WooCommerce::scan_orphaned_fee_orders()`** — pure read; returns scanned/orphaned/reconcilable counts plus the per-order report.
+- **`KDC_qTap_Finance_WooCommerce::reconcile_orphaned_fee_orders( int[] $order_ids = [] )`** — performs the re-link + Transaction recreate. Pass an empty array to operate on every reconcilable order from the most recent scan, or specific IDs to limit scope.
+
+### Files modified
+
+- `includes/class-kdc-qtap-finance-enrollment.php` — broaden retain condition.
+- `includes/traits/trait-kdc-qtap-finance-wc-orders.php` — add `scan_orphaned_fee_orders` + `reconcile_orphaned_fee_orders`.
+- `includes/class-kdc-qtap-finance-wc-orders-admin.php` — register two new AJAX handlers.
+- `includes/traits/trait-kdc-qtap-finance-admin-tab-maintenance.php` — add the Reconcile Orphaned Fee Orders action card with scan-preview + reconcile flow.
+
 ## [3.22.0] - 2026-05-05
 
 ### Fixed — Bulletproof fee-payment cascade flow

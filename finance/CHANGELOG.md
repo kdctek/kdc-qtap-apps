@@ -2,6 +2,48 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.4] - 2026-05-06
+
+### Fixed — Three compounding bugs in reconcile + Transaction delete that produced ledger desync
+
+A live tridha case surfaced this on 2026-05-06: a Payment row with `amount_due = ₹1,31,300` showed `amount_paid = ₹31,300` despite a Transaction record for ₹1,00,000. The trace:
+
+1. Admin manually recorded an offline payment of ₹1,00,000 → Transaction A (`wc_order_id = NULL` because the Record Payment modal doesn't take an order argument).
+2. WC Order #N was created separately for the same fee via the offline submission flow.
+3. Enrollment was updated, the Payment row got retained, but #N became orphaned.
+4. v3.22.3 Reconcile All ran. **Bug 1**: idempotency check looked for a Transaction with matching `wc_order_id`, missed Transaction A (whose `wc_order_id` was NULL), and created Transaction B for ₹1,00,000.
+5. Reconcile bumped `amount_paid` by ₹1,00,000: raw sum became ₹2,00,000, clamped to `amount_due = ₹1,31,300`. **Bug 2**: the ₹68,700 excess was silently lost (no `trickle_excess_forward` call, unlike v3.23.2 Adjust).
+6. Admin spotted the duplicate, deleted Transaction A. **Bug 3**: `Payment_Transaction::delete()` did naive subtraction (`current - txn.amount`) on a previously-clamped `amount_paid`: ₹1,31,300 − ₹1,00,000 = ₹31,300. The remaining real Transaction B (₹1,00,000) only counted for ₹31,300 in the ledger.
+
+### Bug 1 fix — Reconcile idempotency widened
+
+`reconcile_orphaned_fee_orders()` now matches `existing Transaction with wc_order_id = NULL AND amount = order.total` as a duplicate. Catches the manually-recorded-offline + later-orphaned-WC-order case so reconcile no longer creates a second Transaction on top of the first.
+
+### Bug 2 fix — Reconcile cascade-to-credit
+
+When reconcile's amount_paid bump exceeds amount_due, the excess is now pushed via `Payment::trickle_excess_forward()` — same pattern v3.23.2 added for Adjust. Cascades to next pending regular fee or parks as user credit per the v3.16.47 fee-type boundary, with an audit Transaction (`payment_method_title = 'Reconcile Cascade'`).
+
+### Bug 3 fix — Transaction delete recomputes from sum
+
+`Payment_Transaction::delete()` and `apply_financial_reversal()` now set `amount_paid = min(SUM(remaining transactions.amount), amount_due)` instead of `current - deleted.amount`. Self-corrects any historical clamp drift on every Transaction delete. New helper `Payment::recompute_amount_paid_from_transactions()` centralises the logic.
+
+### Added — Recompute amount_paid repair tool (Maintenance tab)
+
+New cyan-bordered card: scans every Payment row and surfaces those where stored `amount_paid` ≠ `min(SUM(transactions.amount), amount_due)`. Per-row Repair button calls `Payment::recompute_amount_paid_from_transactions()` for one-click correction. The tridha case from above will surface as one row with `current=31300, expected=100000, delta=+68700`. Click Repair → `amount_paid=100000`, status flips from over-clamped state to actual partial. Does NOT cascade or touch WC orders / Transactions.
+
+### Reverse-Adjust (v3.23.3) bundled in this release
+
+The Reverse-Adjust feature scoped for v3.23.3 also ships in this combined release — single prod deploy covers both. Each Matrix Adjust now captures a snapshot of pre-state Payment + Items + cascade Transaction IDs, with a new Maintenance card listing recent Adjusts and per-row Reverse buttons. Reverse cascade-deletes the original cascade Transactions (auto-rolling back any user credit and next-pending bumps via existing `Payment_Transaction::delete()` plumbing), restores Payment_Items in place, restores Payment row fields, purges WCPDF cache, and re-flags the row.
+
+### Files modified
+
+- `includes/class-kdc-qtap-finance-payment.php` — added `recompute_amount_paid_from_transactions()` helper.
+- `includes/class-kdc-qtap-finance-payment-transaction.php` — `delete()` and `apply_financial_reversal()` switched from naive subtraction to recompute.
+- `includes/traits/trait-kdc-qtap-finance-wc-orders.php` — `reconcile_orphaned_fee_orders()` widened idempotency check + wired `trickle_excess_forward()` for excess.
+- `includes/class-kdc-qtap-finance-wc-orders-admin.php` — registered AJAX handlers `ajax_scan_amount_paid_desync`, `ajax_repair_amount_paid`, `ajax_list_adjust_history`, `ajax_reverse_adjust`. The Adjust branch captures pre-Adjust snapshot for Reverse.
+- `includes/traits/trait-kdc-qtap-finance-admin-tab-maintenance.php` — added Recompute amount_paid card + Reverse Adjust card with their JS handlers.
+- `kdc-qtap-finance.php`, `readme.txt` — version bump.
+
 ## [3.23.3] - 2026-05-06
 
 ### Added — Reverse-Adjust on the Maintenance tab

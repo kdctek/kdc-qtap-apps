@@ -2,6 +2,40 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.6] - 2026-05-06
+
+### Fixed — Full Tenure retitle now runs BEFORE WCPDF receipt is generated (no more stale-title PDFs)
+
+When a customer paid a whole year's worth of fees in one shot — multiple Payment rows (1st Term + 2nd Term + 3rd Term) bundled into a single WC order — the order shipped to WCPDF with the per-term names baked in. The "Full Tenure" consolidation only ran later (legacy bulk action, manual recompute, or migration sweep), so the WCPDF Pro disk-cached PDF showed stale per-term headers and admins had to click "Regenerate Receipt" every single time.
+
+Root cause: the v3.22.0 canonical `commit_fee_payment` flow — which is now the single ingress for all three payment paths (admin Record Payment, online Pay-Now, offline submission) — never called `apply_full_tenure_retitle()`. Only the legacy `create_multi_fee_order()` path did. So every order born via the canonical flow that covered the full year shipped with per-term names and required manual receipt regeneration.
+
+Fix: the retitle now runs at two points, both BEFORE WCPDF ever sees the order.
+
+- **In `commit_fee_payment()` — before the first `$order->save()`.** Line items are added with their per-term names from `build_item_name()`, then immediately consolidated to "Full Tenure" / "Full Cycle" if the coverage gate is met. The order's first save already carries the final title.
+- **In `finalize_fee_order()` — before `set_status('completed')`.** Belt-and-suspenders for the deferred online (gateway return) and offline (admin-verify) paths where `commit_fee_payment` ran earlier and Payment state may have shifted (e.g. a separate transaction parked excess into a previously-empty term, flipping the coverage answer). The retitle is idempotent — no-op when the title is already correct.
+
+The status flip to "completed" is the trigger for WCPDF generation. By guaranteeing the title is final before that flip, the very first generated PDF carries the correct header and never needs manual regeneration.
+
+Per-term, per-month, and per-cycle enrollments where the customer pays only a single Payment row (e.g. just "1st Term") continue to render with their own per-term titles — the retitle's coverage gate ensures consolidation only happens when the order genuinely covers every regular Payment row for the user+year. Per-tenure enrollments paid through any single Payment row continue to render as "Full Tenure" via the existing per_tenure short-circuit in the retitle gate.
+
+No data migration needed — historical orders with stale titles can still be fixed via the existing manual "Recompute Breakup" / "Regenerate Receipt" actions.
+
+## [3.23.5] - 2026-05-06
+
+### Added — Per-transaction "Regenerate Receipt" icon in Payment History
+
+Transaction Records (Staff Console + Edit Profile payment history) now expose a small refresh icon between Edit and Delete that purges the WCPDF receipt cache for that transaction's linked WC order — same effect as the bulk "qTap: Regenerate WCPDF receipt" action, scoped to one row. Useful when a single receipt's data drifted (e.g. payee name changed, line-item breakup recomputed) and the staff member needs to force a fresh PDF without leaving the user profile.
+
+The icon only appears when both conditions hold:
+
+- The transaction has a linked WC order (i.e. "Create WooCommerce Order" was enabled at record time).
+- A WCPDF receipt/invoice document URL exists for that order.
+
+Rows from manual offline entries that never created an order, or orders without WCPDF documents, render Edit + Delete only — no orphan icon.
+
+The icon shows a spinning indicator while the AJAX call is in flight; result is alerted on completion. New AJAX action: `kdc_qtap_finance_regenerate_transaction_receipt`. Permission gate: `kdc_qtap_finance_current_user_can_manage_payments()`. Safety: caller-supplied `order_id` is cross-checked against the named `transaction_id`'s actual `wc_order_id` to prevent caller-spoofed regenerations.
+
 ## [3.23.4] - 2026-05-06
 
 ### Fixed — Three compounding bugs in reconcile + Transaction delete that produced ledger desync

@@ -2,6 +2,22 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.10] - 2026-05-06
+
+### Fixed — Per-row Regenerate Receipt now uses WCPDF's native regenerate flow (matches WC order admin's "Regenerate" button)
+
+The v3.23.5 implementation only purged `_wcpdf_*_file` meta + the on-disk cached PDF. WCPDF's *stored* receipt number, receipt date, and document settings (`_wcpdf_receipt_number` / `_wcpdf_receipt_date` / `_wcpdf_receipt_settings`) survived the purge — so when WCPDF re-rendered on the next view, it pulled those stored values and produced an identical PDF. The "regenerate" appeared to do nothing.
+
+The native "Regenerate" icon in the WC order admin's PDF metabox (the third icon next to Edit and Delete) calls `$document->regenerate()`, which clears all four — number, date, settings, AND the file — then re-renders from current order data.
+
+Fix: the per-row regenerate AJAX now invokes the same flow:
+
+1. **Pro path** — `$document->regenerate()` if the method exists. Same call the order-admin button makes, same result.
+2. **Fallback** — `$document->delete()` + re-fetch via `wcpdf_get_document('receipt', $order, true)`. Equivalent to delete-then-recreate; assigns a fresh receipt number + date.
+3. **Defense-in-depth** — sweep any leftover `_wcpdf_*_file` meta + on-disk cached PDFs after the regenerate, in case the WCPDF version on this site stores the file path separately from document state.
+
+The response now also carries a `regenerated` boolean so the frontend can distinguish a true regenerate from a bare cache-purge fallback. Combined with the v3.23.9 cache-buster on the receipt link, the next click serves a freshly-rendered PDF reflecting current order data.
+
 ## [3.23.9] - 2026-05-06
 
 ### Fixed — Two cascading WCPDF receipt regressions

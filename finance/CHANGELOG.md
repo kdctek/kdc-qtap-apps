@@ -2,6 +2,30 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.9] - 2026-05-06
+
+### Fixed — Two cascading WCPDF receipt regressions
+
+**1. `paywith_method` / `pay_utr` order metas were never being stamped on orders born via the v3.22.0 canonical `commit_fee_payment` flow.**
+
+Before v3.22.0, `process_completed_order()` ran on every status→completed transition and called `sync_receipt_metas_from_transaction()` to copy `payment_method_title` → `paywith_method`, `reference` → `pay_utr`, and `payment_date` → `payment_date` / `date_paid` from the latest transaction onto the order. The WCPDF receipt template reads these three metas directly.
+
+After v3.22.0 introduced `finalize_fee_order()` as the single ingress for all three payment paths (admin / online / offline), the canonical flow stamps `_kdc_qtap_finance_transactions_created = yes` on the order BEFORE flipping status to completed (to prevent `process_completed_order` from re-cascading). When the status hook fires, `process_completed_order()` checks that flag, returns early at the idempotency guard — and the meta-sync at the bottom of that function never runs. Result: every order born via `commit_fee_payment` ends up with empty `paywith_method`, empty `pay_utr`, and stale (or missing) `payment_date`. WCPDF receipts render with blank Paid With and Reference rows.
+
+Fix: `finalize_fee_order()` now invokes `sync_receipt_metas_from_transaction()` directly, immediately after recording transactions and immediately before the status flip — so the meta is stamped on every payment path and is final BEFORE WCPDF generates the PDF.
+
+For HISTORICAL orders that already shipped with empty meta, click **Maintenance → Rebuild receipt metas (Payment Date / Paid With / UTR / Payee Name)** — the existing button re-runs the v3.16.23 backfill across every fee order using each order's earliest linked transaction.
+
+**2. Per-row "Regenerate Receipt" succeeded but the next view still showed the stale PDF.**
+
+The regenerate AJAX correctly purged WCPDF's disk cache (`_wcpdf_receipt_file` meta + the on-disk PDF file), so the NEXT request to the receipt URL would re-render. But WCPDF's URL itself doesn't change when the cache is purged — and the browser's HTTP cache happily serves the previously-fetched PDF for that URL. The regenerate appeared to do nothing.
+
+Fix: after a successful regenerate, the JS handler now appends a `?_r=<timestamp>` cache-buster to every WCPDF receipt link in the same transaction row. Next click hits a fresh URL → bypasses HTTP cache → lands on a now-cold WCPDF cache → re-renders from current order data.
+
+### Confirmed — Receipt-only WCPDF setup
+
+`receipt` doc type is the canonical document; the invoice fallback in the regenerate AJAX handler is harmless dead code that only runs when `wcpdf_get_document('receipt', ...)` returns null. Receipt-only setups don't trigger it.
+
 ## [3.23.8] - 2026-05-06
 
 ### Fixed — v3.23.7's enrollment-update title-refresh was silently no-oped by Payment::update()'s column whitelist

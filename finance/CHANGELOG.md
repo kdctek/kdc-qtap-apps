@@ -2,6 +2,21 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.11] - 2026-05-07
+
+### Fixed — Per-row Regenerate Receipt now preserves the receipt number (audit-trail safe)
+
+v3.23.10's fallback path called `$document->delete()` followed by `wcpdf_get_document('receipt', $order, true)` to force a re-init. That sequence wipes `_wcpdf_receipt_number` and `_wcpdf_receipt_date` along with the file, so the next render assigns a brand-new receipt number — leaving the old number unused, creating an audit gap (e.g. receipt #26270445 issued to a parent, regenerate runs, the order now shows #26270450, and #26270446–26270449 never existed). Receipt numbers are transactional records that must persist across regenerations.
+
+Fix:
+
+- **Pro path** is unchanged — `$document->regenerate()` is the canonical WCPDF API for "rebuild PDF body, keep number/date". Same as the WC order admin's Regenerate button.
+- **Manual fallback** now clears ONLY `_wcpdf_{type}_settings` (the cached template-settings snapshot) and `_wcpdf_{type}_file` (the cached PDF file). `_wcpdf_{type}_number` and `_wcpdf_{type}_date` are explicitly preserved. `$document->delete()` is never called from this path.
+
+The success message now reads "Receipt regenerated (number preserved)" so admins know the old number stays.
+
+If anyone hit v3.23.10's fallback path on tridha (only triggered when `regenerate()` was unavailable on the local WCPDF Pro version), spot-check WC order admin → PDF Document Data → Receipt Number to confirm continuity. Pro path users (the WC admin's Regenerate button works for them, which it does on tridha) were unaffected because `regenerate()` resolved and the fallback never ran.
+
 ## [3.23.10] - 2026-05-06
 
 ### Fixed — Per-row Regenerate Receipt now uses WCPDF's native regenerate flow (matches WC order admin's "Regenerate" button)

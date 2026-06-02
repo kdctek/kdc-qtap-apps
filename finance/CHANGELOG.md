@@ -2,6 +2,13 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.14] - 2026-05-07
+
+### Changed — POS Orders table polish
+
+- **Order column**: Receipt number and `[#order-number]` now render inline on the same row (was stacked). Date drops to the line below as before.
+- **Amount column**: right-aligned (header + cells) so the currency totals form a clean vertical column.
+
 ## [3.23.13] - 2026-05-07
 
 ### Changed — POS Orders tab columns consolidated to 5

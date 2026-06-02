@@ -2,6 +2,20 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.13] - 2026-05-07
+
+### Changed — POS Orders tab columns consolidated to 5
+
+Restructured the POS Orders table from 7 columns to 5 per request, so each cell carries grouped info instead of fragmented single values:
+
+- **Buyer** — first name only (was first + last), email below.
+- **Order** — receipt number with external PDF link (opens WCPDF receipt in new tab), `[#order-number]` below linking to the WC order admin edit screen, then datetime on a third line. Was previously split across Order and Date columns; the receipt number is new.
+- **Items** — unchanged (line items + variation attributes).
+- **Amount** — unchanged.
+- **Payment** — payment mode on top, transaction ID on the line below. Was previously two separate columns.
+
+Receipt number + PDF URL resolve via `KDC_qTap_Finance_WooCommerce::get_wcpdf_receipt_number()` / `get_wcpdf_receipt_url()` — same helpers the Receipts tab uses, so the link goes to the WCPDF document endpoint and reflects the current cache state. Edit-order link only appears for viewers with `edit_shop_orders` or `manage_woocommerce`.
+
 ## [3.23.12] - 2026-05-07
 
 ### Added — POS Orders tab in the Staff Console frontend block

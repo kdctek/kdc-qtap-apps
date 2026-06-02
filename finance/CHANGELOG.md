@@ -2,6 +2,26 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.12] - 2026-05-07
+
+### Added — POS Orders tab in the Staff Console frontend block
+
+Staff can now browse POS-sourced WC orders without leaving the Staff Console — a new internal "POS Orders" tab lives between Fee Stats and the external POS link. Reads as a focused, single-purpose table (no Fee/Other source filter to fight with) showing exactly what staff need to reconcile a POS day's transactions:
+
+- **Buyer** — billing first+last, falls back to the linked customer's user record, then "(Guest)". Email shown beneath.
+- **Order** — order number (linked to WC order admin when the viewer has `edit_shop_orders` / `manage_woocommerce`), with the numeric WC order ID displayed below when it differs from the customer-facing number.
+- **Date** — order creation date formatted via `date_format` setting + time.
+- **Items** — each line item with quantity, plus a smaller-text variation line for variable products (e.g. `Size: M / Color: Red`).
+- **Amount** — `wc_price()` formatted using the order's currency.
+- **Transaction ID** — WC core `transaction_id` first, then our `pay_utr` meta, then legacy `_transaction_id` meta. Em-dash when none.
+- **Payment Mode** — WC core `payment_method_title` plus our `paywith_method` meta when it carries extra info (e.g. "Cash (Counter Sales)").
+
+Filter bar: free-text search across buyer / order / UTR / method + a date range over order creation date. Reset link clears all filters. Pagination at 20 rows per page, newest first.
+
+POS detection uses the shared `KDC_qTap_Finance_Block_Editor::detect_pos_order()` classifier — same path as the Receipts tab's Source=POS pill (created_via=pos, `_woocommerce_pos_uuid` meta, or any known POS meta key). The pre-query narrowing runs two `wc_get_orders` calls (one on the uuid meta, one on `created_via=pos`) and unions the IDs, so orders from any POS plugin variant surface.
+
+Tab URL slug is `pos-orders`. `KDC_qTap_Finance_Staff_Rewrites::TABS` extended to include it, and `RULES_VERSION` bumped to `2` so the auto-flush rebuilds the clean-URL rules on next page load (sites on plain permalinks fall back to `?tab=pos-orders`).
+
 ## [3.23.11] - 2026-05-07
 
 ### Fixed — Per-row Regenerate Receipt now preserves the receipt number (audit-trail safe)

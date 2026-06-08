@@ -2,6 +2,19 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.15] - 2026-05-07
+
+### Changed — POS Orders tab hides parked-in-register orders (POS Hold / POS Open)
+
+The WooCommerce POS plugin parks items in the register under the `pos-open` status (some variants use `pos-hold`) before the cashier completes the transaction. These aren't real sales — they're a draft view the cashier reconciles against the register directly, not against the Staff Console.
+
+Two-layer filter:
+
+1. **Pre-query** — the `wc_get_orders` status arg is built by walking `wc_get_order_statuses()` and dropping any slug whose bare form (after stripping the `wc-` prefix WC uses internally) matches `pos-hold` or `pos-open`. So the SQL never returns them.
+2. **Post-query defense-in-depth** — a per-row `get_post_status()` check rejects the same two slugs, catching any POS plugin variant that uses a custom-shaped slug we didn't enumerate.
+
+WC's stock `on-hold` status (used by online gateways during payment processing) is NOT filtered — only the POS-specific hold/open variants. If a future POS plugin uses a different slug, add it to the exclusion list in [trait-kdc-qtap-finance-block-editor-pos-orders.php](kdc-qtap-finance/includes/traits/trait-kdc-qtap-finance-block-editor-pos-orders.php).
+
 ## [3.23.14] - 2026-05-07
 
 ### Changed — POS Orders table polish

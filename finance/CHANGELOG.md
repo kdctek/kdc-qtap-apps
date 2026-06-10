@@ -2,6 +2,25 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.16] - 2026-05-07
+
+### Added — POS Orders tab: date presets, payment-mode filter, top stats cards
+
+Three additions to `/staff/pos-orders/` so the cashier-reconciliation view answers "what happened today?" in one glance instead of demanding a custom date range every time.
+
+**Date range presets.** A pill row above the custom calendar offers Today (default), Yesterday, Week till Now, Last Week, Month till Now, Last Month, and Custom. The default view on first open is now Today. The presets compute their boundaries from the WP site timezone (so "today" matches the wall clock in the office), and "Week till Now" / "Last Week" respect the WP `start_of_week` option. URLs read `?tab=pos-orders&range=last_week` etc.; the Custom pill exposes the existing date-from / date-to inputs.
+
+**Payment-mode pill checkboxes.** A second row of pills lists every distinct payment mode (`paywith_method` meta first, then `payment_method_title`) present in the date-filtered POS orders. Default state: all modes selected. Clicking a pill toggles that mode in/out — the URL carries `mode[]=…` for the active set. Useful for "Cash only" reconciliation, or to exclude Card sales when reconciling the till. The pill row auto-hides when there are no modes (empty date range).
+
+**Top stats cards.** Three cards above the filter bar reflect the CURRENTLY filtered view (range + mode + search), not the unfiltered universe:
+- **Amount** — sum of order totals (via `wc_price` so it picks up the shop currency)
+- **Orders** — count of orders in the filtered set
+- **Items** — sum of line-item quantities across those orders
+
+All three update live whenever any filter changes. Walked the order set once to build a per-order cache (`mode`, `total`, `items`, `WC_Order` ref), so the mode-pill universe, the filter pass, and the stats computation all reuse the same scan — no repeated `wc_get_order()` calls.
+
+Internally: new `resolve_pos_orders_date_range()` static helper centralises the preset → `[date_from, date_to]` math. The render function now flows: date-range query → walk-and-cache → mode filter → search filter → stats compute → paginate. The `base` URL strip-list now drops `range` and `mode` too so the form submit can't double-stamp them.
+
 ## [3.23.15] - 2026-05-07
 
 ### Changed — POS Orders tab hides parked-in-register orders (POS Hold / POS Open)

@@ -2,6 +2,18 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.18] - 2026-06-10
+
+### Fixed — POS Orders nav tab now shows its icon; Payment filter switched to explicit Apply
+
+Two regressions surfaced in v3.23.17 — fixing both together.
+
+**Tab icon.** The POS Orders nav tab and in-content `<h2>` heading both referenced the `receipt` Lucide glyph, which had been removed from the parent's icon map back in qTap App v2.7.7 (its design includes an inline `$` shape — against the icon policy). Result: `kdc_qtap_lucide('receipt', ...)` returned an empty string, so the tab label rendered as plain text while every neighbouring tab showed its glyph. Both call sites now use `package`, which exists in the parent map and reads cleanly as a POS-orders concept.
+
+**Payment filter commit model.** v3.23.17's pills auto-submitted the form on every checkbox toggle. That made multi-select painful — flipping three modes triggered three page reloads, with each reload throwing away whatever the user clicked next. The pattern now mirrors a normal multi-select filter: toggling pills, clicking All, or clicking None all just mutate the checkbox state locally. A new **Apply** button (sitting next to All / None in the row's label cell, primary-styled) is the only path that submits. The All / None buttons remain `type="button"` so they don't accidentally submit; the Apply button is `type="submit"` so the existing form-level `submit` handler still shows the loader overlay — no JS rewiring needed there.
+
+Date-range presets and the Search field keep their existing behaviour (date pills auto-submit, Search needs its existing Search button). Only the Payment row changed.
+
 ## [3.23.17] - 2026-05-07
 
 ### Changed — POS Orders filter UI now matches Receipts; loader overlay on filter change; tab heading with Lucide icon

@@ -2,6 +2,32 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.17] - 2026-05-07
+
+### Changed — POS Orders filter UI now matches Receipts; loader overlay on filter change; tab heading with Lucide icon
+
+The POS Orders tab's filter bar was a mix of styled links + inline forms — visually distinct from the Receipts tab even though both serve the same staff workflow. v3.23.17 rebases POS Orders onto the same `kdc-qtap-rx-*` pill grammar Receipts uses so the two tabs read with one visual identity.
+
+**Receipts-style filter UI.**
+
+- **Single form** wraps the entire filter bar (date range + payment mode + search). Hidden inputs preserve any non-filter URL params (tab, year, page_id, etc.) across submits.
+- **Date range row** uses radio pills (mutually exclusive selection). Today is default; Yesterday / Week till Now / Last Week / Month till Now / Last Month / Custom are siblings. Selecting the Custom pill reveals From/To date inputs inline.
+- **Payment mode row** uses checkbox pills with the same `:has(input:checked)` CSS that Receipts uses (white-on-green when checked, light grey when not). Each pill carries:
+  - A **Lucide glyph** matched by mode-name substring: `card` → credit-card, `cash` → banknote, `cheque` → scroll-text, `imps` → zap, `neft` → landmark, `net banking` → building-2, `upi` → smartphone, `wallet` → wallet, `rtgs` → arrow-right-left, `online` → globe. Falls back to `circle` for unknown modes.
+  - A **count badge** showing how many orders in the active date range match THAT mode (regardless of which modes are selected) — same scope semantics as Receipts' payment-method pills.
+- **All / None toolbar** in the Payment row's left label cell mirrors Receipts' row-action buttons. "All" checks every mode; "None" unchecks them. Both auto-submit the form.
+- **Reset link** appears when any filter is non-default (search active, modes deselected, or range ≠ today).
+- **Auto-submit on change.** Toggling any pill or radio submits the form immediately — no separate "Apply" click required (except for the Custom date inputs, which keep their own Apply button so the user can pick both dates before submitting).
+
+**Loader overlay.** A full-viewport overlay with a spinning indicator and "Applying filters…" copy appears the moment any pill is toggled, any pagination link is clicked, or the form submits. The overlay dismisses naturally on page re-render. Surfaced via:
+
+- A `kdc-qtap-pos-orders__loader` fixed-position div with a CSS `kdc-qtap-pos-spin` keyframe animation.
+- A small `<script>` block at the end of the render that wires click/change/submit handlers to the form's data attributes.
+
+The form also gets `.is-submitting` applied, dimming the bar to 55% opacity and disabling pointer events, so a fast double-click can't fire two requests.
+
+**Tab heading with Lucide icon.** A new `<h2 class="kdc-qtap-pos-orders__heading">` at the very top of the tab content renders the receipt Lucide glyph + "POS Orders" label, matching the icon on the menu nav link. Sits above the stats cards.
+
 ## [3.23.16] - 2026-05-07
 
 ### Added — POS Orders tab: date presets, payment-mode filter, top stats cards

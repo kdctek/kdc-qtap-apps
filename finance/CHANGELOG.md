@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.19] - 2026-06-10
+
+### Fixed — POS Orders querystring no longer uses `mode%5B%5D`
+
+Same address-bar gripe that Receipts fixed long ago — when the POS Orders form submitted as a plain GET, the browser percent-encoded the `[]` in `mode[]` to `mode%5B%5D`, turning every shareable URL into noise. The submit path now mirrors the Receipts handler verbatim: intercept submit, build the querystring manually with literal `[]` for multi-select keys, and `location.href`-navigate to the rebuilt URL.
+
+Side benefit — defaults are now omitted from the URL: `range=today` (the canonical default), empty `q`, and the all-checked / none-checked mode states all drop out, so a bookmark for "Yesterday filtered to UPI" reads as `?range=yesterday&mode[]=upi` instead of carrying along every pill's state.
+
 ## [3.23.18] - 2026-06-10
 
 ### Fixed — POS Orders nav tab now shows its icon; Payment filter switched to explicit Apply

@@ -2,6 +2,26 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.21] - 2026-06-10
+
+### Changed — Cash-only is the default Payment filter on fresh load
+
+The Payment row now defaults to `mode[]=cash` whenever staff land on POS Orders without any explicit payment signal in the URL — opening the tab from the menu, refreshing without query params, or following any link to the bare `/staff/pos-orders/`. Cash is overwhelmingly the dominant POS mode end-of-day, and it's where the reconciliation conversation almost always starts; treating it as the implicit baseline saves a click on every visit.
+
+To distinguish "fresh load" from "user explicitly wants to see everything," a new `mode_all=1` sentinel encodes the latter:
+
+| URL state | Filter applied |
+| --- | --- |
+| `/staff/pos-orders/` (no mode signal) | Cash only |
+| `/staff/pos-orders/?mode[]=cash&mode[]=upi` | Cash + UPI |
+| `/staff/pos-orders/?mode_all=1` | No narrowing (full available set) |
+
+The All / None toolbar buttons now emit `mode_all=1` when committed via Apply, so clicking "All" reliably escapes the Cash default and the URL is unambiguous on subsequent reloads. Auto-submit on a range pill change (e.g. switching to Yesterday from the Cash-default view) reads the live checkbox state and explicitly re-emits `mode[]=cash`, so the filter is preserved through interactions — it never silently collapses back to a "no narrowing" view.
+
+The Cash only preset pill highlights green on fresh load so staff immediately see which preset they're currently on. The Reset link surfaces whenever the URL carries an explicit choice (`mode[]=...` OR `mode_all=1`), but stays hidden on the fresh Cash-default view so the page reads as the canonical landing state.
+
+**Defensive fallback** — on a day with zero Cash transactions, the Cash-only default would otherwise render an empty list. To avoid the impression of a broken filter, the server falls through to "no narrowing" when `cash` is absent from the dynamic `$available_modes`. Result: a brand-new install with no orders yet shows the empty-state message ("No POS orders found") rather than an empty filter view.
+
 ## [3.23.20] - 2026-06-10
 
 ### Added — Static Payment presets: Cash only, Card only, Cash + Card

@@ -2,6 +2,22 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.20] - 2026-06-10
+
+### Added — Static Payment presets: Cash only, Card only, Cash + Card
+
+The dynamic Payment pills mirror whatever modes appear in the current window's orders — useful for arbitrary slicing, but staff who reconcile by cash drawer or card terminal at end-of-day want a one-click switch to "just cash" or "just card." The dynamic pills are still there; a new second line inside the Payment row carries three hardcoded shortcuts:
+
+| Preset | Sends |
+| --- | --- |
+| Cash only | `mode[]=cash` |
+| Card only | `mode[]=card payment` |
+| Cash + Card | `mode[]=card payment&mode[]=cash` |
+
+Clicking a preset OVERRIDES the `mode[]` selection only — every other filter on the form (range, search, custom date inputs, hidden staff-console params) is read live from the form and preserved in the new URL. Presets are single-tap commits — unlike the multi-select pills, they don't wait for Apply. If the currently active `mode[]` selection exactly matches a preset's value set, that preset is highlighted on page load so staff see which shortcut they're currently on.
+
+The presets exist independent of `$available_modes`: clicking "Card only" still narrows to `card payment` even on a day where no card transactions have happened yet, returning a clean empty-state. Useful for confirming "yes, zero card sales today" rather than wondering if the filter is broken.
+
 ## [3.23.19] - 2026-06-10
 
 ### Fixed — POS Orders querystring no longer uses `mode%5B%5D`

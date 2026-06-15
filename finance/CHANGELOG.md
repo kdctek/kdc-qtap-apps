@@ -2,6 +2,18 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.25] - 2026-06-15
+
+### Fixed — Sync status "Elapsed" showed a timezone offset (e.g. "5 hours" the instant a sync began)
+
+The sync job stored its start time via `current_time( 'mysql' )` (site-local) but computed elapsed/staleness against `time()` (UTC) with a bare `strtotime()`. On a UTC+5:30 (IST) site that meant "Elapsed: 5 hours" appeared the moment a sync started, and the >5-minute staleness check computed a *negative* age — so a genuinely stuck job would never be flagged stale. Jobs now carry a `started_ts` UTC epoch used for all elapsed/staleness math (legacy in-flight jobs convert their local string via `get_gmt_from_date()`); the displayed "Started:" line stays in site-local time.
+
+### Reinstated — custom-fee attach to existing enrollments (v3.23.22 union)
+
+`create_payments_on_enrollment()` again transiently unions currently-applicable custom slabs (`_custom_*`, filtered from `get_applicable_slabs()`) into the enrollment's `fee_slabs` before regeneration, so a grade-specific custom fee added after enrollment attaches to existing students on the next Sync. This was reverted in v3.23.23 while diagnosing the data-loss incident, which turned out to be the unrelated `Fee_Matrix::get()` fatal fixed in v3.23.24 — the union was never the cause. Still custom-only (regular per-student exclusions untouched), transient (enrollment snapshot unchanged), and idempotent (`create_custom_slab_payment()` skips existing rows).
+
+**To attach Sports Club to the 664 existing students:** run Sync Payments once for the year. IV/V/VI students (amount > 0) get the `_custom_0` row created; the now-fixed regenerate flow completes cleanly.
+
 ## [3.23.24] - 2026-06-15
 
 ### Fixed (CRITICAL) — Sync Payments deleted unpaid payments then fatally errored before regenerating

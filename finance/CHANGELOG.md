@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.30] - 2026-06-15
+
+### Fixed — Overdue cron no longer stamps date-less fees (and heals ones it already did)
+
+v3.23.29 stopped the UI from *deriving* a false Overdue status, but the persisted `status` column was still wrong: the daily overdue cron (`update_overdue_statuses()`) ran `UPDATE … SET status = 'overdue' WHERE status IN ('pending','partial') AND due_date < {today}`, and in SQL a MySQL zero-date (`0000-00-00`) sorts before any real date — so every date-less custom fee got written to `overdue` in the database. The display guards couldn't undo an already-stored value, so the badge kept showing Overdue. The cron query now excludes `NULL` / `0000-00-00` / empty due dates, and a companion self-healing query flips any already-mis-stamped `overdue` row with no real due date back to `pending` on each run. A one-time DB heal was also applied on production (352 rows corrected).
+
 ## [3.23.29] - 2026-06-15
 
 ### Fixed — No-due-date fees no longer show "Overdue" or a garbage date

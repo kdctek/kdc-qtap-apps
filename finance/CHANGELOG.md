@@ -2,6 +2,20 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.24] - 2026-06-15
+
+### Fixed (CRITICAL) — Sync Payments deleted unpaid payments then fatally errored before regenerating
+
+`start_sync_payments_job()` called `KDC_qTap_Finance_Fee_Matrix::get()` — a method that does not exist on the class (it defines `get_by_year()`). The call sat immediately AFTER the bulk `DELETE` of all unpaid payments for the year, but BEFORE the regeneration batches were scheduled. So every Sync Payments run (and every auto-cascade on fee-matrix save):
+
+1. Deleted all unpaid payment rows + items for the year (committed),
+2. Fatally errored on the undefined method (`Call to undefined method KDC_qTap_Finance_Fee_Matrix::get()`),
+3. Never scheduled regeneration — so the deleted rows were never rebuilt.
+
+To the operator this surfaced only as a generic "Request failed. The server may have timed out." and as failed `kdc_qtap_finance_sync_payments_batch` entries in Action Scheduler. The method name is corrected to `get_by_year()`. After this fix, a single Sync run deletes-and-regenerates as designed, restoring the unpaid rows from the current matrix.
+
+**Recovery:** after updating, run Sync Payments once for the affected year. The delete step finds the already-removed rows absent and the regeneration step rebuilds every unpaid payment from the current fee matrix. Old failed Action Scheduler entries can be ignored or deleted.
+
 ## [3.23.23] - 2026-06-15
 
 ### Reverted — v3.23.22's custom-slab union in enrollment payment generation

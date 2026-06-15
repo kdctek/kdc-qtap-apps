@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.29] - 2026-06-15
+
+### Fixed — No-due-date fees no longer show "Overdue" or a garbage date
+
+Custom fees created without a due date are stored with a MySQL zero-date (`0000-00-00`), which PHP treats as a truthy, far-past date. Every place that rendered or compared the due date therefore showed a bogus value ("Tue, 30-Nov--0001") and falsely flagged the fee as **Overdue**. Added a `kdc_qtap_finance_is_due_date_set()` helper that rejects empty values, MySQL zero-dates, and pre-epoch timestamps, and guarded all due-date render/overdue-comparison sites with it: the `/fees/` block AJAX (per-fee, term groups, and custom/user fees), the Payment History and Enrollments views, the admin Enrollments overdue badges and stats, the notification preview, and the mobile-dashboard REST responses. Date-less fees now display `—` (or an empty date) and are never marked overdue. Pairs with the v3.23.26 change that stopped custom fees from inheriting the first term's due date.
+
 ## [3.23.28] - 2026-06-15
 
 ### Changed — All fee Pay buttons add to cart and land on /checkout/

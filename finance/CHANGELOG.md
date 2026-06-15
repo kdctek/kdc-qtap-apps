@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.28] - 2026-06-15
+
+### Changed — All fee Pay buttons add to cart and land on /checkout/
+
+Single-fee online payment previously created a WooCommerce order and redirected to the order-pay page (`/checkout/pay/{order}/`), while multi-fee and term payments already added to the cart and landed on the standard `/checkout/`. Single-fee Pay (regular, custom, and the `?fee=` deeplink) now routes through the same cart → `/checkout/` flow, so every online Pay path behaves consistently. Implemented by delegating `initiateSinglePayment()` to the existing multi-fee cart path (a single fee is a one-item list), which already handles credit application and pending-verification identically — no server changes, the legacy single-order AJAX path is simply no longer invoked from the UI.
+
 ## [3.23.27] - 2026-06-15
 
 ### Fixed — fee_slug now generated on the per-card "Save" (custom slabs)

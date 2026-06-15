@@ -2,6 +2,37 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.27] - 2026-06-15
+
+### Fixed — fee_slug now generated on the per-card "Save" (custom slabs)
+
+v3.23.26 generated the `fee_slug` inside `sanitize_matrix()`, but the matrix editor's per-card **Save** button posts to a dedicated AJAX handler that persists via `update_option()` directly and never calls `sanitize_matrix()`. So saving a custom fee from its card left `fee_slug` unset and the badge kept showing `_custom_0`. The per-slab AJAX save now generates the `fee_slug` itself (slugify the name + dedupe with a numeric suffix against the other custom slabs), matching the full-matrix-save path. Re-save the Sports Club card once and its badge becomes `sports-club`.
+
+## [3.23.26] - 2026-06-15
+
+### Added — Human fee-slug for custom fees + shareable `?fee=` deeplink
+
+Custom (grade-specific) fees now get a stable, human-readable `fee_slug` generated from the fee name on matrix save: "Sports Club" → `sports-club`, deduped with a numeric suffix (`sports-club-1`, `sports-club-2`) on collision. The matrix editor badge shows this slug instead of the positional `_custom_0`, and it powers a shareable deeplink that resolves per-student:
+
+```
+/fees/?fee=sports-club&year=2026-2027
+/fees/?fee=sports-club&year=2026-2027&action=offline
+```
+
+The `?fee=` resolver matches the human slug first, then the internal `_custom_<index>` key, then the display label — all case-insensitive — so one link works for every logged-in student. The slug is stored under `fee_slug` (NOT `slug`, which the matrix migration treats as old-format and would promote a custom fee into a regular one). Payments keep their internal `_custom_<index>` key — the slug is a display/deeplink alias, so no payment rows migrate.
+
+### Fixed — Custom fee with no due date no longer shows "Overdue"
+
+A custom fee with an empty due date was inheriting the first term's due date (often in the past), which rendered an "Overdue" badge the moment it was created. No-deadline custom fees now stay genuinely due-date-less, so the overdue logic never fires.
+
+### Changed — Custom fees are exempt from past-dues blockage
+
+A parent can now always pay an optional grade-specific fee (e.g. Sports Club) regardless of any other outstanding dues. Previously the cross-year prior-year-dues check rejected custom-fee payment server-side even when the rule was only "warn" (the Pay button looked enabled but the payment silently failed), and a "Please clear earlier dues first" banner showed on the custom-fee card. `validate_sequential_payment()` now returns early (allowed) for `_custom_*` slabs, and the frontend no longer renders the prior-year banner, disabling, or within-year warning on custom-fee cards.
+
+### Hardened — Sync Payments validates the fee matrix before deleting
+
+`start_sync_payments_job()` now fetches and validates the fee matrix BEFORE the destructive bulk delete and bails (deleting nothing) if the matrix is empty/missing. This closes the failure mode behind the v3.23.24 incident, where a fault between "delete unpaid" and "schedule regeneration" left unpaid rows gone with nothing to rebuild them.
+
 ## [3.23.25] - 2026-06-15
 
 ### Fixed — Sync status "Elapsed" showed a timezone offset (e.g. "5 hours" the instant a sync began)

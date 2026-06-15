@@ -2,6 +2,12 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.8] - 2026-06-15
+
+### Fixed — Login-with-OTP "Network error" now surfaces the real cause
+
+The "Send OTP via WhatsApp" handler caught only `Exception`, so a PHP fatal (`\Error`) anywhere in the OTP generation or WhatsApp send path escaped as an HTTP 500, which the frontend rendered as the opaque "Network error. Please try again." The handler now catches `\Throwable`, logs the full cause via `kdc_qtap_debug_log()` (source `kdc-qtap-mobile`), and returns the actual reason to the form (e.g. an expired WhatsApp token or a fatal in the API call) so the failure is diagnosable instead of silent.
+
 ## [2.15.7] - 2026-04-28
 
 ### Changed — Channel chips now mirror the parent dashboard's notification preferences UI

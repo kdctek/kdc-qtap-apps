@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.23] - 2026-06-15
+
+### Reverted — v3.23.22's custom-slab union in enrollment payment generation
+
+v3.23.22 widened `create_payments_on_enrollment()` to transiently union currently-applicable custom slabs into the enrollment's `fee_slabs` before payment generation, so the fee-matrix-save cascade / Sync Payments would attach a newly-added grade-specific custom fee to existing enrollments. In production this coincided with unpaid payments disappearing from enrollments after a matrix save + Sync, so the union is reverted pending a safe, non-destructive redesign.
+
+Root cause of the disruption is the Sync mechanism itself: Sync Payments (and the auto-cascade on matrix save) **delete every unpaid payment and regenerate them** from the current matrix. That is the wrong vehicle for *adding* a single new fee — a custom fee should be attached additively without touching existing rows. The replacement (next release) will create only the missing custom-fee Payment rows via the idempotent `create_custom_slab_payment()` and never delete or regenerate anything.
+
+The generic `?fee=` deeplink and the `data-slab` / `data-slab-label` attributes added in v3.23.22 are retained — they only read URL params and render data attributes, with no data-mutation side effects.
+
 ## [3.23.22] - 2026-06-15
 
 ### Fixed — Grade-specific custom fees added after enrollment now reach existing students

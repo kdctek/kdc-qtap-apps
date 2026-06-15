@@ -2,6 +2,34 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.22] - 2026-06-15
+
+### Fixed — Grade-specific custom fees added after enrollment now reach existing students
+
+A custom (grade-specific) fee created in the matrix AFTER students were already enrolled — e.g. a "Sports Club" fee for grades IV–VI — never appeared on those students' fee screens. Custom fees are materialized into Payment rows from the enrollment's frozen `fee_slabs` snapshot, which predates the new fee, so the fee-matrix-save cascade and the manual Sync Payments action both regenerated payments from a stale slab list that didn't include the new custom fee.
+
+`create_payments_on_enrollment()` now transiently unions the enrollment's stored `fee_slabs` with the **currently-applicable custom slabs** (`KDC_qTap_Finance_Fee_Matrix::get_applicable_slabs()`, filtered to `_custom_*`) before generating payments. This is deliberately limited to custom slabs: regular fees can be intentionally excluded per-student at enrollment time, and re-adding the full applicable set would silently re-bill fees a student was opted out of. Grade-specific custom fees have no per-student opt-out — they apply to every student in the grade by definition — so unioning them is safe. The union is transient (the stored enrollment snapshot is left untouched), and `create_custom_slab_payment()` is idempotent, so re-running the cascade can never duplicate a row.
+
+**To apply to the 600 already-enrolled students:** after updating, re-save the affected year's Fee Matrix (fires the auto-cascade) or click Sync Payments. Every enrolled student in a grade with the custom fee configured (amount > 0) gets the Payment row created on the next batch.
+
+### Added — Generic share-one-link deeplink to a single fee (`?fee=`)
+
+The fee-payment deeplink previously only accepted `?payment_id=X`, a row id unique to one student — useless for a broadcast to hundreds of students, and it only fired in the flat (non-terms) render path, never matching custom-fee buttons. A new generic resolver targets a fee by **slab key or label** instead of row id:
+
+```
+/<fees-page>/?fee=_custom_0&year=2026-2027
+/<fees-page>/?fee=Sports%20Club&year=2026-2027&action=offline
+```
+
+- `fee` matches the raw slab (`_custom_0`) exactly, or the fee label (`Sports Club`) case-insensitively — so ONE URL resolves to whichever Payment row the logged-in student has for that fee.
+- `action=offline` opens the DirectPay / offline submission form; omitting it triggers the online Pay button.
+- `year` optionally selects the academic year and is preserved in the cleaned-up URL.
+- Works in both the flat and terms render paths, and across regular, term, and custom-fee buttons. The legacy `?payment_id=X` form still works.
+
+Custom-fee buttons now emit `data-slab` / `data-slab-label` so the resolver can match generically.
+
+**Note:** the deeplink can only open a fee the student actually has a Payment row for — so for newly-added custom fees, run the cascade/Sync (above) first, then share the link.
+
 ## [3.23.21] - 2026-06-10
 
 ### Changed — Cash-only is the default Payment filter on fresh load

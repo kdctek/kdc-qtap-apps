@@ -2,6 +2,12 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.9] - 2026-06-16
+
+### Fixed — Login shortcode now shows Site Kit "Sign in with Google"
+
+The `[kdc_qtap_mobile_login]` shortcode and the Mobile account endpoint now render the login form via `wp_login_form()` instead of a custom standalone OTP form. Because WordPress fires `do_action( 'login_form' )` inside `wp_login_form()`, both Site Kit's "Sign in with Google" button and the plugin's own WhatsApp OTP fields are injected together — matching the Fees block and WooCommerce My Account login forms, which already used `wp_login_form()`. Shortcode attributes (`heading`, `description`, `align`, `redirect_to`) are preserved. Note: `show_google="0"` no longer hides the Site Kit button (it comes from the core `login_form` hook, not the legacy `kdc_qtap_login_social_buttons` action).
+
 ## [2.15.8] - 2026-06-15
 
 ### Fixed — Login-with-OTP "Network error" now surfaces the real cause

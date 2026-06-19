@@ -2,6 +2,18 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.32] - 2026-06-19
+
+### Fixed — Receipt-IERT no longer double-generates with the standard receipt
+
+Fully-IERT orders were generating **both** the Receipt-IERT (proforma) *and* the standard `receipt` document, which incorrectly advanced the standard receipt number series. The routing class was only suppressing the `invoice` document type, but this install issues the standard receipt as the WCPDF `receipt` document. The suppression now covers both `receipt` and `invoice` (via the new `kdc_qtap_finance_standard_doc_types` filter, default `array( 'receipt', 'invoice' )`) in both gates — `wpo_wcpdf_document_is_allowed` (generation) and `wpo_wcpdf_custom_attachment_condition` (email attachment). A fully-IERT order now produces exactly one document (the Receipt-IERT) and never consumes a standard receipt number. Mixed/non-IERT orders are unaffected.
+
+## [3.23.31] - 2026-06-19
+
+### Added — Receipt-IERT: tag-based receipt routing for fully-IERT orders
+
+Orders whose **every** line item carries the `IERT` `product_tag` ("fully-IERT") now receive a dedicated **Receipt-IERT** WCPDF document with its own independent number series, instead of the standard receipt — while mixed orders (any non-IERT item) and all other orders keep the standard receipt. Each order still gets exactly one receipt. Routing happens at the WCPDF document layer (`wpo_wcpdf_document_is_allowed`, `wpo_wcpdf_custom_attachment_condition`, `wpo_wcpdf_template_file`), so it behaves identically for web- and POS-created orders, independent of order status. The IERT document type is configurable via the `KDC_QTAP_FINANCE_IERT_DOC_TYPE` constant (default `proforma`, repurposing WCPDF Pro's Proforma document) and the `kdc_qtap_finance_iert_doc_type` filter. The standard receipt is suppressed on fully-IERT orders **only when the IERT document is enabled**, so an unconfigured setup degrades gracefully to the standard receipt instead of producing none. Finance receipt number, view-link, regenerate, and search paths are all IERT-aware via new `order_is_fully_iert()`, `wcpdf_receipt_types()`, `wcpdf_document_link()`, and `wcpdf_get_receipt_document()` helpers. The IERT document renders with its **own default WCPDF template** — the existing finance enrollment/payment enrichment hooks fire on it automatically — and the look can be customised with a theme override at `{theme}/woocommerce-pdf-invoices-packing-slips/Simple/proforma.php` (no plugin-side template). Setup (WCPDF Pro UI): create/enable the IERT document, set its number prefix and "Attach to" emails to match the standard receipt.
+
 ## [3.23.30] - 2026-06-15
 
 ### Fixed — Overdue cron no longer stamps date-less fees (and heals ones it already did)

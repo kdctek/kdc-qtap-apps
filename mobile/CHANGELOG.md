@@ -2,6 +2,12 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.10] - 2026-06-19
+
+### Fixed — Site Kit "Sign in with Google" now renders on wp-login.php
+
+Site Kit's "Sign in with Google" button outputs only through the `login_form_top` filter (plus the WooCommerce and comments hooks), and that filter is fired exclusively by `wp_login_form()` — never by the core `wp-login.php` page. As a result the button appeared on WooCommerce My Account login and the OTP login shortcode, but was missing on `wp-login.php`. The plugin now bridges `login_form_top` into the `login_form` action (which `wp-login.php`, the custom OTP login page, and the OTP block all fire), so the button renders there too, above the WhatsApp OTP field. The bridge is generic (any `login_form_top`-based plugin benefits) and a no-op when no plugin hooks the filter.
+
 ## [2.15.9] - 2026-06-16
 
 ### Fixed — Login shortcode now shows Site Kit "Sign in with Google"

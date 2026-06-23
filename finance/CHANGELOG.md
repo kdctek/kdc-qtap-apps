@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.33] - 2026-06-23
+
+### Fixed — Staff Report "Term Split" ignored per-student discounts/surcharges
+
+With the **Term Split** view enabled, the per-term **Collection** (and Balance) columns ignored enrollment adjustments: a student with a 50%-tuition discount showed the full catalog term amount (e.g. ₹1,31,300 in 1st Term instead of their net ₹75,035), and a fully-paid term wrongly showed an outstanding balance — even though the **Total Collection** was already correct/net. Cause: `redistributeTermBalance()` in the report JS recomputed each student's per-term Collection from a single group-wide "cap" = the *mode of all students' collection values* (i.e. the catalog per-term amount that most, non-discounted, students pay), inflating discounted students to the gross figure. It now preserves each student's own net per-term Collection (the server value, already net of discounts/surcharges) and uses that as the cap for the advance/received-overflow redistribution. The exported XLSX uses the same function, so it now reflects the corrected calculation too. The advance-payment redistribution behaviour for normal and advance-paying students is unchanged.
+
 ## [3.23.32] - 2026-06-19
 
 ### Fixed — Receipt-IERT no longer double-generates with the standard receipt

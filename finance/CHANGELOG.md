@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.35] - 2026-06-23
+
+### Fixed — Carried-forward overpayment double-counted in a term's "Paid"
+
+When a parent overpaid one term, the surplus is reclaimed to user credit and trickled forward to the next term as a single credit transaction. On at least one enrollment the receiving term's stored `amount_paid` had been incremented **twice** for that surplus (e.g. an ₹18,270 carry-forward stored as ₹36,540) while only one ₹18,270 trickle transaction existed — so the term's Paid, the total Paid, the outstanding balance, the Staff Report, and the exported XLSX all showed the inflated figure (and the Pay button under-charged). The authoritative record is the transaction ledger (`amount_paid = sum of transactions, capped at amount_due`); a new one-time, idempotent, version-gated migration (`migrate_heal_amount_paid_divergence_3_23_35`) re-derives `amount_paid` from the ledger via `recompute_amount_paid_from_transactions()` for every regular payment whose stored value disagrees, then recomputes status and item allocation. The current live payment/trickle path already records a matching transaction for every applied amount (including auto-applied credit), so it does not produce this drift going forward — the migration repairs historical rows. On production this corrected one enrollment (2nd-term Paid ₹36,540 → ₹18,270; balance ₹94,260 → ₹1,12,530).
+
 ## [3.23.34] - 2026-06-23
 
 ### Added — "Show Special" column in the Staff Report

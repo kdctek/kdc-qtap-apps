@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.34] - 2026-06-23
+
+### Added — "Show Special" column in the Staff Report
+
+A new **Show Special** toggle on the report (admin Report tab and the staff console Report block). When enabled, a **Special** column is inserted immediately after the student name showing, per student: an **RTE** badge when the enrollment is fee-exempt, and the **payment cycle** (Monthly / Quarterly / Half Yearly / Yearly / Full Tenure) when it is not the institute default (i.e. a per-enrollment cycle override). The column is omitted from the Summary tab and carries through to the exported XLSX (plain text, same as on-screen). Off by default — no change unless toggled.
+
 ## [3.23.33] - 2026-06-23
 
 ### Fixed — Staff Report "Term Split" ignored per-student discounts/surcharges

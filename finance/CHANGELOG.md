@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.37] - 2026-06-24
+
+### Changed — All Balance columns shown in red
+
+In the Staff Report, every Balance figure now renders in red when an amount is still outstanding (overpayments in green, zero as a neutral dash) — the per-term Balance columns (1st/2nd Term Balance), the overall Balance column, and their footer totals. Previously only the overall Balance column was coloured. Applies to both the group tabs and the Summary. (On-screen only — the XLSX export is uncoloured because the bundled mini SheetJS build does not carry cell styling.)
+
 ## [3.23.36] - 2026-06-24
 
 ### Fixed — On-screen Summary per-term totals disagreed with the XLSX

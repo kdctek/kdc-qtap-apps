@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.41] - 2026-06-24
+
+### Changed — Split "Only Dues" into per-term due filters
+
+The Staff Report's single **Only Dues** filter is replaced by two independent filters: **1st Term Due** and **2nd Term Due**. Each shows only rows with an outstanding balance in the corresponding term; checking both shows rows due in either term (union). The per-term balance is evaluated on the same basis the table displays (respecting Term Split redistribution), and the filters apply to the on-screen tabs, the Summary, and the XLSX export.
+
 ## [3.23.40] - 2026-06-24
 
 ### Fixed — Grade column now actually freezes in the Summary tab

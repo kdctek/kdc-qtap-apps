@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.36] - 2026-06-24
+
+### Fixed — On-screen Summary per-term totals disagreed with the XLSX
+
+The Staff Report **Summary** tab's per-term Received/Balance totals were wrong while the exported XLSX was correct (e.g. ~₹10.9 L of Received mis-split between 1st and 2nd term; grand totals matched). Cause: term-split redistribution is non-linear (each term's received is capped at that term's collection with the overflow carried forward), so it must run **per student before** the rows are summed into a grade row. The XLSX did this; the on-screen Summary did the opposite — it aggregated each grade's students first and then redistributed the *summed* row, so `redistribute(sum) ≠ sum(redistribute)`. The Summary now redistributes per student and then aggregates (identical to the XLSX), and `initDataTable()` no longer re-redistributes already-aggregated Summary rows. Group tabs (which redistribute individual student rows) and the grand totals are unchanged.
+
 ## [3.23.35] - 2026-06-23
 
 ### Fixed — Carried-forward overpayment double-counted in a term's "Paid"

@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.38] - 2026-06-24
+
+### Changed — Grade column frozen in the Summary tab
+
+In the Staff Report Summary tab, the Grade column now stays pinned to the left while the term/total columns scroll horizontally, so the grade label remains visible — especially on mobile. Implemented as a sticky first column across the DataTables scroll header, body, and footer.
+
 ## [3.23.37] - 2026-06-24
 
 ### Changed — All Balance columns shown in red

@@ -2,6 +2,15 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.39] - 2026-06-24
+
+### Changed — Staff Report mobile optimisation
+
+The Staff Report screen is now optimised for mobile:
+- **Staff menu** (Overview / Receipts / Report / Fee Stats / POS Orders / POS) collapses to a single swipeable horizontal strip instead of wrapping onto multiple rows.
+- **Filter controls** (Reporting Breakup, Only Dues, Show Custom Fees, Show Division, Show User ID, Show Special, Term Split) are tucked into a collapsible "Filters" panel (`<details>`) on mobile, and remain expanded inline on desktop.
+- **Report grade-tabs** (~28 tabs) become a native dropdown on mobile — one tap to switch class instead of a long horizontal swipe. The desktop tab row is unchanged.
+
 ## [3.23.38] - 2026-06-24
 
 ### Changed — Grade column frozen in the Summary tab

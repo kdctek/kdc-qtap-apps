@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.23.40] - 2026-06-24
+
+### Fixed — Grade column now actually freezes in the Summary tab
+
+The pinned/frozen Grade column added in 3.23.37 never took effect: the sticky CSS targeted DataTables 1.x scroll-wrapper class names (`.dataTables_scrollBody` etc.), but the bundled library is DataTables 2.1.8, which renamed them to `.dt-scroll-body` / `.dt-scroll-head` / `.dt-scroll-foot`. Updated the selectors so the Grade column stays put while the term/total columns scroll. The footer-totals clone selector was updated for the same reason (now matches both 1.x and 2.x markup).
+
+### Added — Tap-to-highlight row
+
+Tapping (or clicking) a row in any report table now keeps that row highlighted with a left accent bar, so it's easy to track which row you're reading on touch devices across a wide, horizontally-scrolled table.
+
 ## [3.23.39] - 2026-06-24
 
 ### Changed — Staff Report mobile optimisation

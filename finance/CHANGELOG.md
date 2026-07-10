@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.24.1] - 2026-06-24
+
+### Fixed — WP-CLI subcommand name
+
+The transfer command is now correctly registered as `wp kdc-finance transfer-user` (hyphenated, matching the docs). It had registered as `transfer_user` because WP-CLI derives the subcommand from the method name; added the `@subcommand` annotation. No change to the admin Transfer tab.
+
 ## [3.24.0] - 2026-06-24
 
 ### Added — Transfer all finance records between users

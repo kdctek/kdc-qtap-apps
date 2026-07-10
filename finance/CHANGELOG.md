@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.24.0] - 2026-06-24
+
+### Added — Transfer all finance records between users
+
+A new mechanism to move every finance record from one user to another, changing only the owner (`user_id` / order `customer_id`) — all amounts, order numbers, receipt numbers, transaction ids and payment ids are preserved exactly, and staff audit fields (created/verified by) are left untouched.
+
+- **What moves:** payments (and their transactions, receipts and line items), WhatsApp tracking rows, WooCommerce orders, and — in full scope — the finance profile user-meta (enrollments, credit balance + ledger, DOB/gender, associations). Profile keys the target already has are skipped (never clobbered; nothing on the source is deleted).
+- **Admin tool:** qTap Finance → **Transfer** tab. Enter source + target (ID, email, or username), **Preview** exactly what will move, then confirm. Capability-gated (`manage_options`); finance-table changes run in a DB transaction; every reassigned order gets an audit note.
+- **WP-CLI:** `wp kdc-finance transfer-user <from> <to> [--scope=all|records] [--yes]`. Dry-run by default.
+
 ## [3.23.41] - 2026-06-24
 
 ### Changed — Split "Only Dues" into per-term due filters

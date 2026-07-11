@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.24.2] - 2026-06-24
+
+### Changed — POS Orders list shows only Completed / Processing
+
+The staff console's POS Orders list (and its totals) now shows only **Completed** and **Processing** orders. Failed, cancelled, draft, on-hold, refunded, pending, and the POS register's own hold/open parking statuses are hidden. The allowlist is filterable via `kdc_qtap_finance_pos_orders_statuses`.
+
 ## [3.24.1] - 2026-06-24
 
 ### Fixed — WP-CLI subcommand name

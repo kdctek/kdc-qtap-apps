@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.24.5] - 2026-07-11
+
+### Reverted — WP-CLI subcommand annotation (3.24.1)
+
+Undid the `@subcommand transfer-user` annotation added in 3.24.1. The user-transfer command now registers under its default method-derived name (`wp kdc-finance transfer_user`) again. No other change — 3.24.2 (POS Orders allowlist), 3.24.3 (receipt stamp + My Account gating), and 3.24.4 (payment-filter fix) remain in place. The admin **Transfer** tab is unaffected.
+
 ## [3.24.4] - 2026-06-24
 
 ### Fixed — POS Orders payment filter no longer disappears on empty ranges

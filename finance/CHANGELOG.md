@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.24.7] - 2026-07-11
+
+### Fixed — Receipt button still shown on cancelled/failed/refunded orders in My Account
+
+The 3.24.3 button-gating didn't actually hide the receipt button on the customer's WooCommerce My Account orders list. Our removal filter ran at priority 99, but WooCommerce PDF Invoices & Packing Slips adds its My Account button at priority **999** — so when our filter ran the button didn't exist yet and there was nothing to remove. Moved our filter to priority 1000 so it runs after WCPDF. Cancelled, failed, and refunded orders now correctly hide the receipt/invoice button for the customer (admin generation and the stamped receipt itself are still available).
+
 ## [3.24.6] - 2026-07-11
 
 ### Fixed — POS Orders list empty under HPOS (regression from 3.24.2)

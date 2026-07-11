@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.24.8] - 2026-07-11
+
+### Changed — Removed the "Paid" stamp from receipts
+
+The green **Paid** watermark is no longer stamped on WCPDF receipts for completed/processing orders — a paid receipt doesn't need it. The exception-state stamps remain: **Unpaid** (red), **Cancelled** (grey), and **Refunded** (blue). Sites that want the Paid stamp back can re-add it via the `kdc_qtap_finance_receipt_stamp` filter.
+
 ## [3.24.7] - 2026-07-11
 
 ### Fixed — Receipt button still shown on cancelled/failed/refunded orders in My Account

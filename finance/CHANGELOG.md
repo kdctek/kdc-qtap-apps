@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.24.6] - 2026-07-11
+
+### Fixed — POS Orders list empty under HPOS (regression from 3.24.2)
+
+The staff console's POS Orders list went completely empty on sites running WooCommerce **HPOS with post-sync disabled**. The 3.24.2 status allowlist added a per-row "defense-in-depth" recheck that read each order's status with `get_post_status()`; under HPOS-without-sync every order's placeholder post reports `draft`, so the recheck rejected **all** Completed/Processing orders and left the list blank. The recheck now reads the order's authoritative status via `wc_get_order()->get_status()`. The Completed/Processing allowlist (3.24.2) and all other 3.24.x behaviour are unchanged.
+
 ## [3.24.5] - 2026-07-11
 
 ### Reverted — WP-CLI subcommand annotation (3.24.1)

@@ -2,6 +2,13 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.24.3] - 2026-06-24
+
+### Added — Payment-status stamp on receipts + My Account button gating
+
+- **Receipt stamp:** WCPDF receipts now carry a bordered status stamp in the top-right — **Paid** (completed/processing, green), **Unpaid** (pending/on-hold/failed, red), **Cancelled** (grey), or **Refunded** (blue; also shown on refund/credit-note documents). Filterable via `kdc_qtap_finance_receipt_stamp`.
+- **My Account:** the receipt download button is hidden on the customer's My Account orders list for **cancelled / failed / refunded** orders. Admin-side generation and the stamped receipt itself are unaffected, so a Refunded receipt can still be produced from the admin. Statuses filterable via `kdc_qtap_finance_receipt_button_hidden_statuses`.
+
 ## [3.24.2] - 2026-06-24
 
 ### Changed — POS Orders list shows only Completed / Processing

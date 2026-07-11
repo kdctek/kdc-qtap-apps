@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.24.4] - 2026-06-24
+
+### Fixed — POS Orders payment filter no longer disappears on empty ranges
+
+The payment filter row (mode pills + Cash / Cards / Cash + Card quick presets) is now always shown on the staff POS Orders screen. Previously the whole row was hidden whenever the selected date range had no matching orders — which became common after 3.24.2 restricted the list to completed/processing (a range whose only orders were cancelled/pending would render zero modes and hide the filters). The dynamic per-mode pills remain range-dependent; when a range has no payments, a short hint shows and the quick presets stay available.
+
 ## [3.24.3] - 2026-06-24
 
 ### Added — Payment-status stamp on receipts + My Account button gating

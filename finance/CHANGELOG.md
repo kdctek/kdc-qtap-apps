@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.24.9] - 2026-07-14
+
+### Added — Grade-Specific Fees can vary by Division
+
+A **Grade-Specific Fee** (e.g. *Sports Club*) can now optionally charge a different amount per **division/section** within the same grade. In **Fee Matrix → Grade-Specific Fees**, each fee has a new **"Vary amount by division (section)"** toggle that reveals a grade × division grid. A per-division value **overrides** the grade amount for students in that division; leaving a cell blank falls back to the grade amount (the cell's placeholder shows what a blank resolves to). A fee configured only for specific divisions (grade amount 0) still applies to those divisions.
+
+- Fully backward-compatible and additive: existing grade-only fees are unchanged and carry no new data until you set a division amount. No database migration.
+- The student's division (already recorded on their enrollment) selects the amount when their fees are generated. Changing amounts affects new enrollments immediately; existing **unpaid** fees update on the next **Sync payments** run — already-paid fees are never changed.
+- JSON export/import of the fee matrix carries division overrides automatically. (CSV export/import remains grade-only.)
+- Regular fee slabs (Tuition/Transport, the per-month/term/cycle/tenure grid) are unchanged — this applies to Grade-Specific Fees only.
+
 ## [3.24.8] - 2026-07-11
 
 ### Changed — Removed the "Paid" stamp from receipts

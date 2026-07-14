@@ -2,6 +2,21 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.25.0] - 2026-07-14
+
+### Added — Grade-Specific Fee installments (staggered, dated part-payments)
+
+A **Grade-Specific Fee** can now be collected in **installments**, each with its own amount and due date — while still letting a student pay the whole fee at once.
+
+- **Admin (Fee Matrix → Grade-Specific Fees):** a new **"Split into installments"** toggle reveals a repeatable schedule of rows — *label*, *amount*, *due date*. Enter a fixed amount for the early installments and leave the last amount **blank** to charge the **balance**. One schedule applies to every grade; amounts scale automatically to each grade's (and division's) total. A live preview shows the resolved split (e.g. *Grade 10: ₹45,000 + ₹45,000*). Allocation is capped so the parts never exceed the total, and the final part absorbs rounding so they always sum exactly.
+- **Payments:** on enrollment (and on the next *Sync payments* run) an installment fee fans out into one payment row per installment, each with its own amount and due date. Reconciliation only ever creates or refreshes **unpaid** rows — already-paid installments are never changed, and a fee already settled as a single charge is never re-billed.
+- **Student/parent fees page:** the fee card lists each installment with its own status, due date, and **Pay** button, plus a **"Pay all"** button that settles every unpaid installment in one order. Per-installment **overdue** badges and reminders work automatically.
+- **Deeplinks:** each installment has its own shareable link — `?year={year}&fee={slug}&installment={n}` — that scrolls to and opens that specific part-payment. The whole-fee link (`?year=&fee=`) still opens the card.
+
+### Fixed — Fees summary total no longer double-counts custom / user fees
+
+The fees-page summary (**Total Fees / Paid / Balance**) previously added Grade-Specific (custom) fees and per-user fees **twice** — once in the all-rows total and again from their dedicated buckets — overstating the headline totals for any student who had such a fee. They are now counted once. (Pre-existing issue, surfaced while building installments.)
+
 ## [3.24.11] - 2026-07-14
 
 ### Added — Grade-Specific Fee cards: rich-text description + copy payment link

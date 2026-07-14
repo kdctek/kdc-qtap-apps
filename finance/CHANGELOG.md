@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.25.1] - 2026-07-14
+
+### Added — "Copy payment link" in the Admin Fee Matrix
+
+Each **Grade-Specific Fee** card in the admin **Fee Matrix** now has a link icon in its header that copies the fee's shareable frontend payment link — `{fees-page}/?year={active-year}&fee={slug}` — so staff can send parents a direct link without opening the frontend. Uses the configured fees page (`KDC_qTap_Finance_Fees_Endpoint`) and the year currently being edited.
+
+### Fixed — Installment card button alignment
+
+The per-installment **copy-link** icon was breaking the pay-actions row alignment (it floated detached at the far right and could pick up a filled focus box from some themes). It now lives in the installment's header next to the status badge, so the **Pay Together / offline / Pay** row lines up exactly like a normal fee card. The button is also flattened in all focus/active states.
+
 ## [3.25.0] - 2026-07-14
 
 ### Added — Grade-Specific Fee installments (staggered, dated part-payments)

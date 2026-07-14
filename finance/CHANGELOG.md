@@ -2,6 +2,12 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.25.2] - 2026-07-14
+
+### Fixed — Whole-fee deeplink now opens "Pay all", not the first installment
+
+A deeplink to an installment fee **without** an installment index (`?year=&fee={slug}`) was opening the **first installment's** Pay button instead of the full amount. It now triggers the card's **"Pay all"** (the full outstanding amount). The per-installment deeplinks (`&installment=1`, `&installment=2`, …) are unchanged and continue to open their specific part. Non-installment fees and fully-paid cards are unaffected.
+
 ## [3.25.1] - 2026-07-14
 
 ### Added — "Copy payment link" in the Admin Fee Matrix

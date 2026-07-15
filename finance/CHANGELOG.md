@@ -2,6 +2,26 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.25.3] - 2026-07-14
+
+### Fixed — A fee that no longer applies to a student is now withdrawn on Sync
+
+Grade-specific fee rows were only ever **created or updated**, never removed. So if a fee was billed under an earlier configuration and its scope later narrowed — e.g. an amount typed into the **grade** field (which bills every division), afterwards corrected to a **division-only** amount — the students who should no longer be billed **kept the fee through every Sync**. A 3A student went on seeing the 3B fee even after the config was fixed. **Sync payments** now retires rows for any grade-specific fee that resolves to 0 for a student's grade + division. Only **fully-unpaid** rows are withdrawn — a paid or part-paid fee is never removed.
+
+> **Action:** run **Sync payments** once after upgrading to clear fees left behind by an earlier misconfiguration.
+
+### Fixed — Duplicating a Grade-Specific Fee no longer loses its settings
+
+**Duplicate** on a Grade-Specific Fee card only copied the name, per-grade amounts and the exempt flag. It silently dropped the **description**, every **per-division override**, and the entire **installment schedule** — and set every date field to the first date's value. It now deep-copies the whole fee (description, per-grade amounts, division overrides, the full installment schedule, and both the "Vary by division" / "Split into installments" toggles), with the single due date copied field-scoped so installment dates are untouched. This makes the "one fee per division" flow work: build *Terra 3A*, duplicate it, change the division + amounts → *Terra 3B*.
+
+### Changed — Division-scoped fees no longer read "0 grades configured"
+
+The coverage badge counted only per-grade amounts, so a correctly division-scoped fee (grade amount blank, amount entered only in a division column) showed **"0/N grades configured"**. A grade now counts as configured when its grade amount **or** any of its division overrides is set — matching how the server decides applicability. Division inputs also refresh the badge live.
+
+### Added — Guardrail against billing every division
+
+The Grade-Specific Fee amount table now states: *"Leave a grade blank to scope this fee to specific divisions below — an amount here applies to EVERY division."* An amount in the **grade** field bills **all** divisions (and a division with no override falls back to it), which could make a fee intended for one division appear for another.
+
 ## [3.25.2] - 2026-07-14
 
 ### Fixed — Whole-fee deeplink now opens "Pay all", not the first installment

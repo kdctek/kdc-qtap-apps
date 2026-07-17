@@ -2,6 +2,16 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.25.4] - 2026-07-17
+
+### Added — Editable, stable payment-link slug for Grade-Specific Fees
+
+Each Grade-Specific Fee now has its own **Payment Link Slug** field (below the fee name). The slug is what the shareable deeplink uses (`/fees/?fee=terra-3a`), and it now stays **fixed once set** — you can rename the fee freely without breaking a link you have already shared with parents. The field follows WordPress slug rules (lowercase letters, numbers and hyphens; no spaces or other characters), auto-suggests from the fee name for a brand-new fee, and stops tracking the name the moment you edit it yourself.
+
+### Fixed — Renaming a fee no longer changed its deeplink
+
+Previously the slug was **regenerated from the fee name on every save** (per-card Save, name auto-save, and full-matrix save all did this), so editing the name silently changed the deeplink and any link already shared stopped working. The slug is now resolved once and preserved: an existing fee keeps its stored slug across renames, a brand-new fee derives one from its name, and **Duplicate** gives the copy its own distinct slug. Slugs are still de-duplicated across fees with a numeric suffix.
+
 ## [3.25.3] - 2026-07-14
 
 ### Fixed — A fee that no longer applies to a student is now withdrawn on Sync

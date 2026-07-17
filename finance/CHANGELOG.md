@@ -2,6 +2,14 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.25.5] - 2026-07-17
+
+### Added — Record a Grade-Specific Fee's installments together as one payment
+
+When a Grade-Specific Fee is split into installments, each unsettled installment row now shows a **checkbox** in the payment history (both the staff console and the admin student profile). Tick two or more of the same fee's installments and a **Record Combined Payment** bar appears — it opens the record-payment dialog pre-filled with the combined balance and settles every selected installment as a **single payment with one receipt**, instead of recording each installment separately.
+
+The amount is distributed across the installments earliest-due first (a smaller amount records as a partial against the earliest, a larger amount rides forward), and it routes through the same canonical payment path as a normal record — so the WooCommerce order, receipt PDF, and ledger all stay correct. Selection is locked to one fee at a time so a combined payment always maps to a single fee.
+
 ## [3.25.4] - 2026-07-17
 
 ### Added — Editable, stable payment-link slug for Grade-Specific Fees

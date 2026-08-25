@@ -2,6 +2,20 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.11] - 2026-08-25
+
+### Added — Demo account with a fixed OTP and a validity window
+
+**qTap Mobile > Login** gains a Demo Account section for product demos and app-store review, where a reviewer cannot receive a live OTP. Enabling it designates one configurable mobile number that logs in with a fixed 6-digit OTP instead of a real WhatsApp OTP, bounded by inclusive "Valid from" / "Valid to" dates read in the site timezone; either bound may be left empty for an open end. The number and the code are set in the admin screen and are deliberately not recorded here.
+
+No WhatsApp message is sent for the demo number — the send step short-circuits — so the number need not exist on WhatsApp and no API credits are spent. The OTP itself is fixed at exactly 6 digits because the login form auto-verifies as soon as 6 digits are entered; a different length is rejected at save rather than silently breaking the demo.
+
+Outside the window the account cannot log in **by any route**. All four OTP entry points re-check the window independently — send, verify, the final `login_user` step (which sets the auth cookie directly and so never passes through `wp_authenticate`), and the `wp-login.php` OTP path — and an `authenticate` filter at priority 30 closes password login for the same user as a backstop. A token issued while the window was open therefore stops working the moment it closes. Refusals carry the actual start/end date rather than a generic error.
+
+The demo user is **not** auto-provisioned: attach the number to an existing WordPress user the normal way. The settings screen resolves the number in one query and shows which user holds it — or warns in red when no user does, which would otherwise surface only as a confusing "No account found" at the login screen. A status badge shows Active / Not started / Expired at a glance.
+
+New helpers `kdc_qtap_is_demo_user( $user_id = 0 )` and `kdc_qtap_is_demo_account_active()` let other qTap plugins mask data or disable destructive actions for the demo account without knowing how the number is stored.
+
 ## [2.15.10] - 2026-06-19
 
 ### Fixed — Site Kit "Sign in with Google" now renders on wp-login.php

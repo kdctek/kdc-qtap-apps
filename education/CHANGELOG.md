@@ -2,6 +2,52 @@
 
 All notable changes to this plugin will be documented here.
 
+## [1.1.5] — 2026-09-08 — Create-student: fee slabs actually register, and the success card stops implying a mailbox
+
+Two bugs reported against the staff dashboard's Create form: the enrollment assigned on the form wasn't what got registered, and the success card announced an email account even when the Google Workspace toggles were unticked.
+
+### Fixed — fee-slab cards used a slug Finance never produces
+
+`render.php` derived each slab card's `data-slug` with `sanitize_key()` over the slab *name*. Finance's canonical slug is `KDC_qTap_Finance_Fee_Matrix::generate_slug()` — i.e. `sanitize_title()`. For any multi-word fee the two disagree:
+
+```
+sanitize_key( 'Tuition Fee' )    →  tuitionfee     ← what the card carried
+sanitize_title( 'Tuition Fee' )  →  tuition-fee    ← what /qtap/education/slabs returns
+```
+
+`view.js applySlabs()` hides and unchecks every card whose slug isn't in the REST response, so those cards vanished from the form the moment a grade was picked, and `enrollment.fee_slabs` submitted empty. `Enrollment::save()` then auto-assigned *all* applicable slabs — so the student got fees, just never the ones the staff selected.
+
+Cards are now built from the per-year fee matrix itself (unioned across every configured academic year, so switching years still finds its cards), carrying the matrix key verbatim as the slug. Two knock-on fixes come with it:
+
+- Grade-level `_custom_slabs` now appear on the form. They live only in the matrix, never in the legacy `fees_slabs` settings list the form used to read, so they could not be ticked at all.
+- The per-adjustment "Apply to" checkboxes used the same broken slug, which silently widened every targeted discount to *all* slabs.
+
+### Fixed — Adjustments were gathered, POSTed, and dropped
+
+`gatherFormData()` collected the discount / surcharge rows and sent them as `enrollment.adjustments`, but `create_student()` never copied them into the payload handed to `KDC_qTap_Finance_Enrollment::save()`. Every adjustment entered during creation was discarded and had to be re-entered on the student's Finance profile. Now forwarded through a new `sanitize_adjustments()` shape guard.
+
+### Fixed — `enrolled` in the response was always true
+
+`Enrollment::save()` returns `true` unconditionally (`update_user_meta()` returns false for an unchanged value, so it can't signal success). The handler now reads the enrollment back and reports whether a grade actually landed on the user.
+
+### Fixed — contact mobile numbers were formatted but never validated
+
+`to_e164()` only *formats*: it strips non-digits and prepends the default dial code. A mistyped `12345` became `+9112345`, was stored on `kdc_qtap_mobile_numbers`, displayed back as a real number, and then failed silently on every WhatsApp / SMS dispatch afterwards. Each non-empty contact number is now checked with the parent's `kdc_qtap_validate_phone()` (E.164: `+` then 7-15 digits) — the same gate qTap Mobile applies on its own profile screen — and a bad number is rejected with a 400 so the staff corrects it while the parent is still in front of them. Name/email-only contact rows are still allowed.
+
+### Fixed — success card implied a mailbox that was never created
+
+The card printed `body.email` bare, next to the username. In assign mode that address is generated purely to fill WordPress's mandatory `user_email` column — no mailbox exists behind it unless a Workspace job was scheduled. The card now labels it `Account email` and states the Workspace outcome explicitly from the flags the server already returned:
+
+| Situation | Card now says |
+|---|---|
+| Job scheduled | ✓ Google Workspace account queued (parent / student) |
+| Toggle ticked, integration inactive | ⚠ No Google account was created — the Workspace integration is not active |
+| Toggle unticked | No Google account created — WordPress account only |
+
+The seed password is likewise gated on `workspace_scheduled` rather than on the toggles, so an unusable password is no longer surfaced when nothing was created. A `⚠ Enrollment was NOT saved` note appears when `enrolled` comes back false.
+
+---
+
 ## [1.1.4] — 2026-05-01 — Federation lookup rename + identity-aware response
 
 apps/web (api.qtap.app) needs to know HOW the lookup matched (was it the WP user's primary `user_email`, or a `kdc_qtap_mobile_numbers` contact-array email?) to decide auto-link vs requiring email-OTP verification on the OAuth-to-tenant linking flow. v1.1.4 also renames the lookup endpoint to a name that doesn't lie ("phone" was a misnomer once email lookup landed in v1.1.0).

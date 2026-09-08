@@ -2,6 +2,35 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.12] - 2026-09-08
+
+### Fixed — `kdc_qtap_get_primary_mobile_number()` returned an array, not a number
+
+The helper has been handing back the wrong type since **2.6.36**, when `get_user_mobile_numbers()` began returning normalized contact rows instead of bare number strings. The helper was never updated:
+
+```php
+// Before — $numbers[0] is {number, name, email, email_verified, whatsapp, sms}
+return !empty($numbers) ? $numbers[0] : '';
+```
+
+Its name, its docblock (`@return string`) and every caller in the ecosystem expected a string. None of them checked, so the array flowed straight through:
+
+| Caller | Symptom |
+|---|---|
+| `kdc-qtap-events` — ticket confirmation `send_whatsapp()` | array passed as `recipient.phone`; WhatsApp confirmation silently never delivered |
+| `kdc-qtap-events` — RSVP form localize | `kdcQtapEvents.userMobile` shipped an object to JS, so the phone field never prefilled |
+| `kdc-qtap-events` — OTP "save number to profile" | a non-empty array is truthy, so `empty($existing_mobile)` was always false and the number was never saved |
+| `kdc-qtap-finance-dashboard` — manual notification ability | array set as `recipient.phone` |
+| `kdc-qtap-wa` — `from_user_query()` audience build | truthy array skipped the `phone` / `mobile` / `billing_phone` fallbacks, then `kdc_qtap_wa_format_phone()` got an array |
+
+The helper now returns the **first row that actually carries a number**, as a string — skipping name/email-only contact rows, which qTap Education's create-student form can produce. Legacy pre-2.6.36 bare-string rows are still honored. This matches how the 2.13.5+ helpers (`kdc_qtap_get_whatsapp_enabled_numbers()`, `kdc_qtap_is_whatsapp_enabled()`) already read the same meta.
+
+No call-site changes were needed — restoring the documented contract fixes all five at once.
+
+### Added — `kdc_qtap_get_primary_mobile_contact()`
+
+For callers that legitimately want the whole row (name, email, channel flags) rather than just a number to dial. Returns the normalized contact array, or `null`.
+
 ## [2.15.11] - 2026-08-25
 
 ### Added — Demo account with a fixed OTP and a validity window

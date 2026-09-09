@@ -2,11 +2,23 @@
 
 All notable changes to qTap App are documented in this file.
 
-## [3.2.1] - 2026-04-28
+## [3.2.3] - 2026-04-28
+
+### Updated — OTP expiry bumped from 5min → 10min
+
+`KDC_qTap_REST_API::OTP_EXPIRY` is now `600` (was `300`). Three knock-on effects:
+
+- The transient holding the OTP code lives for 10 minutes server-side (matches what api.qtap.app's `auth_otps` table now enforces).
+- The two user-facing template fallback strings — the SMS/short text default ("This code expires in 10 minutes.") and the email-channel message ("This code expires in 10 minutes. If you did not request this code, please ignore this email.") — now read 10 minutes.
+- The REST response's `expires_in` and `expires_at` fields, plus the `otp_expiry_minutes` notification template variable, all reflect 10 minutes automatically (they're computed from the `OTP_EXPIRY` constant).
+
+**Why now:** api.qtap.app's `OTP_VALIDITY_MIN` is 10. Without this bump, parents going through the tenant-override OTP path (api.qtap.app → kdc-qtap parent → SMS/WhatsApp gateway) would see "expires in 5 minutes" while the actual server-enforced expiry is 10 — confusing UX that gets worse if a tenant copies the message to their own template store. Aligning both sides keeps user-facing text and server enforcement in sync.
+
+## [3.2.2] - 2026-04-28
 
 ### New — HMAC gate for trusted-server OTP callers (api.qtap.app)
 
-The `/wp-json/kdc/v1/qtap/otp/*` endpoints are public by default (existing dashboard + mobile-app login flows depend on this). v3.2.1 adds a **trusted-caller HMAC opt-in** so the central qTap API at `api.qtap.app` can call `send_otp` and `verify_otp` server-to-server without exposing a denial-of-wallet surface to the open internet.
+The `/wp-json/kdc/v1/qtap/otp/*` endpoints are public by default (existing dashboard + mobile-app login flows depend on this). v3.2.2 adds a **trusted-caller HMAC opt-in** so the central qTap API at `api.qtap.app` can call `send_otp` and `verify_otp` server-to-server without exposing a denial-of-wallet surface to the open internet.
 
 **Contract:**
 

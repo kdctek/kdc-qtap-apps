@@ -2,6 +2,20 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.25.6] - 2026-09-09
+
+### Added — Per-student due dates for each term
+
+An enrollment can now carry **its own due date for every term**. The Add Enrollment card and the Edit Enrollment dialog (admin student profile and the staff console alike) gained a **Term Due Dates** section listing each term of the selected academic year with a date field and the term's own date shown alongside for reference. A date entered there applies to **that student only** and overrides the term due date configured in **Fee Matrix > Terms**; clearing the field hands the term back to the year default.
+
+What the override reaches:
+
+* **Newly generated payments** — every billing period the term owns takes the student's date. Longer cycles (quarterly, half-yearly, yearly) follow the override of the term they start in, exactly as they follow that term's date by default.
+* **Unsettled part-paid terms** — a retained row that still owes a balance is moved onto the date its billing period now resolves to: the student's own date when set, the term's date again the moment the override is cleared. Paid and exempt rows are history and keep the date they were settled against.
+* **Institute-wide term changes** — editing a term's due date in Fee Matrix, and the **Sync payments** run that follows, now **skip students who pin their own date** for that term, instead of silently overwriting the exception.
+
+Overrides also round-trip through the enrollments CSV as a `term_due_dates` column — `1st Term: 2026-06-10; 2nd Term: 2026-09-10`, accepting either term names or term keys. Import only touches the field when the column is mapped, so every other enrollment tool (bulk payment-cycle change, profile save, transfer) leaves a student's dates alone.
+
 ## [3.25.5] - 2026-07-17
 
 ### Added — Record a Grade-Specific Fee's installments together as one payment

@@ -2,6 +2,21 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.25.7] - 2026-09-09
+
+### Fixed — A term with no due date is no longer discarded
+
+Adding a term in **General > Academic Terms** and leaving **Due Date** empty threw the whole term row away. The page still answered "Terms saved", so the loss only surfaced on the next refresh, when the term was simply not there.
+
+A term due date is now **optional**. A term without one stays open-ended: the payments it generates carry no deadline, are never flagged overdue, and are skipped by the due-date reminders — the same way a Grade-Specific Fee with no due date has behaved since 3.23.26. Setting a date later works as it always has, and the change flows to existing unpaid payments through the usual sync.
+
+Two related silences are gone with it:
+
+* A term row is still rejected when it has **no name or no months** — those define what is billed. The save now reports how many rows were skipped and why, rather than reporting plain success.
+* A due date that is not a real calendar date (`0000-00-00` from an old import, `2026-02-30` from a hand-edited CSV) used to be stored verbatim and then rendered as a nonsense date. It now normalises to "no deadline".
+
+The same relaxation applies to terms arriving through **Import**, which dropped date-less terms just as quietly.
+
 ## [3.25.6] - 2026-09-09
 
 ### Added — Per-student due dates for each term

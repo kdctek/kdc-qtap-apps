@@ -2,6 +2,22 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.13] - 2026-10-01
+
+### Fixed — Login with OTP and the mobile REST search read every user, one query each
+
+Login with OTP looks up the accounts behind a mobile number three times per sign-in (send, verify, log in), and `GET /wp-json/kdc/v1/qtap/mobile/{identity}` once per call. Both listed every user on the site and read each one's `kdc_qtap_mobile_numbers` with `get_user_meta()`, so every lookup cost about one query per user:
+
+| On a site with 997 users | Before | After |
+|---|---|---|
+| One lookup, fresh request | 998 queries, 136–203 ms | 1–4 queries, 2.5–4 ms |
+| Login: send OTP | 1,013 queries | 16 |
+| Login: verify OTP | 1,003 queries | 6 |
+
+Both now call the new `KDC_qTap_Mobile_User_Mobile::get_users_with_mobile()`, which reads that meta key for every user in one query and compares numbers exactly as before: only digits and `+` count, a leading `+` is ignored, and a user's first meta row is the one read. The matching users are then loaded with `get_users()`, so they come back in the same order (by login) and, on multisite, from the current site only. The result is not cached, so a number added or removed is seen at once.
+
+Nothing else changes: for every stored number on that site, reformatted forms of them (no `+`, spaces, dashes, a `00` prefix, one digit short) and edge inputs, 2,405 lookups in all, the login lookup and the REST search returned byte-identical results before and after. `kdc_qtap_find_user_by_mobile()` (the `LIKE` search with a 5-minute cache) is unchanged.
+
 ## [2.15.12] - 2026-09-08
 
 ### Fixed — `kdc_qtap_get_primary_mobile_number()` returned an array, not a number

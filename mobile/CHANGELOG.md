@@ -2,6 +2,16 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.14] - 2026-10-01
+
+### Fixed — Login with OTP showed "Network error" in a browser that was already logged in
+
+"Send OTP via WhatsApp" failed with "Network error. Please try again." whenever the browser already held a login cookie for the site, for example an administrator testing the login form in the same browser they had just used to update the plugin, or a visitor sent back to the login screen to re-authenticate. No OTP was sent.
+
+The send, verify and login actions were registered only for logged-out visitors (`wp_ajax_nopriv_*`). For a logged-in browser, `admin-ajax.php` looks only for `wp_ajax_{action}`; finding no handler, it answers HTTP 400 with a body of `0`, which the form shows as a network error. The 2.15.8 change that reports the real cause of a send failure never ran, because the request never reached the handler.
+
+All three actions are now also registered as `wp_ajax_*`. Logging in from that state switches accounts cleanly, since the final login step already clears the old session before setting the new one. Logged-out visitors, the usual case, were never affected and behave exactly as before.
+
 ## [2.15.13] - 2026-10-01
 
 ### Fixed — Login with OTP and the mobile REST search read every user, one query each

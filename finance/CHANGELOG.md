@@ -2,6 +2,25 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.25.8] - 2026-10-09
+
+### Fixed — Deleting a Grade-Specific Fee no longer re-bills the fees after it
+
+Every Grade-Specific Fee was identified by its position in the list (first fee, second fee, …), and every save of the Fee Matrix renumbered the list. Deleting one fee therefore moved every fee after it to a new number — but payments already made stayed on the old number. Two things followed:
+
+* A paid fee showed under the name of whichever fee now held its old number — a paid park trip listed as "Ladakh Trip Charges", say.
+* **Sync Payments** saw the moved fee without a payment on its new number and billed it again, so families who had already paid saw the same fee twice, the second time as unpaid or overdue.
+
+Duplicating a fee did the same in the other direction, since the copy was inserted mid-list.
+
+Each fee now keeps its number for good. Deleting or duplicating a fee leaves every other fee where it is, a new fee always takes a number no payment has ever used, and the paid payments of a deleted fee keep showing the deleted fee's name. Display order is stored separately, so a duplicated fee still appears right after its original.
+
+### New — Maintenance > Realign Grade-Specific Fee rows
+
+A one-off repair for payments already affected. **Scan** lists, fee by fee, the paid payments sitting on the wrong number and where each one belongs — matched on the student's grade and division, the amount paid and the fee name recorded when it was billed. **Apply Selected** moves the ticked groups back and then rebuilds those students, which removes the duplicate unpaid charges. Paid payments of a fee that was deleted on purpose are kept, under their own name.
+
+Only the fee a payment points to changes; amounts, transactions, receipts and WooCommerce orders are never touched. A payment the tool cannot place with certainty — one that looks like a fee renamed and re-priced after payment, or that would land on a fee the student has already paid — is listed for a manual look and left as it is. Each applied run is logged so it can be reversed.
+
 ## [3.25.7] - 2026-09-09
 
 ### Fixed — A term with no due date is no longer discarded

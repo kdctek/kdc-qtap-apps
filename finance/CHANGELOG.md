@@ -2,6 +2,17 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.27.0] - 2026-10-27
+
+### New — A grade's name for parents
+
+Accounts teams often write grades in Roman numerals (`I`, `V`, `X`) while parents know them as `1st`, `5th`, `10th`. **General → Grade name for parents** now lists each saved grade with an optional **Parents see** name.
+
+- **Staff keep the stored name:** wp-admin, the Staff Console, the Fee Matrix, reports, exports and imports show `V`, exactly as before. Nothing stored changes.
+- **Parents see the other name** on the fees page, in email and WhatsApp messages (`{{grade}}`), on new WooCommerce orders, carts and PDF receipts (item names and the Grade line), on My Account fee cards, in the WhatsApp fee list, and in the Share with parents message.
+- **`{{grade_internal}}`** gives templates the staff name. The REST API keeps `grade` as stored and adds `grade_parent`.
+- **Blank means the same name**, so a school that doesn't need this sees no change. Orders placed before a name is set keep the name they were created with.
+
 ## [3.26.0] - 2026-10-27
 
 ### New — A simpler Fee Matrix that works on phones

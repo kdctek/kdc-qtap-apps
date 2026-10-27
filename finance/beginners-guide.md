@@ -43,6 +43,8 @@ Everything in qTap Finance is built on these things:
 
 2. **Grades & Divisions** — How your school organizes students. Grades are the class level (Nursery, LKG, Grade 1...), and Divisions are the sections within each grade (A, B, C...).
 
+   **A different name for parents.** Many schools' accounts teams write grades in Roman numerals (I, V, X) while parents know them as 1st, 5th, 10th. Under **General → Grade name for parents**, each saved grade has an optional **Parents see** box: type `5th` next to `V`. Staff screens, the Staff Console, reports and exports keep showing `V`. Parents see `5th` on the fees page, in email and WhatsApp messages (`{{grade}}`), on receipts and their orders, and in the Share with parents message. Leave the box blank to use the same name everywhere. Templates that need the staff name can use `{{grade_internal}}`. Orders already placed keep the name they were created with.
+
 3. **Fee Matrix** — The master price list with **fee types** that control how charges are calculated:
    - **Per Month** — charged every month (e.g., transport)
    - **Per Term** — charged once per academic term (e.g., exam fee)

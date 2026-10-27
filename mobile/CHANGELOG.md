@@ -2,6 +2,14 @@
 
 All notable changes to qTap Mobile are documented in this file.
 
+## [2.15.15] - 2026-10-27
+
+### Fixed — "missing dependencies" notice in the PHP log when editing pages
+
+Opening the block editor (or any admin screen that loads blocks) logged, on WordPress 6.9.1 and later: `The script with the handle "kdc-qtap-mobile-block-frontend" was enqueued with dependencies that are not registered: kdc-qtap-phone-field, kdc-qtap-frontend-helpers`.
+
+The Mobile block declared its front-end script as the block's `script`, so WordPress also loaded it in the editor. The two scripts it depends on are registered by qTap only on the front end. The block no longer declares it: the block's render callback already loads the script on the page for logged-in users, so the Mobile page works exactly as before.
+
 ## [2.15.14] - 2026-10-01
 
 ### Fixed — Login with OTP showed "Network error" in a browser that was already logged in

@@ -2,7 +2,15 @@
 
 All notable changes to qTap Finance are documented in this file.
 
-## [3.27.0] - 2026-10-27
+## [3.26.2] - 2026-10-27
+
+### Fixed — Sync Payments deleted parents' offline payments awaiting verification
+
+Sync Payments rebuilds a year's unpaid fees by deleting every unpaid payment and creating them again. It also runs on its own a minute after every Fee Matrix save. An offline (DirectPay) payment a parent has submitted stays "unpaid" until staff verify it, so each sync deleted its payment and left the submission pointing at nothing. Online orders still in checkout lost their payment the same way.
+
+Sync now keeps an unpaid payment that has a linked order or any submitted payment, the rule the per-student rebuild has used since 3.22.1. The sync log shows how many it kept. Paid and part-paid fees were never affected.
+
+## [3.26.1] - 2026-10-27
 
 ### New — A grade's name for parents
 

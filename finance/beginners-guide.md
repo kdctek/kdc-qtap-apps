@@ -75,28 +75,20 @@ A **slab** is a **fee category** — a type of fee you charge students.
 
 ### Fee Types — How Charges Are Calculated
 
-Each slab has up to four **fee types** that control how amounts are calculated:
+Each slab has up to four **fee types** that control how amounts are calculated. The Fee Matrix screen shows them under **How is it charged?**:
 
-| Fee Type | When It's Charged | Example |
-|----------|------------------|---------|
-| **Per Month** | Every single month | Transport: ₹1,000/month |
-| **Per Term** | Once per academic term | Exam Fee: ₹500/term |
-| **Per Cycle** | Once per 12-month cycle | Lab Maintenance: ₹2,000/year |
-| **Per Tenure** | Once for the entire program | Admission Fee: ₹10,000 (one-time) |
+| On screen | Fee Type (CSV key) | When It's Charged | Example |
+|-----------|--------------------|------------------|---------|
+| **Monthly** | Per Month (`per_month`) | Every single month | Transport: ₹1,000/month |
+| **Per term** | Per Term (`per_term`) | Once per academic term | Exam Fee: ₹500/term |
+| **Yearly** | Per Cycle (`per_cycle`) | Once per 12-month cycle | Lab Maintenance: ₹2,000/year |
+| **One-time** | Per Tenure (`per_tenure`) | Once for the entire program | Admission Fee: ₹10,000 (one-time) |
 
-A single slab can use multiple fee types! For example, "Tuition Fee" might have both a Per Month component (₹2,000/month) and a Per Tenure component (₹5,000 one-time admission).
+A single slab can use multiple fee types! For example, "Tuition Fee" might have both a Monthly component (₹2,000/month) and a One-time component (₹5,000 admission).
 
-### Collection Modes — How Often Students Pay
+### How Often Students Pay
 
-Each slab also has a **collection mode** that determines how payments are grouped:
-
-| Mode | What It Means |
-|------|--------------|
-| **Monthly** | One payment every month |
-| **Quarterly** | One payment every 3 months |
-| **Half Yearly** | One payment every 6 months |
-| **Full Year** | One payment per 12-month cycle |
-| **Full Tenure** | One single payment for everything |
+How often a student pays — monthly, quarterly, half-yearly or once a year — is the **payment cycle**. It is not set per fee: it comes from the **Academic Terms** (General tab), and can be changed for an individual student on their enrollment. Every fee due in a billing period is collected together in that period's payment.
 
 ### How Amounts Differ by Grade
 
@@ -159,15 +151,32 @@ The order of fee types themselves is also drag-to-reorder (Per Tenure → Per Cy
 
 **Step 4: Build the fee matrix** (Fee Matrix Tab)
 
-1. Click the **Fee Matrix** tab
-2. Select the academic year from the dropdown
-3. For each fee slab:
-   - Choose the **Collection Mode** (how often to collect)
-   - For each **Fee Type** row (Per Month, Per Term, Per Cycle, Per Tenure):
-     - Enter the amount for each grade
-     - Check the "Enable" checkbox for grades that should pay
-   - Check **"Exempt"** if some students might get a free pass
-4. Click **Save Fee Matrix**
+1. Click the **Fee Matrix** tab and pick the academic year at the top
+2. On **Academic Fees**, open each fee category card:
+   - Under **How is it charged?**, tap the ways it is charged (Monthly, Per term, Yearly, One-time)
+   - Enter the amount for each grade. Leave a box empty where the fee does not apply; `0` means it applies but is free
+   - **Quick fill** sets one amount for every grade, or raises them all by a percentage (handy each new year)
+   - **More options** holds the description, the exemption switch, and whether the billing period shows next to the fee
+3. Check **What a student pays this year** at the bottom — pick a grade to see its term-by-term total
+4. Press **Save changes** in the bar at the bottom of the screen. Nothing is saved until you do, and unpaid payments of students already enrolled update automatically about a minute later (paid payments are never changed)
+
+Starting a new year? Use **Tools → Copy from another year…** to bring last year's fees in, optionally raised by a percentage, then review and save.
+
+### Grade-Specific Fees — Fees Only Some Students Pay
+
+A trip, a lab, a sports kit: fees that only some grades — or only some divisions of a grade — pay live on the **Grade-Specific Fees** tab. Press **New fee** and answer five short questions:
+
+1. **What is the fee?** — its name, its payment link, and an optional note for parents. The link (`?fee=annual-trip`) is filled in from the name; change it if you like, using lowercase letters, numbers and hyphens only. Each fee in a year needs its own link. The link is fixed once the fee is created, so links already sent to parents keep working
+2. **Who pays?** — tap the grades; say whether every division pays or only some (and which). Each grade offers only the divisions its students are enrolled in
+3. **How much?** — one amount for everyone, or a different amount per grade — or per division when only some divisions pay (e.g. VI-A ₹930, VI-B ₹900 in one fee)
+4. **When is it paid?** — in one payment (with an optional due date) or in installments, each with its own due date. Leave installment amounts empty to split the fee equally
+5. **Check and create** — read the summary, change anything, then create it
+
+An existing fee can be edited on its card (amounts per division, installments, duplicate, delete — its payment link is shown but can't be changed) and saved with **Save changes**.
+
+**Approvals (optional, off by default):** to have an administrator check fees before anyone is billed, switch on **Fees added by staff need an administrator’s approval** at the top of the Grade-Specific Fees tab. It saves as soon as you flip it. While it is on, a fee created by staff who are not administrators is not billed straight away. It waits under **Waiting for your approval** on the Grade-Specific Fees tab (a notice on every Finance page says how many). An administrator opens **Review & approve**, can correct anything in the same five steps, and approves — or rejects it with a reason. Only approved fees reach students.
+
+**Asking for a fee from the website (school admins):** school admins don't need the WordPress dashboard. Add the **qTap Finance — Fee Requests** block to a page of its own (it is separate from the accounts team's Staff Console). Only logged-in users with the qTap API role can use it; everyone else sees a login form. They press **New fee**, answer the same five questions and create it. With approvals switched on, the button reads **Request a new fee**, the last step **Send for approval**, and under **Your requests** they see each request as *Waiting for approval*, *Approved* (with a note if the administrator changed it), or *Not approved* with the reason. Below that is the list of fees already set up for the year, so nobody asks for one twice. Each has **Edit**: it opens the fee's summary, where **Change** goes to any step (everything except the payment link, which stays as it was created). **Save changes** sends a 6-digit code to the editor's own WhatsApp number (from their qTap mobile numbers) and email address, the same code to both, and the change is saved once that code is entered. The code is valid for 10 minutes and allows 5 tries, and a new one can be requested after 30 seconds. An edit applies straight away, whether or not approvals are switched on. If someone else changed the fee in the meantime, the page asks you to reload instead of overwriting their change. Administrators who open the page create fees directly and see a link to anything waiting for them.
 
 ---
 

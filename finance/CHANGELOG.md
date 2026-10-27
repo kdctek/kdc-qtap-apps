@@ -2,6 +2,36 @@
 
 All notable changes to qTap Finance are documented in this file.
 
+## [3.26.0] - 2026-10-27
+
+### New — A simpler Fee Matrix that works on phones
+
+The Fee Matrix is rebuilt around two tabs, **Academic Fees** and **Grade-Specific Fees**, with one **Save changes** for the whole year. If someone else changed the fees meanwhile, it says so instead of overwriting their work. Cards fold away, the amounts read clearly on a phone, and **What a student pays this year** adds up a grade's fees as you type. **Copy fees from another year** can raise amounts by a percentage and move due dates into the new year; **Compare with another year** shows last year's amount under each one, with the change.
+
+### New — Guided "New fee" for Grade-Specific Fees
+
+Five short questions — what is the fee, who pays, how much, when, and a final check — replace the long form. **Who pays** offers only the divisions each grade actually has students in, and an amount can differ per division (VI-A ₹930, VI-B ₹900 in one fee). Installments left blank share the fee in whole rupees, with the last one taking the remainder, so ₹22,071 in two becomes ₹11,035 + ₹11,036. Parents can still pay the whole amount at once.
+
+### New — Payment link chosen when the fee is created
+
+Step 1 has a **Payment link** (`?fee=annual-trip`), filled in from the name and editable. It follows WordPress link rules without underscores — lowercase letters, numbers and hyphens — and must be unique in the year. Once the fee is created the link can't be changed anywhere, so links already sent to parents keep working. Older links written with underscores still open the right fee.
+
+### New — Share a fee with parents
+
+Every Grade-Specific Fee has **Copy link** and **Share**. Share writes a ready message — who pays how much, the due dates, that the whole amount can be paid at once, and the payment link — to edit, then **Copy message** for WhatsApp, **Email**, or the phone's own share menu.
+
+### New — Fee Requests block for school admins
+
+The **qTap Finance — Fee Requests** block puts the same guided form on any page, for logged-in users with the qTap API role (others see a login form). It lists the fees set up for each year. Staff can **Edit** a fee there: saving sends one 6-digit code to their own WhatsApp number and email, and the change is saved once the code is entered (valid 10 minutes, 5 tries, a new code after 30 seconds). A change someone else made meanwhile is never overwritten.
+
+### New — Optional approval of fees added by staff
+
+**Fees added by staff need an administrator's approval** — a switch at the top of the Grade-Specific Fees tab, off by default. When on, fees staff add wait under **Waiting for your approval**; an administrator reviews them in the same five steps, can correct anything, and approves or rejects with a reason. Staff follow their requests on the Fee Requests page. Nothing is billed until approved.
+
+### Fixed — "Missing dependency" notice in the error log
+
+Opening the block editor logged *The script with the handle "kdc-qtap-finance-block-frontend" was enqueued with dependencies that are not registered: kdc-qtap-frontend-helpers* (WordPress 6.9.1+). The fees block's script now loads only where it is used, on the page itself.
+
 ## [3.25.8] - 2026-10-09
 
 ### Fixed — Deleting a Grade-Specific Fee no longer re-bills the fees after it
